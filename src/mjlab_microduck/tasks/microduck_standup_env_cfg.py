@@ -19,7 +19,29 @@ the ground_state_mix recovery curriculum has finished ramping.
 """
 
 import math
+import os
 from copy import deepcopy
+
+
+def _stall_tilt_g():
+    """``MICRODUCK_STALL_TILT_G`` — tilt clause for ``recovery_stall`` (structure arm, A/B).
+
+    Default (unset) = ``None`` = the original height-only rule, so the baseline stays reproducible.
+    """
+    raw = os.environ.get("MICRODUCK_STALL_TILT_G")
+    return None if raw is None else float(raw)
+
+
+def _sharp_hold() -> bool:
+    """``MICRODUCK_STANDUP_SHARP_HOLD=1`` — stop ANNEALING the last-mile price (reward arm).
+
+    Measured (2026-09-22): the two terms that can price the final 30 deg of uprighting are
+    curriculum-ANNEALED over training — ``height_stand_sharp`` 1.0 -> 0.5 -> **0.2** and
+    ``upright_sharp`` 1.5 -> 1.0 -> **0.5** at iterations 0 / 3000 / 4000 — so the goal-state terms
+    are weakest exactly when the policy parks at 34 deg of tilt (113 mm). Holding them and boosting
+    them late inverts that: the differential for finishing goes from ~0.46 to ~2.8 per step.
+    """
+    return os.environ.get("MICRODUCK_STANDUP_SHARP_HOLD", "0") == "1"
 
 # Symmetry
 ENABLE_SYMMETRY = False
@@ -232,11 +254,18 @@ def make_microduck_standup_env_cfg(
     # task↔regulariser ratio does.
 
     # Pose target — legs+hips+knees+ankles. target_overrides=None → HOME.
+    # std 0.5 -> 0.2 (2026-09-21). Audit of the 40,000-iteration checkpoint, per spawn bucket
+    # (logs/family_eval.py --by_spawn_bucket): envs that NEVER stood still collected 54-65 % of the
+    # reward a standing env collects (prone 33.7 / sitting 32.0 / supine 38.1 vs 58.9), so "get up"
+    # was worth only a 35-46 % marginal gain against the whole dynamic maneuver. At std 0.5 a
+    # slumped pose whose legs merely *resemble* HOME kept most of this 2.0-weight term. Tightening
+    # it is the cheapest way to make the ground buckets unpayable; the potential-based rewrite
+    # (pay d(progress), holding pays zero) is the follow-up if this is not enough.
     cfg.rewards["pose_stand_legs"] = RewardTermCfg(
         func=microduck_mdp.pose_target_match,
         weight=2.0,
         params={
-            "std": 0.5,
+            "std": 0.2,
             "joint_indices": _LEG_JOINTS,
             "target_overrides": None,   # HOME = standing
         },
@@ -299,6 +328,34 @@ def make_microduck_standup_env_cfg(
     #    wide-std Gaussian was already saturated (0.93/1.0) — no gradient to
     #    pull the last cm. The sharp layer adds 0.36→1.0 reward jump in that
     #    same range, ~3× the marginal pull.
+    # Incremental progress term (2026-09-21): makes "park in a slump" pay nothing, which the
+    # std tightening alone did not achieve (see standup_progress_delta's docstring for the audit).
+    cfg.rewards["standup_progress_delta"] = RewardTermCfg(
+        func=microduck_mdp.standup_progress_delta,
+        weight=4.0,
+        params={},
+    )
+    # Structural companion: still LOW and no progress for 2 s (100 control steps) ends the episode,
+    # so a parked slump cannot collect the rest of the episode's reward. This is the lever the two
+    # reward-side fixes (std, delta) could not move - three per-bucket re-checks were bit-identical.
+    cfg.terminations["recovery_stall"] = TerminationTermCfg(
+        func=microduck_mdp.recovery_stall_termination,
+        time_out=False,
+        params={
+            "threshold_z": 0.09,
+            "stall_steps": 100,
+            # MICRODUCK_STALL_TILT_G (structure arm, 2026-09-22): the rule's only clause used to be
+            # `z < 0.09`, and the measured failure mode is a park at 113 mm / 34 deg of tilt - above
+            # the threshold, so the rule never fired (1/256) and fixing progress_eps changed the
+            # floor-flip rate by nothing (0/184 before and after, 3,000 iterations). With the tilt
+            # clause the parked half-stand counts as stalled too.
+            "tilt_clause_g": _stall_tilt_g(),
+        },
+    )
+    # The two smoothing terms whose flat payoff the failing buckets were living on are cut so the
+    # incremental term dominates the ground-bucket economy.
+    cfg.rewards["pose_stand_legs"].weight = 0.5
+
     cfg.rewards["height_stand"] = RewardTermCfg(
         func=microduck_mdp.height_target_gaussian,
         weight=1.0,
@@ -1027,7 +1084,7 @@ def make_microduck_standup_env_cfg(
                 {"step": 0,          "weight": 0.0},
                 {"step": 2500 * 24,  "weight": 1.5},
                 {"step": 3000 * 24,  "weight": 3.0},
-                {"step": 4000 * 24,  "weight": 4.0},
+                {"step": 4000 * 24,  "weight": 1.5},   # was 4.0: flat payoff a slump could farm
             ],
         },
     )
@@ -1102,6 +1159,20 @@ def make_microduck_standup_env_cfg(
             ],
         },
     )
+    if _sharp_hold():
+        # Reward arm: the anneal above is what makes the 34 deg park optimal. Hold the start values
+        # and DOUBLE them once the spawn mix is at its hardest (3000) - the last mile gets more
+        # expensive, not less.
+        cfg.curriculum["height_stand_sharp_weight"].params["weight_stages"] = [
+            {"step": 0,          "weight": 1.0},
+            {"step": 3000 * 24,  "weight": 1.5},
+            {"step": 4000 * 24,  "weight": 2.0},
+        ]
+        cfg.curriculum["upright_sharp_weight"].params["weight_stages"] = [
+            {"step": 0,          "weight": 1.5},
+            {"step": 3000 * 24,  "weight": 2.0},
+            {"step": 4000 * 24,  "weight": 3.0},
+        ]
     cfg.curriculum["standing_composite_weight"] = CurriculumTermCfg(
         func=microduck_mdp.reward_weight,
         params={

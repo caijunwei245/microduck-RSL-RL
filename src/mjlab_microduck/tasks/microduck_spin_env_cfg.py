@@ -18,6 +18,39 @@ Voir docs/superpowers/specs/2026-08-04-spin-env-design.md.
 """
 
 import math
+import os
+
+
+def _spin_yaw_ema() -> float:
+    """``MICRODUCK_SPIN_YAW_EMA`` — tau (s) for the EMA filter on the spin-rate reward.
+
+    Default 0 = off (the recipe that produced `spin_rate_track` 0.09 -> 1.22 -> 0.60 with
+    `fell_over` 1036-4745). The arm sets ~0.5 s, matching the turn family's fix, so the reward
+    prices the sustained rotation instead of the oscillation every stepping gait needs.
+    """
+    return float(os.environ.get("MICRODUCK_SPIN_YAW_EMA", "0"))
+
+
+def _spin_rate_max() -> float:
+    """``MICRODUCK_SPIN_RATE_MAX`` — the target spin rate (rad/s), default = mdp.SPIN_RATE_MAX (3.0).
+
+    Capability-paced ramp (optimization_plan.md A1). Measured: this policy reaches 0.60-1.22 rad/s,
+    i.e. roughly a THIRD of the 3.0 rad/s the reward asks for, while the tracking Gaussian has
+    std = 1.5. When the target sits far beyond capability, "rotate as fast as possible" and "stay on
+    your feet" stop being complementary - being on the ground is the more stable way to spin fast -
+    which is exactly the measured failure (0.60-1.22 rad/s at g ~ -0.34, i.e. ~70 deg of tilt). Asking
+    for a rate the robot can actually hold makes the upright constraint affordable again.
+    """
+    return float(os.environ.get("MICRODUCK_SPIN_RATE_MAX", str(microduck_mdp.SPIN_RATE_MAX)))
+
+
+def _spin_feet_flat_mult() -> float:
+    """``MICRODUCK_SPIN_FEETFLAT_MULT`` — scale on the `feet_flat` penalty (default 1.0).
+
+    A pivoting 800 g biped has to scuff and alternate support; at -2.0 "keep the feet flat" can
+    outbid "rotate". The arm drops it (0.25x) and the demo (5 rounds) decides.
+    """
+    return float(os.environ.get("MICRODUCK_SPIN_FEETFLAT_MULT", "1.0"))
 from copy import deepcopy
 
 # La symétrie G/D transformerait un spin à gauche en spin à droite : interdit ici.
@@ -73,12 +106,18 @@ from mjlab_microduck.tasks.symmetry import PpoWithSymmetryCfg, SYMMETRY_CFG
 
 # Enveloppe de phase : constantes canoniques définies dans mdp.py.
 SPIN_PERIOD = microduck_mdp.SPIN_PERIOD
-_ENVELOPE = {
-    "rate_max": microduck_mdp.SPIN_RATE_MAX,
-    "accel_end": microduck_mdp.SPIN_ACCEL_END,
-    "hold_end": microduck_mdp.SPIN_HOLD_END,
-    "brake_end": microduck_mdp.SPIN_BRAKE_END,
-}
+def _envelope() -> dict:
+    """Phase envelope, evaluated at cfg BUILD time so ``MICRODUCK_SPIN_RATE_MAX`` takes effect.
+
+    (A module-level dict would freeze the value at import, which silently ignored the switch when it
+    was set after import - the arm would then have trained the baseline recipe.)
+    """
+    return {
+        "rate_max": _spin_rate_max(),          # capability-paced target
+        "accel_end": microduck_mdp.SPIN_ACCEL_END,
+        "hold_end": microduck_mdp.SPIN_HOLD_END,
+        "brake_end": microduck_mdp.SPIN_BRAKE_END,
+    }
 # Nuque/tête tenues près du neutre SAUF head_yaw, laissé libre : il peut servir
 # de volant d'inertie pour lancer la rotation.
 NECK_PATTERN_NO_YAW = r"^(neck_pitch|head_pitch|head_roll)$"
@@ -138,13 +177,13 @@ def make_microduck_spin_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.rewards["spin_rate_track"] = RewardTermCfg(
         func=microduck_mdp.spin_rate_track,
         weight=6.0,
-        params={"command_name": "twist", "std": 1.5, **_ENVELOPE},
+        params={"command_name": "twist", "std": 1.5, "yaw_ema_tau": _spin_yaw_ema(), **_envelope()},
     )
     # Bootstrap L1 : gradient constant quand la gaussienne sature loin de la cible.
     cfg.rewards["spin_rate_l1"] = RewardTermCfg(
         func=microduck_mdp.spin_rate_l1,
         weight=0.5,
-        params={"command_name": "twist", **_ENVELOPE},
+        params={"command_name": "twist", **_envelope()},
     )
     # Tourner SUR PLACE, et tuer l'élan d'entrée. Renforcé -1.0 -> -3.0 : au run de
     # calibrage à 500 it. le tronc translatait à ~0.35 m/s (~ω·demi-voie), signature
@@ -170,7 +209,7 @@ def make_microduck_spin_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         params={
             "command_name": "twist",
             "omega_scale": microduck_mdp.SPIN_WHEEL_OMEGA_SCALE,
-            **_ENVELOPE,
+            **_envelope(),
         },
     )
     # Amorce 2 : ciseau des jambes (décroît par curriculum, voir plus bas).
@@ -180,7 +219,7 @@ def make_microduck_spin_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         params={
             "command_name": "twist",
             "joint_bases": ("hip_pitch", "knee"),
-            **_ENVELOPE,
+            **_envelope(),
         },
     )
     # Les deux lames au sol pendant le spin (pas de vrille en l'air).
@@ -190,13 +229,13 @@ def make_microduck_spin_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         params={
             "sensor_name": "feet_ground_contact",
             "command_name": "twist",
-            **_ENVELOPE,
+            **_envelope(),
         },
     )
     # Stabilité / sim2real
     cfg.rewards["feet_flat"] = RewardTermCfg(
         func=microduck_mdp.feet_flat_penalty,
-        weight=-2.0,
+        weight=-2.0 * _spin_feet_flat_mult(),
         params={
             "asset_cfg": SceneEntityCfg("robot", site_names=("left_foot", "right_foot")),
             "sensor_name": "feet_ground_contact",

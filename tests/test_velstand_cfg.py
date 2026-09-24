@@ -406,3 +406,17 @@ def test_prone_spawn_adds_terrain_origin_z():
     z = env.sim.data.qpos[:, 2]
     assert torch.allclose(z, torch.tensor([0.07, 0.37, 0.19, 0.12]), atol=1e-6)
     assert (torch.rad2deg(torch.acos((1 - 2 * (env.sim.data.qpos[:, 4] ** 2 + env.sim.data.qpos[:, 5] ** 2)).clamp(-1, 1))) > 89).all()
+
+# ── structural recovery constraint (appended while rebasing onto upstream, 2026-09-24) ───────────
+# Audit: low-spawn recovery 23.0 % overall and 0/32 from supine, with the reward-side levers (std
+# tightening, a delta term) leaving every per-bucket number bit-identical over 6,000 iterations on
+# the sibling StandUp family. The lever that changes the economics instead of the arithmetic is a
+# termination: a parked slump ends the episode instead of being paid for.
+
+def test_velstand_has_a_recovery_stall_termination():
+    cfg = make_microduck_velstand_env_cfg()
+    assert "recovery_stall" in cfg.terminations
+    term = cfg.terminations["recovery_stall"]
+    assert term.time_out is False, "a stall is a failure, not a time-out"
+    assert term.params["stall_steps"] <= 150
+    assert term.params["threshold_z"] <= 0.10, "must not fire on a standing robot"

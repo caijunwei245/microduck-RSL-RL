@@ -27,7 +27,68 @@ Task design (unchanged — the roller recipe):
 """
 
 import math
+import os
 from copy import deepcopy
+
+
+def _wheel_rolling() -> bool:
+    """``MICRODUCK_WHEEL_ROLLING=1`` swaps wheel-spin for wheel-ROLLING (A/B).
+
+    Read at cfg build, default off = the recipe that has been running. See the
+    comment at the ``wheel_speed`` wiring below for why spin was the wrong thing
+    to pay for.
+    """
+    return os.environ.get("MICRODUCK_WHEEL_ROLLING", "0") == "1"
+
+
+def _rolling_slip_std() -> float:
+    """Slip tolerance (m/s) for ``wheel_rolling_reward``; ``MICRODUCK_ROLLING_SLIP_STD``.
+
+    Default 0.18 is calibrated from measured slip at the deployment command (0.019 rollers,
+    0.092 swizzle) rather than guessed -- see the comment at the wiring site.
+    """
+    return float(os.environ.get("MICRODUCK_ROLLING_SLIP_STD", "0.18"))
+
+
+# The roller stand measured on the robot (ROLLER_STAND_Z, docs/roller_standup_policy_summary.md):
+# 138.7 mm of trunk was reached by the roller_standup rehearsal at iteration 999, so the old
+# 93.5-123.5 mm band was asking for a crouch and charging for the stand.
+_ROLLER_STAND_BAND = (0.130, 0.145)
+
+
+def _height_band() -> tuple:
+    """Trunk-height band for ``com_height_target``; ``MICRODUCK_ROLLER_HEIGHT_BAND="lo,hi"``.
+
+    Default is the original recipe (0.0935, 0.1235) so this stays an A/B: the arm under test sets
+    the band to bracket the measured 138 mm roller stand.
+    """
+    raw = os.environ.get("MICRODUCK_ROLLER_HEIGHT_BAND")
+    if not raw:
+        return (0.0935, 0.1235)
+    lo, hi = (float(v) for v in raw.split(","))
+    return (lo, hi)
+
+
+def _tall_curriculum_stage2() -> float:
+    """``MICRODUCK_ROLLER_TALL_STAGE2`` — iteration at which the tall posture is fully asked for.
+
+    0 (default) = off: the single-recipe behaviour (either the crouched band or the swapped-in tall
+    band). Setting it enables the TWO-STAGE recipe (optimization_plan.md B): stage 1 keeps the
+    original crouched band with the skating terms muted so the rolling gait is established, then the
+    band lerps to the measured roller stand while the skating terms fade back in.
+    """
+    return float(os.environ.get("MICRODUCK_ROLLER_TALL_STAGE2", "0"))
+
+
+def _rollers_noskate() -> bool:
+    """``MICRODUCK_ROLLERS_NOSKATE=1`` deletes the blade-skating terms (A/B).
+
+    ``single_support``, ``skating_air_time`` and ``glide`` are ICE-SKATING terms (single-foot
+    support, feet in the air, quiet legs) and they pull against a passively wheeled body that has to
+    push off the ground to roll. The rolling-consistency arm showed rolling works (97 % of command),
+    so this arm asks whether the skating terms are now dead weight. Read at cfg build; default off.
+    """
+    return os.environ.get("MICRODUCK_ROLLERS_NOSKATE", "0") == "1"
 
 # Symmetry — OFF: SYMMETRY_CFG's obs permutation is hardcoded for the old 51D
 # layout and breaks on the 61D obs (same situation as all other v1.5+ envs).
@@ -189,7 +250,7 @@ def make_microduck_velocity_rollers_env_cfg(
     cfg.rewards["com_height_target"] = RewardTermCfg(
         func=microduck_mdp.com_height_target,
         weight=2.0,
-        params={"target_height_min": 0.0935, "target_height_max": 0.1235},
+        params={"target_height_min": _height_band()[0], "target_height_max": _height_band()[1]},
     )
     cfg.rewards["self_collisions"] = RewardTermCfg(
         func=mdp.self_collision_cost,
@@ -250,11 +311,34 @@ def make_microduck_velocity_rollers_env_cfg(
     # un-saturated tanh slope and kept pushing it to go faster than it can (over-
     # reach -> launch instability). 0.3 saturates near the achievable speed, so it
     # is 'content' there instead of over-driving.
+    #
+    # MICRODUCK_WHEEL_ROLLING=1 (A/B switch, 2026-09-22): the 2,000-iteration
+    # checkpoints spin the wheels at ~43 % of the tanh scale with a body speed of
+    # 0.000 m/s, because this term pays for ROTATION and never for DISTANCE --
+    # "spin in place" is its argmax. With the switch on, the same weight pays for
+    # rolling consistency instead (mdp.wheel_rolling_reward: cmd * v_fwd/cap *
+    # exp(-slip^2)), and wheel_speed drops to 0.0 so the arm is visible in wandb.
+    # Applies to every family derived from this base (rollers, swizzle,
+    # roller_crouch, roller_slope, roller_standup, spin).
     cfg.rewards["wheel_speed"] = RewardTermCfg(
         func=microduck_mdp.wheel_speed_reward,
-        weight=10.0,
+        weight=0.0 if _wheel_rolling() else 10.0,
         params={"command_name": "twist", "vel_scale": 0.3},
     )
+    if _wheel_rolling():
+        # slip_std is CALIBRATED, not guessed. Measured slip at the deployment command
+        # (FIXED_VX=0.3, 256 envs, family_eval's new readout) is 0.019 m/s for rollers/1999 and
+        # 0.092 m/s for swizzle/1999 -- and EARLY in training it is larger still. A first attempt
+        # at slip_std = 0.06 put exp(-(0.092/0.06)^2) = 0.095 on the swizzle baseline and ~0.004
+        # of raw reward on the 150-iteration policy, i.e. an invisible gradient (AGENTS.md: stds
+        # must be wide enough that the CURRENT policy scores visibly). 0.18 keeps the two
+        # baselines at 0.99/0.77 while still collapsing a free-spinning wheel (slip ~0.25 m/s)
+        # to 0.15. Override with MICRODUCK_ROLLING_SLIP_STD for further A/Bs.
+        cfg.rewards["wheel_rolling"] = RewardTermCfg(
+            func=microduck_mdp.wheel_rolling_reward,
+            weight=10.0,
+            params={"command_name": "twist", "cap_speed": 0.35, "slip_std": _rolling_slip_std()},
+        )
     # Brake: reward stopping when cmd_x < 0. Silent at cmd_x >= 0 (coast/push).
     cfg.rewards["braking"] = RewardTermCfg(
         func=microduck_mdp.braking_reward,
@@ -625,6 +709,45 @@ def make_microduck_velocity_rollers_env_cfg(
                 ],
             },
         )
+
+    _stage2 = _tall_curriculum_stage2()
+    if _stage2 > 0:
+        # TWO-STAGE ROLLER RECIPE. Stage 1 (0 -> stage2) = crouched rolling with the skating terms
+        # muted: that gait travels at 117 % of the commanded push. Stage 2 = the band lerps up to the
+        # measured stand (0.130-0.145, ROLLER_STAND_Z = 0.138) while the skating terms fade in over
+        # the next 500 iterations - the tall posture needs them, and flipping everything at step 0
+        # measured 15 % (logs/family_rollers.md, round 4).
+        _sk = {"single_support": 3.0, "skating_air_time": 1.5, "glide": 4.0}
+        cfg.curriculum["com_height_band"] = CurriculumTermCfg(
+            func=microduck_mdp.height_band_curriculum,
+            params={
+                "reward_name": "com_height_target",
+                "band_stages": [
+                    {"step": 0,                 "band": (0.0935, 0.1235)},
+                    {"step": int(_stage2 * 24), "band": _ROLLER_STAND_BAND},
+                ],
+            },
+        )
+        for _name, _w in _sk.items():
+            cfg.curriculum[f"{_name}_weight"] = CurriculumTermCfg(
+                func=microduck_mdp.reward_weight,
+                params={
+                    "reward_name": _name,
+                    "weight_stages": [
+                        {"step": 0,                          "weight": 0.0},
+                        {"step": int(_stage2 * 24),          "weight": 0.0},
+                        {"step": int((_stage2 + 500) * 24),  "weight": _w},
+                    ],
+                },
+            )
+        print(f"TALL CURRICULUM: crouched band until iter {_stage2:.0f}, then lerp to "
+              f"{_ROLLER_STAND_BAND} with the skating terms fading in by iter {_stage2 + 500:.0f}")
+
+    # no-skate A/B arm: drop the blade-skating terms AFTER they are all defined. Confined to this
+    # block so the treatment is one variable against the shared baseline (rollers_rolling18).
+    if _rollers_noskate():
+        for _dead in ("single_support", "skating_air_time", "glide"):
+            cfg.rewards.pop(_dead, None)
 
     return cfg
 

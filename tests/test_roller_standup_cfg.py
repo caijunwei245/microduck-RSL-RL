@@ -156,6 +156,34 @@ def test_joint_indices_match_actual_roller_model():
     assert len(set(_LEG_JOINTS) | set(_NECK_JOINTS) | set(_WHEEL_JOINTS)) == len(articulated)
 
 
+def test_pose_reward_indices_are_servo_view_not_model_order():
+    """The model-order leg map is right for the compiled model, but mdp joint_indices
+    params index the SERVO-ONLY view (14 wide, canonical layout). Passing the model-order
+    list there put 14/15 out of bounds and crashed every training run with a CUDA
+    device-side assert inside pose_target_match (found 2026-09-20)."""
+    from mjlab_microduck.tasks.microduck_roller_standup_env_cfg import (
+        _LEG_JOINTS,
+        _LEG_SERVO_IDX,
+        make_microduck_roller_standup_env_cfg,
+    )
+
+    SERVO_WIDTH = 14
+    assert max(_LEG_JOINTS) >= SERVO_WIDTH, "the model-order map is meant to be wider"
+    assert max(_LEG_SERVO_IDX) < SERVO_WIDTH, (
+        "joint_indices params must stay inside the 14-wide servo view"
+    )
+    assert len(_LEG_SERVO_IDX) == len(_LEG_JOINTS) == 10
+    assert _LEG_SERVO_IDX == [0, 1, 2, 3, 4, 9, 10, 11, 12, 13]
+
+    # ... and nothing in this cfg passes the model-order list to an mdp param.
+    cfg = make_microduck_roller_standup_env_cfg()
+    for name, term in list(cfg.rewards.items()):
+        idx = (term.params or {}).get("joint_indices")
+        if idx is not None:
+            assert max(idx) < SERVO_WIDTH, f"{name} passes model-order indices"
+            assert idx == _LEG_SERVO_IDX, f"{name} passes an unexpected index list"
+
+
 def test_recovery_rewards_present_with_expected_weights():
     cfg = make_microduck_roller_standup_env_cfg()
     expected = {
@@ -202,11 +230,15 @@ def test_recovery_rewards_use_roller_heights_not_walker_heights():
 
 
 def test_pose_rewards_target_legs_only_at_roller_indices():
-    from mjlab_microduck.tasks.microduck_roller_standup_env_cfg import _LEG_JOINTS
+    """The pose rewards must select the ten leg joints — and must do it in the SERVO
+    view, not the model-order view. This test previously asserted `_LEG_JOINTS`
+    (model order, containing 14/15), which is what crashed RollerStandUp training with
+    a CUDA device-side assert in pose_target_match (found 2026-09-20)."""
+    from mjlab_microduck.tasks.microduck_roller_standup_env_cfg import _LEG_SERVO_IDX
 
     cfg = make_microduck_roller_standup_env_cfg()
     for name in ("pose_stand_legs", "pose_stand_l1", "standing_composite"):
-        assert cfg.rewards[name].params["joint_indices"] == _LEG_JOINTS
+        assert cfg.rewards[name].params["joint_indices"] == _LEG_SERVO_IDX
         # target_overrides=None → la cible est HOME (default_joint_pos).
         assert cfg.rewards[name].params["target_overrides"] is None
 

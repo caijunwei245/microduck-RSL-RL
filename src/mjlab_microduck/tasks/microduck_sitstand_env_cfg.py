@@ -44,6 +44,7 @@ Joint layout (14 actuated joints):
 """
 
 import math
+import os
 from copy import deepcopy
 
 # Symmetry
@@ -172,6 +173,18 @@ from mjlab_microduck.tasks.microduck_velocity_env_cfg import (
     HEAD_POSE_CMD_RESAMPLE_S,
 )
 from mjlab_microduck.tasks.symmetry import PpoWithSymmetryCfg, SYMMETRY_CFG
+
+
+def _hold_env_fraction() -> float:
+    """``MICRODUCK_SITSTAND_HOLD`` - fraction of envs pinned on one posture command (A4).
+
+    Measured (`logs/sitstand_cmd_audit.txt`): 4 of 5 failing demo rounds had a CONSTANT posture flag
+    that the robot ignored - commanded STAND while sitting at 55 mm, or SIT while standing at 115 mm.
+    The dwell (3.5-6.5 s in a 20 s episode) makes that case only a few percent of episodes, so the
+    bucket makes it common. Half of the pinned envs are commanded the posture OPPOSITE to their spawn.
+    Default 0.0 = the recipe that has been running.
+    """
+    return float(os.environ.get("MICRODUCK_SITSTAND_HOLD", "0.0"))
 
 
 def make_microduck_sitstand_env_cfg(
@@ -577,6 +590,8 @@ def make_microduck_sitstand_env_cfg(
         **{
             **vars(command),
             "sit_prob": SIT_PROB,
+            "rel_hold_envs": _hold_env_fraction(),
+            "hold_s":   25.0,
             "ramp_s":   POSTURE_RAMP_S,
             "sit_z":    SIT_Z,
             "stand_z":  STAND_Z,

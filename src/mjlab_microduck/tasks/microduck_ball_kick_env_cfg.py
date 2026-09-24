@@ -32,14 +32,25 @@ at the same relative strength.
 """
 
 import math
+import os
 from copy import deepcopy
+from dataclasses import replace as _dc_replace
 
 # ── Kicking foot: "right" or "left" ───────────────────────────────────────────
 # Flips the ball spawn side and the support-foot (anti-hop) sensor. Everything
 # else is left/right symmetric (HOME pose has mirrored signs). Train the two
 # policies as separate runs — wandb experiment/run name follows this flag.
-KICK_FOOT = "right"
-assert KICK_FOOT in ("right", "left")
+# Which foot kicks. ``MICRODUCK_KICK_FOOT=left`` trains the mirrored variant: left- and right-footed
+# kicks are two SEPARATE runs (the actor is ball-blind, the critic sees the ball, and the ball spawns
+# in front of the kicking foot), so this is the switch that makes the left foot trainable at all -
+# it had never been trained (logs/optimization_plan.md A5). Read at import, default unchanged.
+KICK_FOOT = os.environ.get("MICRODUCK_KICK_FOOT", "right")
+# Ball spawn-noise scale (diagnostic, optimization_plan.md A4). The actor is BALL-BLIND: it kicks a
+# fixed offset, so spawn noise converts directly into misses - measured 13/25 rounds (52 %) over 5
+# seeds. Evaluating the SAME policy with scaled-down noise says how much of that is noise rather
+# than skill, which decides between "retrain with less noise" and "enlarge the contact area".
+BALL_NOISE_SCALE = float(os.environ.get("MICRODUCK_BALL_NOISE_SCALE", "1.0"))
+assert KICK_FOOT in ("right", "left"), f"MICRODUCK_KICK_FOOT must be right|left, got {KICK_FOOT!r}"
 
 # Symmetry — must stay OFF: the kick task is inherently one-footed.
 ENABLE_SYMMETRY = False
@@ -81,18 +92,64 @@ BALL_RADIUS = 0.035
 # (0.08 ± 0.02 allowed spawn-penetration with the toe: the solver ejected the
 # ball at reset — free "kick" reward with no kick.)
 # The lateral sign follows the kicking foot (right = -y, left = +y).
-BALL_OFFSET_X     = 0.09
+# 2026-09-19: 0.09 -> 0.082. The deployment rehearsal showed the trained swing
+# GRAZES the ball at the old nominal: with the ball shifted 15 mm closer the same
+# checkpoint goes from 0.109 to 0.216 m/s, i.e. the strike was landing at the very
+# edge of its reach and 40 ms / 1.5 cm decided between a kick and a miss
+# (logs/kick_r1_report.md §26-27). A shallower contact target forces a real strike.
+# The anti-penetration rule still holds: worst-case rear surface
+# 0.082 - 0.008 - 0.035 = 0.039 vs toe tip 0.034 = 5 mm clear.
+BALL_OFFSET_X     = 0.082
 BALL_OFFSET_ABS_Y = 0.042
-# Uniform ± placement noise per axis. This is the DR that makes the BLIND
-# policy's swing robust to real-world aiming error.
-BALL_POS_NOISE_XY = 0.015
+# Uniform ± placement noise per axis, and deliberately ASYMMETRIC in role: x sets
+# how deep the swing must reach (tight, and its near edge 0.074 is exactly the
+# clearance limit above), while y keeps the full real-world AIMING error the blind
+# policy has to survive. The distribution therefore spans the old nominal 0.09 down
+# to the deepest safe contact, so wherever the deployed swing actually lands inside
+# that band, the policy has met it in training.
+BALL_POS_NOISE_XY = (0.008 * BALL_NOISE_SCALE, 0.015 * BALL_NOISE_SCALE)
 
 # Target kick speed (m/s). The first trained policy (linear reward capped at
 # 5 m/s) kicked much harder than needed — this tames the kick to a gentle,
-# controlled tap. NOTE: the kick reward weights below are scaled to keep the
-# at-target payoff ≈ +3/step regardless of this value (weight ≈ 3/target for
-# the capped term) — if you change the target, rescale the weights with it.
-BALL_TARGET_SPEED = 1.0
+# controlled tap.
+#
+# The kick reward weights below are DERIVED from these three numbers instead of
+# being written out by hand, so the documented economy cannot drift out of sync
+# with the code again: commit 2a0b1b0 once raised the target 0.25 -> 1.0 without
+# rescaling (its own comment three lines down said to), silently multiplying the
+# at-target payoff by 4 and moving the net-zero strike speed to ~4 m/s.
+# tests/test_ball_kick_cfg.py locks the economy.
+#   • at-target payoff = BALL_AT_TARGET_PAYOFF: ≈ +3/step, enough to justify the
+#     swing's transient pose/upright cost against the ~7/step standing stack
+#     (at the pre-taming weight 3.0 it was 0.75/step — too weak);
+#   • overshoot slope = BALL_OVERSHOOT_WEIGHT_PER_MPS (per m/s of excess, so
+#     |slope| BELOW the capped weight): the landscape peaks at the target but
+#     erring hard stays much cheaper than not kicking — net reward only reaches
+#     0 at BALL_TARGET_SPEED * (1 + payoff/|overshoot|) = 4x the target.
+BALL_TARGET_SPEED = 0.25
+BALL_AT_TARGET_PAYOFF = 3.0
+BALL_OVERSHOOT_WEIGHT_PER_MPS = -4.0
+BALL_FORWARD_WEIGHT = BALL_AT_TARGET_PAYOFF / BALL_TARGET_SPEED
+
+# ── Deployment hand-off state ─────────────────────────────────────────────────
+# On the robot the kick is triggered by handing control to this policy mid-episode,
+# so it starts from whatever stand the walking policy settled into. Measured at
+# exactly that hand-off (deployment rehearsal, walker → kick, logs/kick_obs_walk.csv,
+# sim t=13 s) as a deviation from HOME, in model joint order:
+#   left leg + neck/head + right leg, the same order as the ONNX metadata.
+# This is 0.13 rad = 2.6x the ±0.05 reset noise the task used to train with, and a
+# within-run A/B (logs/kick_reset_probe.py <onnx> 0.05 stand) showed the trained
+# policy kicking to 0.244 m/s from HOME and 0.0005 m/s from this stand — the
+# deployed initial state was not in the reset distribution, so it stood instead of
+# swinging. Training now covers it (see the settled_stand event below). If the
+# walking policy or the hand-off changes, RE-MEASURE this: it is a fact about the
+# deployment stack, not a tuned constant.
+DEPLOY_STAND_OFFSET = (
+    0.0437, 0.0406, 0.1322, 0.0676, -0.0609,      # left leg
+    -0.0433, 0.0459, -0.0111, 0.0092,             # neck / head
+    0.0658, -0.1228, -0.0368, -0.0417, -0.0155,   # right leg
+)
+SETTLED_STAND_PROB = 0.5
 
 # Trunk standing height (measured natural equilibrium at HOME — see standup env).
 STAND_Z = 0.115
@@ -123,6 +180,7 @@ from mjlab.utils.noise import UniformNoiseCfg as Unoise
 from mjlab_microduck.robot.microduck_constants import (
     MICRODUCK_BALL_CFG,
     MICRODUCK_STANDUP_ROBOT_CFG,
+    actuators as _kick_base_actuators,
 )
 from mjlab_microduck.tasks import mdp as microduck_mdp
 from mjlab_microduck.tasks.microduck_velocity_env_cfg import HEAD_BODY_NAMES
@@ -189,7 +247,7 @@ def make_microduck_ball_kick_env_cfg(
     # Robot MUST stay the first entity (set_random_ground_state and the base
     # reset events write robot root state at qpos[:, 0:7]).
     cfg.scene.entities = {
-        "robot": MICRODUCK_STANDUP_ROBOT_CFG,
+        "robot": KICK_ROBOT_CFG,   # coherent per-episode actuator lag, see above
         "ball":  MICRODUCK_BALL_CFG,
     }
     cfg.scene.sensors = (feet_ground_cfg, support_foot_ground_cfg, self_collision_cfg)
@@ -221,28 +279,26 @@ def make_microduck_ball_kick_env_cfg(
             del cfg.rewards[name]
 
     # ── Rewards: kick objective — TARGET speed, not max speed ────────────────
-    # Two-sided landscape peaking at BALL_TARGET_SPEED (0.25 m/s — a gentle tap):
+    # Two-sided landscape peaking at BALL_TARGET_SPEED (see the constants block):
     #   • ball_forward_velocity, linear and CAPPED at the target: dense
-    #     bootstrap gradient from the first touch. Weight 12.0 = 3.0/target so
-    #     the at-target payoff stays ≈ +3/step (with the old weight 3.0 the
-    #     payoff would be 0.75/step — too weak vs the ~7/step standing stack to
-    #     justify the swing's transient pose/upright cost).
-    #   • ball_speed_overshoot_penalty (weight -4.0): each m/s above target
-    #     costs -4/step while it persists. Needed because the cap alone does
-    #     NOT tame the kick — a harder kick keeps the ball at the cap for more
-    #     steps, so total (per-step × rolling time) reward still grows with
-    #     strike speed.
-    # Slopes stay asymmetric (+12/(m/s) below, -4/(m/s) above): the optimum
-    # sits at the target, but erring hard stays much cheaper than not kicking
-    # (net reward only hits 0 at ~1.0 m/s, 4× the target).
+    #     bootstrap gradient from the first touch. Weight = payoff/target
+    #     (BALL_FORWARD_WEIGHT) so the at-target payoff is BALL_AT_TARGET_PAYOFF
+    #     per step whatever the target is set to.
+    #   • ball_speed_overshoot_penalty (BALL_OVERSHOOT_WEIGHT_PER_MPS): each m/s
+    #     above target costs that much per step while it persists. Needed because
+    #     the cap alone does NOT tame the kick — a harder kick keeps the ball at
+    #     the cap for more steps, so total (per-step × rolling time) reward still
+    #     grows with strike speed.
+    # Slopes stay asymmetric: the optimum sits at the target, but erring hard
+    # stays much cheaper than not kicking (net reward only hits 0 at 4× target).
     cfg.rewards["ball_forward_velocity"] = RewardTermCfg(
         func=microduck_mdp.ball_forward_velocity,
-        weight=12.0,
+        weight=BALL_FORWARD_WEIGHT,
         params={"asset_name": "ball", "max_speed": BALL_TARGET_SPEED},
     )
     cfg.rewards["ball_speed_overshoot"] = RewardTermCfg(
         func=microduck_mdp.ball_speed_overshoot_penalty,
-        weight=-4.0,
+        weight=BALL_OVERSHOOT_WEIGHT_PER_MPS,
         params={"asset_name": "ball", "target_speed": BALL_TARGET_SPEED},
     )
 
@@ -445,6 +501,23 @@ def make_microduck_ball_kick_env_cfg(
             "sitting_tilt_max": math.radians(5),  # ±5° pitch/roll on the stand
             "standing_z_min":   0.11,
             "standing_z_max":   0.12,
+        },
+    )
+
+    # Deployment hand-off state (see DEPLOY_STAND_OFFSET): a share of envs starts
+    # from the stand the walking policy actually hands over at, scaled 0.6-1.2x so
+    # the distribution reaches from near-HOME to just past the measured stand.
+    # MUST run after set_ground_state (which writes the robot root + joints for the
+    # upright spawn) and before reset_ball (which derives the ball from the pose).
+    cfg.events["settled_stand"] = EventTermCfg(
+        func=microduck_mdp.reset_joints_to_settled_stand,
+        mode="reset",
+        params={
+            "offset": DEPLOY_STAND_OFFSET,
+            "prob": SETTLED_STAND_PROB,
+            "scale_range": (0.6, 1.2),
+            "position_range": (-0.05, 0.05),
+            "asset_cfg": SceneEntityCfg("robot", joint_names=(r"^(?!passive_).*",)),
         },
     )
 
@@ -658,4 +731,29 @@ MicroduckBallKickRlCfg = RslRlOnPolicyRunnerCfg(
     save_interval=250,
     num_steps_per_env=24,
     max_iterations=10_000,
+)
+
+
+# ── Actuator latency: COHERENT, not dithered ──────────────────────────────────
+# mjlab's DelayBuffer with the shared actuator cfg (delay_update_period=0,
+# delay_hold_prob=0.0, delay_per_env_phase=True) re-draws the actuator lag EVERY
+# control step per env, so training's "3-6 step delay" is a dither around ~4.5
+# steps, never a coherent delay. The robot has a coherent one (and so does the
+# deployment rehearsal's --delay). For a 0.2 s one-shot swing that difference is
+# the whole ball speed: with the SAME checkpoint in the SAME training env, the
+# dithered recipe scores 0.2433/0.2448 m/s while holding the lag
+# (delay_hold_prob=0.999) scores 0.1215/0.1404 — reproducing the deployment
+# rehearsal's 0.109-0.19 exactly (logs/kick_r1_report.md §34).
+# So this task holds each env's lag for a whole episode; walking policies are
+# quasi-static and were fine either way, which is why nothing caught it.
+KICK_LAG_HOLD_STEPS = int(EPISODE_LENGTH_S * 50)   # 250 control steps = 1 episode
+KICK_ACTUATORS = _dc_replace(
+    _kick_base_actuators, delay_update_period=KICK_LAG_HOLD_STEPS
+)
+
+KICK_ROBOT_CFG = _dc_replace(
+    MICRODUCK_STANDUP_ROBOT_CFG,
+    articulation=_dc_replace(
+        MICRODUCK_STANDUP_ROBOT_CFG.articulation, actuators=(KICK_ACTUATORS,)
+    ),
 )

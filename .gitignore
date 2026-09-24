@@ -38,3 +38,6 @@ backup_onnx/
 logdir/.claude/
 logdir/
 logdir/.claude/worktrees/
+
+# MuJoCo writes this into the CWD whenever the model warns (rehearsals, smoke tests)
+MUJOCO_LOG.TXT

@@ -14,6 +14,18 @@ crouch_glide_height_by_phase. Obs 61D unifié → interchangeable au runtime.
 """
 
 import math
+import os
+
+
+def _crouch_delta_weight() -> float:
+    """``MICRODUCK_CROUCH_DELTA`` — weight of the phase-progress DELTA term (default 0 = off).
+
+    The crouch rewards are per-step Gaussians on a phase-interpolated target (an annuity), so a round
+    that never completes the return still banks most of the cycle. Measured: 9/15 rounds pass and the
+    failures end at ~79 mm / g -0.40 - the return leg. A potential-based delta cannot be farmed by
+    parking and pays only for actually progressing along the commanded phase.
+    """
+    return float(os.environ.get("MICRODUCK_CROUCH_DELTA", "0.0"))
 from copy import deepcopy
 
 ENABLE_SYMMETRY = False
@@ -177,6 +189,17 @@ def make_microduck_roller_crouch_env_cfg(play: bool = False) -> ManagerBasedRlEn
         weight=6.0,
         params={**_pose_params, "std": CROUCH_POSE_STD},
     )
+    if _crouch_delta_weight() > 0.0:
+        # Return-leg pricing (A4): unfarmable progress along the commanded phase.
+        # NOTE: `_pose_params` belongs to the JOINT-pose term (crouch_pose/stand_pose/...); the delta
+        # is built on the HEIGHT target, whose envelope differs. Passing `_pose_params` here crashed
+        # the arm with "unexpected keyword argument 'crouch_pose'" (found after the run produced no
+        # checkpoint), so the height envelope uses the function's own canonical defaults.
+        cfg.rewards["crouch_phase_delta"] = RewardTermCfg(
+            func=microduck_mdp.crouch_phase_progress_delta,
+            weight=_crouch_delta_weight(),
+            params={"command_name": "twist"},
+        )
     # Bootstrap L1 : gradient constant vers la cible même quand la gaussienne
     # sature loin de la pose.
     cfg.rewards["crouch_glide_pose_l1"] = RewardTermCfg(

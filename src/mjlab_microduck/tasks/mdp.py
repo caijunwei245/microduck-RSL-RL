@@ -113,6 +113,51 @@ except Exception:
 
 print("[mdp] Patch 4 active: ONNX export filters passive_* joints")
 
+# ---------------------------------------------------------------------------
+# Patch 5: bound the adaptive learning rate.
+#
+# rsl_rl's adaptive schedule is clamped only to [1e-5, 1e-2] and multiplies by
+# 1.5 per mini-batch whenever KL stays under desired_kl/2, so the LR walks an
+# unbounded 1.5^k ladder (8.65e-4 observed on the 2026-09-16 run).  The ceiling
+# is the p90 of the blow-up-free 2026-09-15 run (3.84e-4) — a band that recipe
+# used for 3.4k iterations with zero explosions; 34/40 of the 2026-09-16
+# action blow-ups were preceded within 6 iterations by an LR >= 2.56e-4.
+#
+# CONTROL, keep it honest: LR is NOT the proven cause of those blow-ups — the
+# 2026-09-15 run reached 2.25e-3 and never exploded, so this ceiling is
+# insurance against the runaway, not a fix.  Implemented as a property rather
+# than a post-hoc clamp so *every* assignment the schedule makes is bounded,
+# including the ~20 updates that happen inside a single learn() call.
+# ---------------------------------------------------------------------------
+LEARNING_RATE_MIN = 1e-5
+LEARNING_RATE_MAX = 3.84e-4
+
+
+def clamp_learning_rate(
+    value: float, lo: float = LEARNING_RATE_MIN, hi: float = LEARNING_RATE_MAX
+) -> float:
+    """Clamp a learning rate into ``[lo, hi]`` (NaN falls back to ``lo``)."""
+    value = float(value)
+    if value != value:  # NaN never compares equal to itself.
+        return lo
+    return min(max(value, lo), hi)
+
+
+def _get_bounded_lr(self) -> float:
+    return self.__dict__.get("_bounded_learning_rate", LEARNING_RATE_MIN)
+
+
+def _set_bounded_lr(self, value: float) -> None:
+    self.__dict__["_bounded_learning_rate"] = clamp_learning_rate(value)
+
+
+_PPO.learning_rate = property(_get_bounded_lr, _set_bounded_lr)
+
+print(
+    f"[mdp] Patch 5 active: adaptive LR bounded to "
+    f"[{LEARNING_RATE_MIN:.1e}, {LEARNING_RATE_MAX:.2e}]"
+)
+
 # Patch 5: warm start. MjlabOnPolicyRunner.load restores env.common_step_counter
 # (and rsl_rl restores the iteration) from the checkpoint so a RESUMED run keeps
 # its curricula. A WARM START loads another task's weights into a new task —
@@ -135,21 +180,431 @@ try:
             self.env.unwrapped.common_step_counter = 0
             self.current_learning_iteration = 0
             print(
-                f"[mdp] Patch 5: WARM START from {path} — common_step_counter "
+                f"[mdp] Patch 6: WARM START from {path} — common_step_counter "
                 f"{restored} → 0, iteration → 0 (curricula restart; weights/normalizer/optimizer kept)"
             )
         return infos
 
     _MjlabRunner.load = _load_with_warm_start
-    print("[mdp] Patch 5 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load")
+    print("[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load")
 except Exception as _e:  # pragma: no cover
-    print(f"[mdp] Patch 5 NOT applied ({_e!r})")
+    print(f"[mdp] Patch 6 NOT applied ({_e!r})")
 
 if TYPE_CHECKING:
     from mjlab.viewer.debug_visualizer import DebugVisualizer
 
 
 _DEFAULT_ASSET_CFG = SceneEntityCfg("robot")
+
+
+# --------------------------------------------------------------------------- #
+# Velocity tracking — YAW ONLY                                                #
+# --------------------------------------------------------------------------- #
+def ema_yaw_rate(
+    env: "ManagerBasedRlEnv",
+    yaw_rate: torch.Tensor,
+    tau: float,
+    name: str = "track",
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """First-order (EMA) filter of the trunk yaw rate with time constant ``tau``.
+
+    Separates the two things hiding inside "the robot's yaw rate": a SUSTAINED
+    turn (DC — the only part deployment asks for; the runtime holds one twist
+    command for 140 s) and the per-step yaw oscillation every stepping gait
+    produces (AC — physically required, so pricing it taxes the gait for
+    something the policy cannot remove).
+
+    Buffer lives on the env and is snapped to the measurement for freshly reset
+    envs (``episode_length_buf <= 1``, the same convention as
+    ``upright_progress``) so a teleport does not leave a filter transient behind.
+    ``tau`` is in seconds; the per-step coefficient is ``exp(-step_dt / tau)``,
+    so the filter is dt-correct at any control rate.
+
+    ``name`` keys the buffer: the reward and a logging metric legitimately want
+    different time constants (and must not share state), so each caller gets its
+    own filter at ``env._yaw_rate_ema_<name>``.
+    """
+    assert tau > 0.0, "tau must be positive (callers use tau=0 to mean 'off')"
+    yaw_rate = torch.nan_to_num(yaw_rate, nan=0.0)
+    attr = f"_yaw_rate_ema_{name}"
+    if not hasattr(env, attr):
+        setattr(env, attr, yaw_rate.clone())
+    buf = getattr(env, attr)
+    fresh = env.episode_length_buf <= 1
+    buf[fresh] = yaw_rate[fresh]
+    alpha = math.exp(-env.step_dt / tau)
+    buf = alpha * buf + (1.0 - alpha) * yaw_rate
+    setattr(env, attr, buf)
+    return buf
+
+
+def track_yaw_velocity(
+    env: "ManagerBasedRlEnv",
+    std: float,
+    command_name: str,
+    tau: float = 0.0,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Track the commanded yaw rate, and nothing else.
+
+    mjlab's ``track_angular_velocity`` returns
+    ``exp(-((cmd_z - w_z)^2 + w_x^2 + w_y^2) / std^2)``: the trunk's roll/pitch
+    wobble — which a walking robot cannot avoid — is charged inside the SAME
+    Gaussian as the yaw error, so the term saturates on wobble and the commanded
+    yaw rate carries almost no gradient.
+
+    Measured on the 2026-09-16 run (mjlab composite term, std² = 0.5):
+      * ``body_ang_vel`` (w = -0.05) sat at -0.0147, i.e. mean(w_x² + w_y²)
+        = 0.29 rad²/s², and exp(-0.29/0.5) = 0.56 — exactly the 1.69/3.0 the
+        tracking term sat at for 20k iterations.  The yaw error contributed ~0.
+      * Fitting the logged ``error_vel_yaw`` at ang ±1.0 (0.833) and ±0.5
+        (0.794) gives error ≈ 0.76 + 0.078·range: ~90% of the measured yaw
+        error is command-INDEPENDENT wobble, which is why three 500-iteration
+        probes that only changed the command range (±0.5 / ±0.6 / ±0.75) moved
+        it by less than noise.
+
+    Body rates stay priced by ``body_ang_vel`` (w_xy only, separate weight), so
+    this term is free to price exactly what its name says.  ``std`` is the yaw
+    error still worth caring about — for the ±0.5 rad/s command range with a
+    ~0.76 rad/s measured wobble, 0.5 leaves the current policy visibly scored
+    (exp(-0.58) ≈ 0.56) while halving the wobble roughly doubles the reward.
+
+    ``tau`` > 0 measures the error against an EMA of the yaw rate instead of the
+    instantaneous one (see ``ema_yaw_rate``).  Why that matters (2026-09-18):
+    the rehearsal shows a policy whose SUSTAINED turn decays 0.317 → 0.144 rad/s
+    over 15k iterations of continued training while every training-side metric —
+    this reward included — stays flat to 3 decimals, because the instantaneous
+    error is dominated by command-independent oscillation.  Filtering first and
+    pricing second is the only version of this term that can see the deployment
+    metric.  Turn it on with a tighter ``std``: with the AC part removed, the
+    remaining error is escapable, which is what ``std`` should price.
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    assert command is not None, f"Command '{command_name}' not found."
+    measured = asset.data.root_link_ang_vel_b[:, 2]
+    if tau > 0.0:
+        measured = ema_yaw_rate(env, measured, tau)
+    yaw_error = torch.square(command[:, 2] - measured)
+    return torch.exp(-yaw_error / std**2)
+
+
+def angular_wobble_cost(
+    env: "ManagerBasedRlEnv",
+    std: float,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Bounded cost in [0, 1) on trunk roll/pitch rate — the OTHER half of the
+    term ``track_yaw_velocity`` was split out of.
+
+    mjlab's composite tracking term was ``exp(-(e_yaw² + ω_x² + ω_y²)/std²)``,
+    so it silently doubled as the recipe's only real roll/pitch-rate
+    regularizer (``body_ang_vel`` is weighted -0.05, i.e. ~0.015/step).
+    Measured consequence of removing it (2026-09-16, same baseline model_54000,
+    matched iterations): yaw error 0.85 → 0.74, but ``body_ang_vel``
+    -0.0142 → -0.0276, i.e. mean(ω_x²+ω_y²) 0.28 → 0.53 (+90% trunk thrash) at
+    unchanged action_rate and std.
+
+    Splitting it explicitly keeps the two pressures separable and tunable:
+        yaw tracking : ``track_yaw_velocity``   (weight +3.0, std 0.5)
+        trunk wobble : ``angular_wobble_cost``  (weight -3.0, std √0.5)
+    together they reproduce the old composite term exactly, except the yaw
+    error now has its own (sharper) std instead of sharing the wobble's.
+    Returns a POSITIVE cost → use a NEGATIVE weight (repo sign convention).
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    ang_vel = asset.data.root_link_ang_vel_b
+    wobble = torch.square(ang_vel[:, 0]) + torch.square(ang_vel[:, 1])
+    return 1.0 - torch.exp(-wobble / std**2)
+
+
+def max_action_delta(env: "ManagerBasedRlEnv") -> torch.Tensor:
+    """Largest ``|a_t - a_{t-1}|`` over joints, per environment (``(B,)``).
+
+    Blow-up detector for the 2026-09-16 spikes.  Those iterations ran
+    ``Episode_Reward/action_rate_l2`` down to -2e5 (RMS |Δa| ≈ 450 rad) in a
+    handful of environments while tripping neither ``nan_state`` nor
+    ``out_of_terrain_bounds``, and ``mean_action_acc`` hides them: averaging
+    over 4096 environments × 14 joints turns a diverged env into a +0.6 blip.
+    The max is what says "an environment diverged", and it costs one reduction
+    over an array the metric above already materialises.
+    """
+    delta = env.action_manager.action - env.action_manager.prev_action
+    return torch.amax(torch.abs(delta), dim=-1)
+
+
+# --------------------------------------------------------------------------- #
+# Blow-up forensics                                                           #
+# --------------------------------------------------------------------------- #
+_BLOWUP_DUMP_MAX = 1200  # per process; a pathological run must not fill the disk
+
+
+class blowup_probe:
+    """``max_action_delta`` + the ONSET SEQUENCE of the env that tripped it.
+
+    Why a class with history: `max_action_delta` says *that* an env diverged,
+    and the first snapshot-only version of this probe (2026-09-17, 09:20) showed
+    the offenders mid-episode with root angular velocity 8–25 rad/s (4–7× the
+    natural tumble rate for a 25 cm robot), joint velocities 9–15 rad/s and
+    actions of 12–25 rad — far outside the mechanical range, with head_yaw and
+    the hips/knee the most frequent joints.  It could not say what came FIRST:
+    a physics excursion the policy then flails against, or a huge action that
+    whips the 38%-of-body-mass head and spins the trunk.  Snapshots cannot
+    answer that; the ramp-up can.
+
+    So every step keeps a short ring buffer of per-env summaries, and when an
+    env trips the dump carries its own last ``history`` steps: max|Δa|,
+    max|a|, max|joint_vel|, |root ω| — enough to see which quantity moves first.
+
+    Writes JSON lines to ``$MICRODUCK_BLOWUP_DUMP`` (no-op when unset).  One
+    record per burst: an env that keeps tripping within ``dedup`` steps of its
+    last dump is not dumped again.
+    """
+
+    def __init__(self, cfg, env: "ManagerBasedRlEnv"):
+        self._env = env
+        params = getattr(cfg, "params", {}) or {}
+        self.threshold = float(params.get("threshold", 2.0))
+        self.history = int(params.get("history", 16))
+        self.dedup = int(params.get("dedup", 8))
+        self.dense = int(params.get("dense", 300))  # full-rate dumps before sampling
+        self.path = os.environ.get("MICRODUCK_BLOWUP_DUMP") or None
+        n = env.num_envs
+        self._n = n
+        # [max|da|, max|a|, max|joint_vel|, |root w|, max foot force, feet in contact]
+        self._hist = torch.zeros(self.history, n, 6)
+        self._hist_len = torch.zeros(self.history, n)
+        self._cursor = 0
+        self._last_dump_step = torch.full((n,), -10**9, dtype=torch.long)
+        self._dumps = 0
+
+    # -- helpers ---------------------------------------------------------- #
+    def _summaries(self, env) -> torch.Tensor:
+        action = env.action_manager.action
+        per_env_da = torch.amax(
+            torch.abs(action - env.action_manager.prev_action), dim=-1
+        )
+        data = env.scene["robot"].data
+        qvel = torch.amax(torch.abs(data.joint_vel), dim=-1)
+        root_w = torch.abs(data.root_link_ang_vel_b[:, 2])
+        per_env_a = torch.amax(torch.abs(action), dim=-1)
+        force, found = self._contact(env)
+        return torch.stack([per_env_da, per_env_a, qvel, root_w, force, found], dim=-1)
+
+    def _contact(self, env):
+        """Per-env max |foot contact force| and number of feet in contact.
+
+        This is the column that separates the two candidate causes of the
+        joint-velocity excursions: a contact/solver impulse (force spike leads
+        qvel) versus the actuator whipping the joint (qvel leads force).
+        """
+        n = self._n
+        try:
+            device = env.device
+        except Exception:
+            device = torch.device("cpu")
+        try:
+            sensor = env.scene.sensors["feet_ground_contact"]
+            data = sensor.data
+            force = torch.zeros(n, device=device)
+            found = torch.zeros(n, device=device)
+            if getattr(data, "force", None) is not None:
+                force = torch.amax(torch.abs(data.force).reshape(n, -1), dim=-1)
+            if getattr(data, "found", None) is not None:
+                found = (data.found > 0).sum(dim=-1).to(torch.float32)
+            return force, found
+        except Exception:
+            return torch.zeros(n, device=device), torch.zeros(n, device=device)
+
+    def _push(self, summary: torch.Tensor, step: int) -> None:
+        i = self._cursor % self.history
+        self._hist[i] = summary.detach().to("cpu")
+        self._hist_len[i] = step
+        self._cursor += 1
+
+    def _trajectory(self, env_idx: int) -> list:
+        rows = []
+        for k in range(self.history):
+            i = (self._cursor - self.history + k) % self.history
+            if float(self._hist_len[i, env_idx]) <= 0:
+                continue
+            h = self._hist[i, env_idx]
+            rows.append(
+                {
+                    "step": int(self._hist_len[i, env_idx]),
+                    "max_da": round(float(h[0]), 3),
+                    "max_a": round(float(h[1]), 3),
+                    "max_qvel": round(float(h[2]), 3),
+                    "root_w": round(float(h[3]), 3),
+                    "foot_force": round(float(h[4]), 2),
+                    "feet_down": int(h[5]),
+                }
+            )
+        return rows
+
+    # -- term API --------------------------------------------------------- #
+    def __call__(self, env, **kwargs) -> torch.Tensor:
+        summary = self._summaries(env)
+        step = int(getattr(env, "common_step_counter", self._cursor))
+        per_env_da = summary[:, 0]
+        if self.path and self._dumps < _BLOWUP_DUMP_MAX:
+            self._push(summary, step)
+            worst = int(torch.argmax(per_env_da))
+            if float(per_env_da[worst]) >= self.threshold and (
+                step - int(self._last_dump_step[worst]) > self.dedup
+            ):
+                # Full rate for the first `dense` records, then only severe ones:
+                # the event rate is ~11 per 100 steps, so an unfiltered cap is
+                # exhausted in ~80 iterations and the run's later behaviour is
+                # never sampled.
+                severe = (
+                    float(summary[worst, 0]) >= 4.0
+                    or float(summary[worst, 2]) >= 12.0
+                    or float(summary[worst, 3]) >= 12.0
+                )
+                if self._dumps < self.dense or severe:
+                    self._last_dump_step[worst] = step
+                    self._dumps += 1
+                    try:
+                        self._dump(env, worst, step, summary)
+                    except Exception as exc:  # forensics must never kill a run
+                        print(f"[mdp] blowup dump failed: {type(exc).__name__}: {exc}")
+        return per_env_da
+
+    def _dump(self, env, worst: int, step: int, summary: torch.Tensor) -> None:
+        import json
+
+        data = env.scene["robot"].data
+        qpos = data.data.qpos[worst]
+        q_adr = data.indexing.free_joint_q_adr
+        v_adr = data.indexing.free_joint_v_adr
+
+        def vec(t, idx=None):
+            t = t[worst] if t.dim() > 1 else t
+            if idx is not None:
+                t = t[idx]
+            return [round(float(x), 5) for x in t.detach().cpu().reshape(-1)]
+
+        delta = (env.action_manager.action[worst] - env.action_manager.prev_action[worst])
+        record = {
+            "step": step,
+            "env_idx": worst,
+            "max_da": round(float(summary[worst, 0]), 4),
+            "joint": int(torch.argmax(torch.abs(delta))),
+            "action": vec(env.action_manager.action[worst]),
+            "prev_action": vec(env.action_manager.prev_action[worst]),
+            "root_pos": vec(qpos, q_adr[:3]),
+            "root_quat": vec(qpos, q_adr[3:7]),
+            "root_lin_vel": vec(data.data.qvel[worst], v_adr[:3]),
+            "root_ang_vel": vec(data.data.qvel[worst], v_adr[3:6]),
+            "joint_pos": vec(data.joint_pos[worst]),
+            "joint_vel": vec(data.joint_vel[worst]),
+            "episode_len": int(env.episode_length_buf[worst]),
+            "foot_force": round(float(summary[worst, 4]), 3),
+            "feet_down": int(summary[worst, 5]),
+            "onset": self._trajectory(worst),
+        }
+        try:
+            record["twist_cmd"] = vec(env.command_manager.get_command("twist")[worst])
+            record["is_standing"] = bool(
+                env.command_manager.get_term("twist").is_standing_env[worst]
+            )
+        except Exception:
+            pass
+        obs = getattr(env, "obs_buf", None)
+        if isinstance(obs, dict):
+            for grp in ("actor", "critic"):
+                if grp in obs:
+                    record[f"{grp}_obs"] = vec(obs[grp][worst])
+        with open(self.path, "a") as fh:
+            fh.write(json.dumps(record) + "\n")
+
+
+def mean_abs_yaw_rate(env: "ManagerBasedRlEnv", asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG) -> torch.Tensor:
+    """|ω_z| actually achieved, per env. Read against `mean_abs_yaw_command`:
+    the ratio is the yaw tracking gain, the number that says whether widening
+    the command range produced a robot that really turns faster."""
+    asset: Entity = env.scene[asset_cfg.name]
+    return torch.abs(asset.data.root_link_ang_vel_b[:, 2])
+
+
+def mean_abs_yaw_command(env: "ManagerBasedRlEnv", command_name: str = "twist") -> torch.Tensor:
+    """|cmd_z| the policy was asked for, per env (the denominator of the gain)."""
+    command = env.command_manager.get_command(command_name)
+    assert command is not None, f"Command '{command_name}' not found."
+    return torch.abs(command[:, 2])
+
+
+def dc_turn_gain(
+    env: "ManagerBasedRlEnv",
+    tau: float = 0.5,
+    min_cmd: float = 0.25,
+    command_name: str = "twist",
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """TRAINING-SIDE readout of the deployment metric: DC turn gain, per env.
+
+    Returns ``EMA(ω_z) / cmd_z`` for envs whose |cmd_z| exceeds ``min_cmd``, 0 for
+    everyone else.  Unlike ``mean_abs_yaw_rate / mean_abs_yaw_command`` — which
+    are dominated by oscillation and by the 50% standing envs, and stayed flat to
+    3 decimals while the deployment turn fell by half (2026-09-18) — this is the
+    quantity the rehearsal actually measures: the SUSTAINED turn relative to the
+    command.  1.0 = tracks, 0.6 = the best checkpoint measured, 0.3 = the
+    degraded ones, 0 = ignores the command (the <0.25 rad/s dead zone).
+
+    Read it on the envs it applies to (the sustained-turn bucket pins them at the
+    top of the range); as an episode mean it is a gain over turning envs only.
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    assert command is not None, f"Command '{command_name}' not found."
+    cmd = command[:, 2]
+    gain = ema_yaw_rate(env, asset.data.root_link_ang_vel_b[:, 2], tau, name="metric")
+    turning = cmd.abs() > min_cmd
+    return torch.where(turning, gain / torch.where(turning, cmd, torch.ones_like(cmd)), 0.0)
+
+
+# --------------------------------------------------------------------------- #
+# Thrash termination                                                          #
+# --------------------------------------------------------------------------- #
+def max_servo_joint_vel(env: "ManagerBasedRlEnv", asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG) -> torch.Tensor:
+    """Largest |joint velocity| over the 14 servo joints, per env.
+
+    Goes through `_servo_joint_ids` rather than raw indices: on roller/backlash
+    models the passive joints interleave (AGENTS.md invariant).
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    qvel = asset.data.joint_vel[:, _servo_joint_ids(env, asset)]
+    return torch.amax(torch.abs(qvel), dim=-1)
+
+
+def thrash_termination(
+    env: "ManagerBasedRlEnv",
+    max_joint_vel: float,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Terminate when a servo joint exceeds a physically plausible speed.
+
+    Root cause (2400 dumps, 2026-09-17): the reward blow-ups are FALLS.  The
+    robot tips past ~30 deg, the policy thrashes its joints (|qvel| median 12.8,
+    max 18.9 rad/s; actions to 22.7 rad against a ±1.6 rad mechanical range) and
+    `bad_orientation(70 deg)` only recycles it many steps later.  The episode
+    action-rate sum accumulated over that thrash is what surfaces as a −1e6
+    reward spike, which then pollutes the PPO batch.
+
+    The 2400 events also ruled out the alternatives: 0.2% happen at resets,
+    foot contact force at the trip is 4.6 N (below body weight — no contact or
+    solver blow-up), and joint speed crosses its bar BEFORE the action in 93% of
+    onset windows (the policy is reacting, not causing).  So the surgical fix is
+    to end the episode on the thrash itself, leaving the 70-deg fall tolerance
+    and the tumble physics untouched.
+
+    Threshold 15 rad/s sits above normal walking (a few rad/s; the offenders'
+    calm rows read 4.5–5) and cuts the top half of the excursion tail.
+    """
+    return max_servo_joint_vel(env, asset_cfg) > max_joint_vel
+
 
 # Name patterns matching the 4 neck/head actuated joints. Used by head_pose
 # tracking reward and by UniformPoseCommand asset hookups.
@@ -1281,6 +1736,14 @@ def com_height_target(
     Reward for keeping the center of mass within a target height range.
     Returns positive reward when in range, negative penalty when outside.
 
+    NOTE (2026-09-22): despite the name, the quantity is the ROOT LINK height
+    (``asset.data.root_link_pos_w[:, 2]``), i.e. the trunk for microduck, not
+    ``root_com_pos_w``. The distinction matters because the bands are read as
+    target HEIGHTS: the roller recipe's band (0.0935-0.1235) tops out 14.5 mm
+    BELOW the measured 138 mm roller stand, so a policy holding the real stand
+    is charged ``(0.138-0.1235)^2`` - the band actively discourages the posture
+    it was written to encourage, and inside the band the cheapest end wins.
+
     Args:
         env: The environment
         asset_cfg: Asset configuration
@@ -1410,6 +1873,46 @@ def forward_speed_reward(
     asset: Entity = env.scene[asset_cfg.name]
     vx = asset.data.root_link_lin_vel_b[:, 0]
     return torch.tanh(torch.clamp(vx, min=0.0) / vel_ref)
+
+
+def crouch_phase_progress_delta(
+    env: ManagerBasedRlEnv,
+    command_name: str = "twist",
+    height_low: float = 0.075,
+    height_high: float = 0.11,
+    hold_lo: float = 0.375,
+    hold_hi: float = 0.625,
+    std: float = 0.02,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """Potential-based delta of the crouch task's phase tracking (return-leg pricing, A4).
+
+    The crouch reward is a per-step Gaussian on a phase-interpolated height target, i.e. an ANNUITY:
+    standing still at the current phase collects it forever, and a round that fails to complete the
+    return still banks most of the cycle's reward. Paying ``max(0, progress - best_so_far)`` instead
+    is unfarmable by parking (AGENTS.md: "pay d(progress): rising pays, holding pays zero"), which is
+    what the standup family's last-mile fix used. Measured motivation: roller_crouch passes 9/15
+    rounds over 3 seeds, and the failing round completes the cycle but ends tilted at ~79 mm
+    (g -0.40), i.e. the return leg is where it loses.
+
+    State lives on the env and is reseeded for freshly reset envs (``episode_length_buf <= 1``), the
+    same convention as ``standup_progress_delta``.
+    """
+    progress = crouch_glide_height_by_phase(
+        env, command_name, height_low, height_high, hold_lo, hold_hi, std, asset_cfg
+    ).detach()
+    best = getattr(env, "_crouch_delta_best", None)
+    if best is None or best.shape != progress.shape:
+        env._crouch_delta_best = progress.clone()
+        return torch.zeros_like(progress)
+    step = getattr(env, "episode_length_buf", None)
+    if step is not None:
+        fresh = step <= 1
+        best = best.clone()
+        best[fresh] = progress[fresh]
+    gain = torch.clamp(progress - best, min=0.0)
+    env._crouch_delta_best = torch.maximum(best, progress)
+    return gain
 
 
 def crouch_pose_blend(
@@ -1851,6 +2354,56 @@ def wheel_speed_reward(
     return torch.clamp(cmd_x, min=0.0) * torch.tanh(torch.clamp(forward_omega, min=0.0) / omega_scale)
 
 
+def wheel_rolling_reward(
+    env: ManagerBasedRlEnv,
+    command_name: str,
+    wheel_radius: float = 0.0175,
+    cap_speed: float = 0.35,
+    slip_std: float = 0.06,
+    vel_deadband: float = 0.02,
+) -> torch.Tensor:
+    """Reward ROLLING — translation coupled to wheel spin — not wheel spin.
+
+    ``wheel_speed_reward`` pays for any forward wheel rotation whatever the body
+    does, so its argmax is "spin the wheels with the body parked" (free-spinning
+    burnout, or wheels not carrying load). That is exactly what the 2,000-iteration
+    wheeled checkpoints do: ``Episode_Reward/wheel_speed`` reads 1.28-2.55 of a
+    weight-10 term while the measured body speed is 0.000 m/s.
+
+    This term pays ``cmd_x * min(v_fwd, cap)/cap * exp(-(slip/slip_std)^2)`` with
+    ``slip = omega * r - v_fwd``, gated on ``cmd_x > 0`` and on ``v_fwd`` clearing
+    a small deadband. Parking pays 0 (velocity factor), burnout pays 0 (slip
+    factor), free-spinning wheels pay 0 (both) — only genuine rolling pays, so the
+    quantity being maximised is a DISTANCE, not a rotation. It also discriminates
+    the two candidate mechanisms behind the measured burnout: wheels off the
+    ground and wheels slipping on it both collapse to 0 here, and the policy can
+    only recover the mass by putting the wheels down and making them bite.
+    """
+    cmd_x = env.command_manager.get_command(command_name)[:, 0]
+
+    asset: Entity = env.scene["robot"]
+    lf_ids, _ = asset.find_joints("passive_LF_?wheel")
+    lr_ids, _ = asset.find_joints("passive_LR_?wheel")
+    rf_ids, _ = asset.find_joints("passive_RF_?wheel")
+    rr_ids, _ = asset.find_joints("passive_RR_?wheel")
+
+    vel = asset.data.joint_vel
+    forward_omega = (
+        vel[:, lf_ids[0]] + vel[:, lr_ids[0]] + vel[:, rf_ids[0]] + vel[:, rr_ids[0]]
+    ) / 4.0
+    wheel_speed = torch.nan_to_num(
+        forward_omega * wheel_radius, nan=0.0, posinf=0.0, neginf=0.0
+    )
+    v_fwd = torch.nan_to_num(
+        asset.data.root_link_lin_vel_b[:, 0], nan=0.0, posinf=0.0, neginf=0.0
+    )
+    slip = wheel_speed - v_fwd
+    rolling = torch.exp(-torch.square(slip) / (slip_std * slip_std))
+    progress = torch.clamp(v_fwd, min=0.0, max=cap_speed) / max(cap_speed, 1e-6)
+    moving = (v_fwd > vel_deadband).float()
+    return torch.clamp(cmd_x, min=0.0) * progress * rolling * moving
+
+
 def coasting_reward(
     env: ManagerBasedRlEnv,
     command_name: str,
@@ -2196,6 +2749,102 @@ def phase_height_track(
         asset.data.root_link_pos_w[:, 2] - env.scene.terrain.env_origins[:, 2], nan=0.0
     )
     return torch.exp(-((z - target_z) / std) ** 2)
+
+
+def recovery_stall_termination(
+    env: ManagerBasedRlEnv,
+    threshold_z: float = 0.09,
+    stall_steps: int = 100,
+    progress_eps: float = 0.0,   # was 0.01: micro-wiggles reset the counter, so the rule
+                                  # never fired in a deterministic evaluation (2026-09-22)
+    tilt_clause_g: Optional[float] = None,   # e.g. -0.9: also stall while NOT upright
+    asset_name: str = "robot",
+) -> torch.Tensor:
+    """Terminate an episode that is still LOW and has made no progress for ``stall_steps``.
+
+    The audit (2026-09-21) showed the ground-bucket envs keep 45-57 % of the standing payoff while
+    never standing, and that two reward-side fixes (std tightening, a delta term) left every bucket
+    bit-identical over 6,000 iterations: the slump stays optimal, so no gradient pulls the policy
+    out. This termination attacks the economy structurally instead: parking in a slump ends the
+    episode instead of collecting reward for the remaining seconds (AGENTS.md: "make the bad state
+    unviable rather than merely less rewarding"). Standing envs are untouched - progress stops
+    rising once upright, but ``threshold_z`` keeps the rule to envs that are still down.
+
+    ``tilt_clause_g`` (2026-09-22) closes the rule's blind spot. Measured: from a forced floor spawn
+    this policy rises to 113 mm / 34 deg of tilt and PARKS there - above the 0.09 m height threshold,
+    so the rule never fired (1 firing in 256 envs) and the 3,000-iteration retrain with the fixed
+    ``progress_eps`` changed the floor-flip rate by exactly nothing (0/184 before and after). With
+    the clause set (e.g. -0.9, i.e. tilt > ~26 deg) the parked half-stand counts as stalled too, so
+    the economy finally applies to the state the policy actually gets stuck in. ``None`` = off, which
+    is the original behaviour.
+    """
+    asset = env.scene[asset_name]
+    z = asset.data.root_link_pos_w[:, 2]
+    g = asset.data.projected_gravity_b[:, 2]
+    zf = torch.clamp((z - 0.06) / (0.115 - 0.06), 0.0, 1.0)
+    gf = torch.clamp(((-g) - 0.30) / (0.95 - 0.30), 0.0, 1.0)
+    progress = zf * gf
+
+    best = getattr(env, "_recovery_best_progress", None)
+    stall = getattr(env, "_recovery_stall_steps", None)
+    if best is None or best.shape != progress.shape:
+        env._recovery_best_progress = progress.clone()
+        env._recovery_stall_steps = torch.zeros_like(progress, dtype=torch.long)
+        return torch.zeros_like(progress, dtype=torch.bool)
+    step = getattr(env, "episode_length_buf", None)
+    if step is not None:
+        fresh = step <= 1
+        best = best.clone(); stall = stall.clone()
+        best[fresh] = progress[fresh]
+        stall[fresh] = 0
+    improved = progress > best + progress_eps
+    best = torch.where(improved, progress, best)
+    stall = torch.where(improved, torch.zeros_like(stall), stall + 1)
+    env._recovery_best_progress = best
+    env._recovery_stall_steps = stall
+    parked = z < threshold_z
+    if tilt_clause_g is not None:
+        parked = parked | (g > tilt_clause_g)
+    return parked & (stall >= stall_steps)
+
+
+def standup_progress_delta(
+    env: ManagerBasedRlEnv,
+    asset_name: str = "robot",
+    z_lo: float = 0.06,
+    z_hi: float = 0.115,
+    g_lo: float = 0.30,
+    g_hi: float = 0.95,
+) -> torch.Tensor:
+    """Incremental (potential-based) standing progress: rising pays, holding pays ZERO.
+
+    Audit 2026-09-21 (per-spawn-bucket, logs/family_eval.py): the smooth standing terms paid
+    54-65 % of the standing payoff to envs that never stood, so "get up" was worth only a 35-46 %
+    marginal gain and 35,000 further iterations left the ground buckets at 0.140 / 0.062 / 0.214.
+    Tightening one std changed nothing (0.140 / 0.062 / 0.232 after 2,000 iters), because a parked
+    policy still farms the other smooth terms. A DELTA of a monotone progress signal cannot be
+    farmed by parking in a slump (AGENTS.md: "pay d(progress): rising pays, holding pays zero,
+    unfarmable"). progress = height_fraction * upright_fraction, both clamped to [0, 1].
+    """
+    asset = env.scene[asset_name]
+    z = asset.data.root_link_pos_w[:, 2]
+    g = asset.data.projected_gravity_b[:, 2]
+    zf = torch.clamp((z - z_lo) / (z_hi - z_lo), 0.0, 1.0)
+    gf = torch.clamp(((-g) - g_lo) / (g_hi - g_lo), 0.0, 1.0)
+    progress = zf * gf
+
+    prev = getattr(env, "_standup_prev_progress", None)
+    if prev is None or prev.shape != progress.shape:
+        env._standup_prev_progress = progress.clone()
+        return torch.zeros_like(progress)          # first call: no delta, just seed the state
+    step = getattr(env, "episode_length_buf", None)
+    if step is not None:
+        fresh = step <= 1                            # env was reset: reseed, pay nothing
+        prev = prev.clone()
+        prev[fresh] = progress[fresh]
+    delta = torch.clamp(progress - prev, min=0.0)
+    env._standup_prev_progress = progress.clone()
+    return delta
 
 
 def pose_target_match(
@@ -3603,6 +4252,48 @@ def reward_weight(
     return torch.tensor([term_cfg.weight])
 
 
+def height_band_curriculum(
+    env: ManagerBasedRlEnv,
+    env_ids: torch.Tensor,
+    reward_name: str,
+    band_stages: list[dict],
+) -> torch.Tensor:
+    """LERP a reward term's trunk-height band between stages.
+
+    Written for the two-stage roller recipe (logs/optimization_plan.md B): the wheeled family has two
+    mutually exclusive gaits - crouched+rolling travels at 117 % of the commanded push but sits at
+    116 mm, while the named roller stand (138.9 mm) needs the skating cycle and only reaches 70 % -
+    and swapping the recipe at step 0 destroys both (15 %). Raising the band GRADUALLY, with the
+    skating terms faded in behind it, lets the policy interpolate instead of choosing.
+
+    Unlike the repo's other curricula this INTERPOLATES between stages rather than stepping at them,
+    because a stepped height target is a moving discontinuity in the reward's argmax.
+
+    NOTE: mutates the live RewardManager term cfg - RewardManager deepcopies its cfg at init, so
+    writing to env.cfg.rewards is a silent no-op (the same trap as the event manager).
+    """
+    del env_ids
+    term_cfg = env.reward_manager.get_term_cfg(reward_name)
+    step = env.common_step_counter
+    lo, hi = band_stages[0]["band"]
+    for i, stage in enumerate(band_stages):
+        if step <= stage["step"]:
+            break
+        lo, hi = stage["band"]
+        prev_step, prev_band = stage["step"], stage["band"]
+        if i + 1 < len(band_stages):
+            nxt = band_stages[i + 1]
+            span = max(1, nxt["step"] - prev_step)
+            frac = min(1.0, max(0.0, (step - prev_step) / span))
+            lo = prev_band[0] + frac * (nxt["band"][0] - prev_band[0])
+            hi = prev_band[1] + frac * (nxt["band"][1] - prev_band[1])
+    term_cfg.params["target_height_min"] = float(lo)
+    term_cfg.params["target_height_max"] = float(hi)
+    # CurriculumManager does `term_state.item()`, so the return MUST be a scalar: log the band centre
+    # (a 2-element tensor raises "a Tensor with 2 elements cannot be converted to Scalar").
+    return torch.tensor(float((lo + hi) * 0.5))
+
+
 def com_range_curriculum(
     env: ManagerBasedRlEnv,
     env_ids: torch.Tensor,
@@ -4716,24 +5407,79 @@ class VelocityCommandCommandOnly(UniformVelocityCommand):
         # spinning on the spot was effectively untrained → slow/unstable real-robot
         # turning. Mirrors the base rel_forward_envs mechanism.
         p = getattr(self.cfg, "rel_turn_in_place_envs", 0.0)
-        if p <= 0.0:
-            return
-        r = torch.empty(len(env_ids), device=self.device)
-        turn_ids = env_ids[r.uniform_(0.0, 1.0) < p]
-        if len(turn_ids) == 0:
-            return
-        self.vel_command_b[turn_ids, 0] = 0.0
-        self.vel_command_b[turn_ids, 1] = 0.0
+        # NOTE: the yaw range is read BEFORE either bucket's early exit — the
+        # sustained bucket below needs maxr even when the turn-in-place bucket
+        # draws no envs this resample (a silent no-op otherwise).
         lo, hi = self.cfg.ranges.ang_vel_z
         maxr = max(abs(lo), abs(hi))
-        rr = torch.empty(len(turn_ids), device=self.device)
-        sign = torch.where(rr.uniform_(0.0, 1.0) < 0.5, -1.0, 1.0)
-        mag = torch.empty(len(turn_ids), device=self.device).uniform_(0.4 * maxr, maxr)
-        self.vel_command_b[turn_ids, 2] = sign * mag
-        # These envs must actually turn — un-mark them as standing (which would
-        # zero the command) and refresh the world-frame reference copy.
-        self.is_standing_env[turn_ids] = False
-        self.vel_command_w[turn_ids] = self.vel_command_b[turn_ids]
+        if p > 0.0:
+            r = torch.empty(len(env_ids), device=self.device)
+            turn_ids = env_ids[r.uniform_(0.0, 1.0) < p]
+            if len(turn_ids) > 0:
+                self.vel_command_b[turn_ids, 0] = 0.0
+                self.vel_command_b[turn_ids, 1] = 0.0
+                rr = torch.empty(len(turn_ids), device=self.device)
+                sign = torch.where(rr.uniform_(0.0, 1.0) < 0.5, -1.0, 1.0)
+                mag = torch.empty(len(turn_ids), device=self.device).uniform_(
+                    0.4 * maxr, maxr
+                )
+                self.vel_command_b[turn_ids, 2] = sign * mag
+                # These envs must actually turn — un-mark them as standing (which
+                # would zero the command) and refresh the world-frame reference.
+                self.is_standing_env[turn_ids] = False
+                self.vel_command_w[turn_ids] = self.vel_command_b[turn_ids]
+
+        # Sustained-turn bucket (2026-09-18): hold the deployment operating point
+        # — in place, |yaw| at the TOP of the range — for longer than an episode
+        # (20 s), instead of the 3-8 s the resample timer hands out.  Two
+        # separate jobs:
+        #   * |cmd| = maxr exactly.  Uniform sampling makes the deployment
+        #     command (0.5) a measure-zero point of the command distribution.
+        #   * one command for the whole episode, so the states that only appear
+        #     after N seconds of continuous turning are on-policy at all.
+        self._sustained_walk_bucket(env_ids)
+        p_s = getattr(self.cfg, "rel_sustained_turn_envs", 0.0)
+        if p_s <= 0.0:
+            return
+        r_s = torch.empty(len(env_ids), device=self.device)
+        sust_ids = env_ids[r_s.uniform_(0.0, 1.0) < p_s]
+        if len(sust_ids) == 0:
+            return
+        rr_s = torch.empty(len(sust_ids), device=self.device)
+        sign_s = torch.where(rr_s.uniform_(0.0, 1.0) < 0.5, -1.0, 1.0)
+        self.vel_command_b[sust_ids, 0] = 0.0
+        self.vel_command_b[sust_ids, 1] = 0.0
+        self.vel_command_b[sust_ids, 2] = sign_s * maxr
+        self.is_standing_env[sust_ids] = False
+        self.vel_command_w[sust_ids] = self.vel_command_b[sust_ids]
+        # Overwrite the timer the resample just drew: no mid-episode change.
+        self.time_left[sust_ids] = getattr(self.cfg, "sustained_turn_hold_s", 25.0)
+
+    def _sustained_walk_bucket(self, env_ids: torch.Tensor) -> None:
+        """Hold a FORWARD command from step 0 for a fraction of envs (A3, 2026-09-23).
+
+        Measured: velocity walk passes only 12/25 demonstration rounds, and the failing rounds read
+        `v = 0.05-0.12 m/s` with `g = -1.00` - upright and simply not walking. The training
+        distribution explains it: `rel_standing_envs` is curriculum-ramped to **0.50**, so half of all
+        experience is "command = 0, stand", while the deployment/eval scenario is a non-zero forward
+        command held from t=0. Making that operating point a populated region (the same trick
+        `rel_sustained_turn_envs` uses for the turn) is the direct fix; this bucket is deliberately
+        NOT marked standing, so its command survives the standing mask.
+        """
+        p_w = getattr(self.cfg, "rel_sustained_walk_envs", 0.0)
+        if p_w <= 0.0:
+            return
+        r_w = torch.empty(len(env_ids), device=self.device)
+        walk_ids = env_ids[r_w.uniform_(0.0, 1.0) < p_w]
+        if len(walk_ids) == 0:
+            return
+        speed = float(getattr(self.cfg, "sustained_walk_speed", 0.3))
+        self.vel_command_b[walk_ids, 0] = speed
+        self.vel_command_b[walk_ids, 1] = 0.0
+        self.vel_command_b[walk_ids, 2] = 0.0
+        self.is_standing_env[walk_ids] = False
+        self.vel_command_w[walk_ids] = self.vel_command_b[walk_ids]
+        self.time_left[walk_ids] = getattr(self.cfg, "sustained_walk_hold_s", 25.0)
 
     def _debug_vis_impl(self, visualizer: "DebugVisualizer") -> None:
         batch = visualizer.env_idx
@@ -4771,6 +5517,14 @@ class VelocityCommandCommandOnlyCfg(UniformVelocityCommandCfg):
     # Fraction of envs commanded to turn in place (lin=0, |ang| forced to
     # [0.4·max, max]) each resample. 0 = disabled (base uniform sampling only).
     rel_turn_in_place_envs: float = 0.0
+    # Fraction of envs put on the DEPLOYMENT operating point: lin=0, |ang| = max
+    # exactly, held for `sustained_turn_hold_s` (longer than an episode), so the
+    # command stays put instead of being resampled every 3-8 s. 0 = disabled.
+    rel_sustained_turn_envs: float = 0.0
+    rel_sustained_walk_envs: float = 0.0      # forward-command bucket (A3)
+    sustained_walk_speed: float = 0.3
+    sustained_walk_hold_s: float = 25.0
+    sustained_turn_hold_s: float = 25.0
 
     def build(self, env: ManagerBasedRlEnv) -> "VelocityCommandCommandOnly":
         return VelocityCommandCommandOnly(self, env)
@@ -5914,7 +6668,7 @@ def reset_ball_in_front_of_foot(
     env: ManagerBasedRlEnv,
     env_ids: torch.Tensor,
     offset: tuple = (0.09, -0.042),
-    noise_xy: float = 0.015,
+    noise_xy: float | tuple[float, float] = 0.015,
     ball_radius: float = 0.035,
     asset_name: str = "ball",
 ):
@@ -5944,7 +6698,18 @@ def reset_ball_in_front_of_foot(
 
     n = len(env_ids)
     off = torch.tensor(offset, device=env.device, dtype=torch.float).repeat(n, 1)
-    off += (torch.rand(n, 2, device=env.device) * 2.0 - 1.0) * noise_xy
+    if isinstance(noise_xy, (tuple, list)):
+        # Per-axis: x sets how deep the strike must reach, y is aiming error.
+        nx, ny = float(noise_xy[0]), float(noise_xy[1])
+    else:
+        nx = ny = float(noise_xy)
+    off += torch.stack(
+        (
+            (torch.rand(n, device=env.device) * 2.0 - 1.0) * nx,
+            (torch.rand(n, device=env.device) * 2.0 - 1.0) * ny,
+        ),
+        dim=1,
+    )
 
     pose = torch.zeros(n, 7, device=env.device)
     pose[:, 0] = root[:, 0] + cos_y * off[:, 0] - sin_y * off[:, 1]
@@ -5959,6 +6724,71 @@ def reset_ball_in_front_of_foot(
     kick_dir = _ball_kick_dir(env)
     kick_dir[env_ids, 0] = cos_y
     kick_dir[env_ids, 1] = sin_y
+
+
+def reset_joints_to_settled_stand(
+    env: ManagerBasedRlEnv,
+    env_ids: torch.Tensor | None,
+    offset: tuple[float, ...],
+    prob: float = 0.5,
+    scale_range: tuple[float, float] = (0.6, 1.2),
+    position_range: tuple[float, float] = (-0.05, 0.05),
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> None:
+    """Reset a fraction of envs at the DEPLOYMENT stand instead of HOME+noise.
+
+    Why (2026-09-19): the kick is triggered on the robot by handing control to the
+    kick ONNX mid-episode, so the policy always starts from whatever pose the
+    walking/stand policy had settled into — measured at that hand-off
+    (``logs/kick_obs_walk.csv``, see DEPLOY_STAND_OFFSET in the kick cfg) as up to
+    0.13 rad off HOME, i.e. 2.6x the ±0.05 reset noise this task trained with. A
+    within-run A/B in the training env (``logs/kick_reset_probe.py <onnx> 0.05
+    stand``) showed one checkpoint kicking to 0.244 m/s from a HOME reset and
+    0.0005 m/s from the deployment stand: the deployed initial state was not a
+    point of the reset distribution, so the policy stood instead of swinging.
+
+    ``offset`` is that measured stand as a deviation from ``default_joint_pos``,
+    in ``asset_cfg``'s joint order. Each selected env draws
+    ``scale ~ U(scale_range)`` so the distribution spans HOME (the low end) through
+    just past the deployment stand, which keeps the kick learned for both — the
+    same "the deployment point must be in the distribution" rule the sustained-turn
+    command bucket follows. ``prob`` keeps a share of envs at plain HOME+noise so
+    the original basin never leaves the data.
+    """
+    if env_ids is None:
+        env_ids = torch.arange(env.num_envs, device=env.device, dtype=torch.int)
+
+    asset: Entity = env.scene[asset_cfg.name]
+    default_joint_pos = asset.data.default_joint_pos
+    assert default_joint_pos is not None
+    default_joint_vel = asset.data.default_joint_vel
+    assert default_joint_vel is not None
+    soft_joint_pos_limits = asset.data.soft_joint_pos_limits
+    assert soft_joint_pos_limits is not None
+
+    n = len(env_ids)
+    joint_pos = default_joint_pos[env_ids][:, asset_cfg.joint_ids].clone()
+    joint_pos += (torch.rand(joint_pos.shape, device=env.device) * 2.0 - 1.0) * (
+        position_range[1] - position_range[0]
+    ) / 2.0
+
+    off = torch.as_tensor(offset, device=env.device, dtype=joint_pos.dtype)
+    assert off.numel() == joint_pos.shape[1], (
+        f"offset has {off.numel()} entries, the asset cfg selects {joint_pos.shape[1]} joints"
+    )
+    selected = torch.rand(n, device=env.device) < prob
+    scale = torch.zeros(n, device=env.device, dtype=joint_pos.dtype)
+    scale[selected] = scale_range[0] + torch.rand(
+        int(selected.sum()), device=env.device, dtype=joint_pos.dtype
+    ) * (scale_range[1] - scale_range[0])
+    joint_pos += scale.unsqueeze(1) * off.unsqueeze(0)
+
+    limits = soft_joint_pos_limits[env_ids][:, asset_cfg.joint_ids]
+    joint_pos = joint_pos.clamp_(limits[..., 0], limits[..., 1])
+
+    joint_vel = default_joint_vel[env_ids][:, asset_cfg.joint_ids].clone()
+    asset.write_joint_position_to_sim(joint_pos, asset_cfg.joint_ids, env_ids)
+    asset.write_joint_velocity_to_sim(joint_vel, asset_cfg.joint_ids, env_ids)
 
 
 def ball_forward_velocity(
@@ -6154,6 +6984,7 @@ def spin_rate_track(
     accel_end: float = SPIN_ACCEL_END,
     hold_end: float = SPIN_HOLD_END,
     brake_end: float = SPIN_BRAKE_END,
+    yaw_ema_tau: float = 0.0,     # > 0: price the EMA-filtered (escapable, DC) yaw rate
     asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> torch.Tensor:
     """Objectif principal du spin : suivre la vitesse de lacet cible ω*(φ).
@@ -6164,6 +6995,12 @@ def spin_rate_track(
     """
     asset: Entity = env.scene[asset_cfg.name]
     omega_z = asset.data.root_link_ang_vel_b[:, 2]
+    if yaw_ema_tau > 0.0:
+        # Only the SUSTAINED part of the yaw rate is escapable: every stepping gait produces
+        # per-step yaw oscillation that no policy can remove, and pricing it taxes the gait. The
+        # turn family measured this A/B (0.26-0.30 rad/s with the instantaneous term, 0.68-0.75
+        # without), so the spin arm prices the filtered value instead.
+        omega_z = ema_yaw_rate(env, omega_z, yaw_ema_tau, name="spin_track")
     target = _spin_target_rate(env, command_name, rate_max, accel_end, hold_end, brake_end)
     return spin_rate_reward_from_values(omega_z, target, std)
 
@@ -6486,6 +7323,38 @@ class SitStandCommand(UniformVelocityCommand):
         sit = (torch.rand(n, device=self.device) < self._sit_prob).float()
         self.vel_command_b[env_ids] = 0.0
         self.vel_command_b[env_ids, 0] = sit
+        self._hold_posture_bucket(env_ids)
+
+    def _hold_posture_bucket(self, env_ids: torch.Tensor) -> None:
+        """Hold ONE posture command for the whole episode (A4/sitstand, 2026-09-23).
+
+        Measured (`logs/sitstand_cmd_audit.txt`): 4 of 5 failing demo rounds were rounds whose flag
+        was CONSTANT and which the robot ignored - commanded STAND while sitting at 55 mm, or
+        commanded SIT while standing at 115 mm. The docstring's claim that the four
+        (start-state x command) combinations are trained holds only in principle: with a 3.5-6.5 s
+        dwell inside a 20 s episode the flag stays constant for the whole episode with probability
+        ~0.5^3-4, and being opposite to the spawn state as well is another factor of ~0.5, i.e. a few
+        percent of episodes. This bucket makes that region common, exactly as
+        ``rel_sustained_turn_envs`` does for the turn and ``rel_sustained_walk_envs`` for walking.
+
+        Half of the pinned envs are commanded the posture OPPOSITE to the one they spawned in, so
+        "hold what you were told, from a hostile start" is trained deliberately rather than by luck.
+        """
+        p_h = float(getattr(self.cfg, "rel_hold_envs", 0.0))
+        if p_h <= 0.0:
+            return
+        r_h = torch.empty(len(env_ids), device=self.device)
+        hold_ids = env_ids[r_h.uniform_(0.0, 1.0) < p_h]
+        if len(hold_ids) == 0:
+            return
+        # spawn state: the blend initialised from the actual trunk height (0 = standing, 1 = sitting)
+        spawned_sitting = self._alpha_from_height()[hold_ids] > 0.5
+        want_opposite = torch.rand(len(hold_ids), device=self.device) < 0.5
+        sit_flag = torch.where(want_opposite, ~spawned_sitting, spawned_sitting).float()
+        self.vel_command_b[hold_ids] = 0.0
+        self.vel_command_b[hold_ids, 0] = sit_flag
+        # Overwrite the dwell the resample just drew: no mid-episode change.
+        self.time_left[hold_ids] = float(getattr(self.cfg, "hold_s", 25.0))
 
     def _alpha_from_height(self) -> torch.Tensor:
         z = torch.nan_to_num(
@@ -6522,6 +7391,10 @@ class SitStandCommand(UniformVelocityCommand):
 @_dataclass(kw_only=True)
 class SitStandCommandCfg(UniformVelocityCommandCfg):
     class_type: type = SitStandCommand
+    # Fraction of envs pinned on ONE posture command for the whole episode (A4/sitstand); half of
+    # them are commanded the posture opposite to their spawn. 0.0 = the recipe that has been running.
+    rel_hold_envs: float = 0.0
+    hold_s: float = 25.0
     # Probability that a resample commands SIT (vs STAND).
     sit_prob: float = 0.5
     # Seconds for the internal target blend to traverse STAND↔SIT in full.

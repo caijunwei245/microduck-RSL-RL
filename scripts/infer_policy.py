@@ -112,9 +112,12 @@ BODY_CMD_MAX_ANGLE = math.radians(30)  # ±30°
 
 # Ball placement for kick behaviors (must match microduck_ball_kick_env_cfg's
 # reset_ball_in_front_of_foot params: ball center in the robot's yaw frame).
-BALL_OFFSET_X = 0.09
+BALL_OFFSET_X = 0.082
 BALL_OFFSET_ABS_Y = 0.042
 BALL_RADIUS = 0.035
+# Diagnostic placement shifts (CLI --kick-ball-dx/--kick-ball-dy), zero by default.
+KICK_BALL_DX = 0.0
+KICK_BALL_DY = 0.0
 
 # Default pose used by the policy (legs flexed, standing position)
 # This is the reference pose that:
@@ -211,7 +214,7 @@ class TerminalInput:
 
 class PolicyInference:
     def __init__(self, model, data, walking_onnx_path=None, action_scale=1.0, bam_ctrl=None,
-                 delay_min_lag=0, delay_max_lag=0,
+                 delay_min_lag=0, delay_max_lag=0, obs_delay=True,
                  standing_onnx_path=None, switch_threshold=0.05,
                  use_projected_gravity=False, ground_pick_onnx_path=None, ground_pick_period=4.0,
                  sit_onnx_path=None, new_cmd_obs=False, slope_onnx_path=None,
@@ -226,6 +229,20 @@ class PolicyInference:
         self.use_projected_gravity = use_projected_gravity
         self.delay_min_lag = delay_min_lag
         self.delay_max_lag = delay_max_lag
+        # Observation delays that TRAINING models and the rehearsal used to skip
+        # (values from the run's own params/env.yaml):
+        #   base_ang_vel / projected_gravity: lag 0-1, HELD for 64 control steps (IMU)
+        #   joint_vel:                        lag exactly 1 (Dynamixel moving average)
+        # Leaving them out puts the rehearsal's feedback loop ~1-1.5 control steps
+        # AHEAD of training's, which is what made the one-shot kick flail at some
+        # actuator lags and look clean at others (logs/kick_r1_report.md §37).
+        self.obs_delay = obs_delay
+        self.IMU_LAG_MAX = 1
+        self.IMU_UPDATE_PERIOD = 64
+        self._imu_hist = []          # [(ang_vel, gravity)] newest last, len <= 2
+        self._imu_lag = 0
+        self._imu_steps = 0
+        self._jvel_prev = None
         self.switch_threshold = switch_threshold
         # When True: emit the unified 13D command vector and treat head_offset /
         # body_cmd as policy COMMANDS (no add to ctrl, no joint_pos correction).
@@ -267,6 +284,7 @@ class PolicyInference:
         # Load ground pick policy
         self.ground_pick_session = None
         self.ground_pick_mode = False
+        self.crouch_mode = False
         self.ground_pick_phase = 0.0
         self.ground_pick_period = ground_pick_period
         if ground_pick_onnx_path:
@@ -375,6 +393,19 @@ class PolicyInference:
         else:
             self.ball_qpos_adr = None
             self.ball_qvel_adr = None
+        # Peak ball forward speed since the last kick trigger (see _place_ball):
+        # the kick-quality number the rehearsal prints as `[ball 1s ref]`.
+        self.ball_peak_fwd = 0.0
+        # Foot frame site, for the kick readout's reach trace (the kick lives or
+        # dies on where the toe actually arrives, see [ball 1s ref]).
+        self.right_foot_site_id = mujoco.mj_name2id(
+            model, mujoco.mjtObj.mjOBJ_SITE, "right_foot"
+        )
+        # Per-kick peaks (reach + ball speed), reported when the kick hands back:
+        # the swing is ~0.2 s, so a peak is the only honest way to compare the
+        # rehearsal against the training env's own trace.
+        self.kick_peak_toe_x = -1e9
+        self.kick_peak_toe_z = -1e9
 
         print(f"Sensors found:")
         print(f"  imu_ang_vel: id={self.imu_ang_vel_id}")
@@ -510,7 +541,9 @@ class PolicyInference:
         elif self.current_policy == "slope":
             # Passive descent: zero command (like standing coast)
             self.command = np.zeros(3, dtype=np.float32)
-        # ground_pick: command is set directly by update_ground_pick_phase
+        # ground_pick / crouch: command is set directly by the phase update
+        if self.crouch_mode:
+            return
 
     def _update_policy_session(self):
         """Switch between walking and standing sessions based on vel_cmd magnitude."""
@@ -518,6 +551,8 @@ class PolicyInference:
             return  # Only one policy loaded, no switching
         if self.ground_pick_mode:
             return  # Don't switch during ground pick
+        if self.crouch_mode:
+            return  # Don't switch during the crouch cycle
         if self.sit_mode:
             return  # Don't switch while sitting
         if self.slope_mode:
@@ -653,8 +688,13 @@ class PolicyInference:
         """Get joint velocities."""
         return self.data.qvel[self.joint_qvel_indices].copy().astype(np.float32)
 
-    def get_observations(self):
+    def get_observations(self, advance=True):
         """Collect observations matching policy input.
+
+        ``advance`` must be True on exactly ONE call per control step (the inference
+        call): the IMU / joint_vel delay state advances there. Logging paths
+        (--save-csv, --record, --debug) call with advance=False so they read the same
+        delayed observation the policy just used instead of stepping the delays twice.
 
         Order for velocity/standing task:
         1. base_ang_vel (3D)
@@ -667,15 +707,34 @@ class PolicyInference:
         """
         obs = []
 
-        obs.append(self.get_base_ang_vel())
+        ang_vel = self.get_base_ang_vel()
+        gravity = (
+            self.get_projected_gravity()
+            if self.use_projected_gravity
+            else self.get_raw_accelerometer()
+        )
+        joint_vel = self.get_joint_vel()
 
-        if self.use_projected_gravity:
-            obs.append(self.get_projected_gravity())
-        else:
-            obs.append(self.get_raw_accelerometer())
+        if self.obs_delay:
+            self._imu_hist.append((ang_vel, gravity))
+            if len(self._imu_hist) > self.IMU_LAG_MAX + 1:
+                self._imu_hist.pop(0)
+            if advance:
+                self._imu_steps += 1
+                if self._imu_steps % self.IMU_UPDATE_PERIOD == 0:
+                    self._imu_lag = int(np.random.randint(0, self.IMU_LAG_MAX + 1))
+            # Clamp to the history we actually have, like training's DelayBuffer.
+            lag = min(self._imu_lag, len(self._imu_hist) - 1)
+            ang_vel, gravity = self._imu_hist[-1 - lag]
+            if self._jvel_prev is not None:
+                joint_vel = self._jvel_prev
+            if advance:
+                self._jvel_prev = self.get_joint_vel()
 
+        obs.append(ang_vel)
+        obs.append(gravity)
         obs.append(self.get_joint_pos_relative())
-        obs.append(self.get_joint_vel())
+        obs.append(joint_vel)
         obs.append(self.last_action)
         obs.append(self.command)
 
@@ -704,6 +763,7 @@ class PolicyInference:
     def _end_ground_pick(self):
         """Switch back after a ground pick cycle completes."""
         self.ground_pick_mode = False
+        self.crouch_mode = False
         self.vel_cmd = np.zeros(3, dtype=np.float32)
         if self.walking_session:
             self.current_policy = "walking"
@@ -725,6 +785,20 @@ class PolicyInference:
         self.ground_pick_phase = new_phase
         # ground_pick policies use the first 3 slots (twist) as phase encoding.
         # Higher slots (head/body) stay at whatever _update_command set them to.
+        self.command[0] = np.cos(2 * np.pi * self.ground_pick_phase)
+        self.command[1] = np.sin(2 * np.pi * self.ground_pick_phase)
+        self.command[2] = 0.0
+
+    def update_crouch_phase(self, dt: float):
+        """Advance the PERIODIC crouch phase and write it into the twist slot.
+
+        The crouch task (`Mjlab-RollerCrouch-Flat-MicroDuck`) is driven by
+        ``GroundPickPhaseCommand`` with ``randomize_phase=False`` and a 5 s period, so every episode
+        starts standing at phase 0. Unlike ground_pick this never "completes": the phase wraps.
+        """
+        if not self.crouch_mode:
+            return
+        self.ground_pick_phase = (self.ground_pick_phase + dt / self.ground_pick_period) % 1.0
         self.command[0] = np.cos(2 * np.pi * self.ground_pick_phase)
         self.command[1] = np.sin(2 * np.pi * self.ground_pick_phase)
         self.command[2] = 0.0
@@ -773,10 +847,15 @@ class PolicyInference:
         qw, qx, qy, qz = self.data.qpos[adr + 3:adr + 7]
         yaw = math.atan2(2.0 * (qw * qz + qx * qy), 1.0 - 2.0 * (qy * qy + qz * qz))
         off_y = -BALL_OFFSET_ABS_Y if behavior == "kick_right" else BALL_OFFSET_ABS_Y
-        bx = x + math.cos(yaw) * BALL_OFFSET_X - math.sin(yaw) * off_y
-        by = y + math.sin(yaw) * BALL_OFFSET_X + math.cos(yaw) * off_y
+        off_y += KICK_BALL_DY
+        _off_x = BALL_OFFSET_X + KICK_BALL_DX
+        bx = x + math.cos(yaw) * _off_x - math.sin(yaw) * off_y
+        by = y + math.sin(yaw) * _off_x + math.cos(yaw) * off_y
         self.data.qpos[self.ball_qpos_adr:self.ball_qpos_adr + 7] = [bx, by, BALL_RADIUS, 1, 0, 0, 0]
         self.data.qvel[self.ball_qvel_adr:self.ball_qvel_adr + 6] = 0.0
+        self.ball_peak_fwd = 0.0   # per-kick peak, reset at every trigger
+        self.kick_peak_toe_x = -1e9
+        self.kick_peak_toe_z = -1e9
         foot = behavior.split("_")[1]
         print(f"Ball placed at ({bx:.3f}, {by:.3f}) in front of the {foot} foot")
 
@@ -790,6 +869,14 @@ class PolicyInference:
 
     def _end_behavior(self):
         name = self.behavior_mode
+        if name in ("kick_left", "kick_right"):
+            # The two numbers that decide a kick, comparable with the training
+            # env's own trace (logs/kick_reset_probe.py prints max toe_x too).
+            print(
+                f"[kick summary] {name}: peak_toe_x={self.kick_peak_toe_x:+.4f} m  "
+                f"peak_toe_z={self.kick_peak_toe_z:.1f} mm  "
+                f"peak_ball_fwd={self.ball_peak_fwd:+.3f} m/s"
+            )
         self.behavior_mode = None
         self.vel_cmd = np.zeros(3, dtype=np.float32)
         if self.walking_session:
@@ -1170,6 +1257,11 @@ class OdomAnchorOverlay:
 def main():
     parser = argparse.ArgumentParser(description="Run ONNX policy in MuJoCo")
     parser.add_argument("--roller", action="store_true", help="Use roller skate robot XML (robot_walk_rollers.xml)")
+    parser.add_argument("--crouch", action="store_true",
+                        help="RollerCrouch rehearsal: roller model + drive the crouch PHASE in the twist "
+                             "slot (cos/sin, wrapping, period --ground-pick-period). Without this the "
+                             "crouch policy never receives its phase command, which is how its skill was "
+                             "mis-judged as 'collapsed' (logs/optimization_plan.md D2).")
     parser.add_argument("--scene", type=str, default=None, help="Path to a scene XML, overriding the default pick (e.g. src/mjlab_microduck/robot/microduck/scene_allcollisions.xml)")
     parser.add_argument("--walking", type=str, default=None, help="Path to walking policy ONNX file")
     parser.add_argument("--standing", "-s", type=str, default=None, help="Path to standing policy ONNX file")
@@ -1190,6 +1282,31 @@ def main():
     parser.add_argument("--delay", type=int, nargs='*', default=None, help="Enable actuator delay: --delay MIN MAX or --delay LAG")
     parser.add_argument("--debug", action="store_true", help="Print observations and actions")
     parser.add_argument("--save-csv", type=str, default=None, help="Save observations and actions to CSV file")
+    parser.add_argument(
+        "--duration", type=float, default=None,
+        help="Stop cleanly after N seconds of simulation (needed for --save-csv, "
+             "whose file is only written after the loop; 132 s reproduces the "
+             "132-sample window of a `timeout 140` run).",
+    )
+    parser.add_argument(
+        "--contact-log", type=str, default=None,
+        help="Write a per-control-step CSV (t, body-frame fwd/lat/yaw, trunk_z, ncon/force per foot) so the "
+             "flight phase can be measured: both feet off the ground at once means the "
+             "gait has a ballistic phase (running); no overlap means walking. Written "
+             "after the loop, so pair it with --duration.",
+    )
+    parser.add_argument(
+        "--head-cmd", type=float, nargs=4, default=None, metavar=("NECK", "PITCH", "YAW", "ROLL"),
+        help="Constant 4D head-pose command in RADIANS (deltas from HOME), fed into the "
+             "13D command obs. Training's head ranges reach +/-1.1 rad (pitch) and "
+             "+/-1.2 rad (yaw); the rehearsal writes zeros unless this is given.",
+    )
+    parser.add_argument(
+        "--cmd-schedule", type=str, default=None,
+        help="Scripted twist command steps, e.g. \"0:0,0,0;20:0.3,0,0;70:0,0,0\" "
+             "(seconds:vx,vy,wz). Used to measure the acceleration/deceleration "
+             "response without a human at the keyboard.",
+    )
     parser.add_argument("--record", type=str, default=None, help="Enable recording mode: save observations to pickle file on Ctrl+C")
     parser.add_argument("--switch-threshold", type=float, default=0.05, help="Vel command magnitude threshold for walking/standing switch (default: 0.05)")
     parser.add_argument("--ground-pick-period", type=float, default=4.0, help="Ground pick phase period in seconds (default: 4.0)")
@@ -1197,6 +1314,14 @@ def main():
                         help="Use the unified 13D command obs layout (twist+head_pose+body_pose). "
                              "Required for policies trained with the new pose-command-tracking setup. "
                              "Old policies (51D obs, head_offset added to ctrl) need this flag OFF.")
+    parser.add_argument("--action-replay", type=str, default=None,
+                        help="DEBUG: .npy of (N,14) actions to replay at 50 Hz instead of the policy's own "
+                             "output, starting --action-replay-start control steps after launch. Separates "
+                             "policy closed-loop behaviour from actuator/physics differences.")
+    parser.add_argument("--action-replay-start", type=int, default=0,
+                        help="Control-step index at which --action-replay takes over (50 Hz).")
+    parser.add_argument("--timestep", type=float, default=0.005,
+                        help="Physics timestep (default 0.005 = the body-server/BAM fit value; training uses 0.002). Decimation is derived so control stays at 50 Hz.")
     parser.add_argument("--no-bam", action="store_true",
                         help="Use the XML MuJoCo position actuators instead of the BAM M6 "
                              "voltage/friction model the policies are trained against.")
@@ -1217,6 +1342,30 @@ def main():
                         help="Override the foot sliding friction (mu) to emulate the real grippy "
                              "PU sole. Training used mu~1.0 (range 0.7-1.3); real PU is likely "
                              "~1.5-2.5. e.g. --foot-friction 2.0")
+    parser.add_argument("--kick-ball-dx", type=float, default=0.0,
+                        help="Shift the ball placement of a kick trigger along the robot's x (m). "
+                             "Diagnostic: the strike is mm-sensitive, so this maps where the swing lands.")
+    parser.add_argument("--kick-ball-dy", type=float, default=0.0,
+                        help="Shift the ball placement of a kick trigger along the robot's y (m).")
+    parser.add_argument("--no-obs-delay", action="store_true",
+                        help="Do NOT model the observation delays training has (IMU lag 0-1 held 64 steps, "
+                             "joint_vel lag 1). Off by default = the rehearsal matches training.")
+    parser.add_argument("--start-pose", type=str, default="stand",
+                        choices=("stand", "prone", "supine"),
+                        help="Spawn the robot standing (default) or already fallen, to rehearse a "
+                             "RECOVERY policy: load it with --standing and watch the trunk rise.")
+    parser.add_argument("--integrator", type=str, default=None,
+                        choices=("euler", "rk4", "implicit", "implicitfast"),
+                        help="Override model.opt.integrator. Training (mjlab SimCfg) uses implicitfast; "
+                             "the XML default is euler. Passed to both the BAM and --no-bam paths.")
+    parser.add_argument("--ccd-iterations", type=int, default=None,
+                        help="Override model.opt.ccd_iterations (training uses 50).")
+    parser.add_argument("--ball-solref", type=float, default=None,
+                        help="Override the ball geom's contact solref time constant (XML default 0.02 s).")
+    parser.add_argument("--ball-solimp", type=float, nargs=3, default=None,
+                        metavar=("DMAX", "DWIDTH", "MID"), help="Override the ball geom's solimp.")
+    parser.add_argument("--ball-condim", type=int, default=None,
+                        help="Override the ball geom's condim (XML default 3).")
     parser.add_argument("--foot-solref", type=float, default=None,
                         help="Soften foot contact: solref time constant (s) for the foot geoms "
                              "(default sim ~0.02 = stiff/rigid). Larger = softer, to emulate the "
@@ -1261,6 +1410,8 @@ def main():
     # Load MuJoCo model. Kick policies get a scene with a ball to kick.
     # --scene overrides everything (any scene whose robot has the standard
     # 14-servo layout works, e.g. scene_allcollisions.xml).
+    if args.crouch:
+        args.roller = True          # the crouch task trains on the roller model
     if args.scene:
         xml_path = args.scene
     elif args.roller:
@@ -1279,10 +1430,10 @@ def main():
         bam_model = load_bam_model(args.kp_fw, args.vin, args.current_limit)
         vin_drop_gain = args.vin_drop_gain if args.vin_drop_gain > 0 else None
         model, data, bam_ctrl, _bam_names = load_mujoco_with_bam(
-            xml_path, bam_model, 0.005, vin_drop_gain, BAM_VIN_MIN)
+            xml_path, bam_model, args.timestep, vin_drop_gain, BAM_VIN_MIN)
     else:
         model = mujoco.MjModel.from_xml_path(xml_path)
-        model.opt.timestep = 0.005
+        model.opt.timestep = args.timestep
         data = mujoco.MjData(model)
         print("Legacy MuJoCo position actuators (--no-bam): NOT the actuator the policy was trained with")
 
@@ -1304,6 +1455,25 @@ def main():
     # whether it reproduces the on-robot forward-fall-at-speed. Training used
     # rigid feet at mu~1.0; the real sole is grippier (higher mu) and compliant
     # (softer solref). Applied to the foot collision geoms only.
+    if args.integrator is not None or args.ccd_iterations is not None:
+        _INT = {"euler": 0, "rk4": 1, "implicit": 2, "implicitfast": 3}
+        if args.integrator is not None:
+            model.opt.integrator = _INT[args.integrator]
+        if args.ccd_iterations is not None:
+            model.opt.ccd_iterations = args.ccd_iterations
+        print(f"SOLVER OVERRIDE: integrator={model.opt.integrator} ccd_iterations={model.opt.ccd_iterations}")
+
+    if args.ball_solref is not None or args.ball_solimp is not None or args.ball_condim is not None:
+        g = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "ball_geom")
+        if args.ball_solref is not None:
+            model.geom_solref[g, 0] = args.ball_solref
+            model.geom_solref[g, 1] = 1.0
+        if args.ball_solimp is not None:
+            model.geom_solimp[g, :3] = args.ball_solimp
+        if args.ball_condim is not None:
+            model.geom_condim[g] = args.ball_condim
+        print(f"BALL CONTACT OVERRIDE: solref={model.geom_solref[g]} solimp={model.geom_solimp[g][:3]} condim={model.geom_condim[g]}")
+
     if args.foot_friction is not None or args.foot_solref is not None:
         import re as _re
         n_feet = 0
@@ -1328,6 +1498,7 @@ def main():
         action_scale=args.action_scale,
         delay_min_lag=delay_min_lag,
         delay_max_lag=delay_max_lag,
+        obs_delay=not args.no_obs_delay,
         standing_onnx_path=args.standing,
         switch_threshold=args.switch_threshold,
         use_projected_gravity=not args.raw_accelerometer,
@@ -1379,6 +1550,13 @@ def main():
     data.qpos[qpos_adr + 1] = 0.0
     data.qpos[qpos_adr + 2] = 0.1385 if args.roller else 0.125  # rollers add 13.5mm height
     data.qpos[qpos_adr + 3:qpos_adr + 7] = [1, 0, 0, 0]
+    if args.start_pose != "stand":
+        # Scripted fall for the recovery rehearsal: belly-down (prone) or back-down (supine).
+        z0 = 0.075 if args.start_pose == "prone" else 0.048
+        pitch = math.radians(90.0) if args.start_pose == "prone" else math.radians(-90.0)
+        data.qpos[qpos_adr + 2] = z0
+        data.qpos[qpos_adr + 3:qpos_adr + 7] = [math.cos(pitch / 2), 0.0, math.sin(pitch / 2), 0.0]
+        print(f"START POSE: {args.start_pose} (trunk z={z0*1000:.0f} mm, pitch={math.degrees(pitch):+.0f} deg)")
     for i, qpos_idx in enumerate(policy.joint_qpos_indices):
         data.qpos[qpos_idx] = policy.default_pose[i]
     if bam_ctrl is not None:
@@ -1387,7 +1565,7 @@ def main():
     mujoco.mj_forward(model, data)
 
     # Verify observation size
-    test_obs = policy.get_observations()
+    test_obs = policy.get_observations(advance=False)
     cmd_dim = 13 if policy.new_cmd_obs else 3
     expected_obs_size = 3 + 3 + policy.n_joints + policy.n_joints + policy.n_joints + cmd_dim
     breakdown = (
@@ -1405,7 +1583,6 @@ def main():
     print("\n" + "="*80)
     print("MicroDuck Policy Inference")
     print("="*80)
-    print(f"Control frequency: 50 Hz (decimation: 4)")
     print(f"Simulation timestep: {model.opt.timestep}s")
     print(f"Observation size: {test_obs.size} (expected: {expected_obs_size})")
     if policy.walking_session:
@@ -1429,9 +1606,27 @@ def main():
     print("Close viewer window to exit")
     print()
 
-    decimation = 4
+    # Keep the 50 Hz control rate whatever the physics timestep is: the training
+    # value (0.002) and the body-server value (0.005) must drive the SAME policy
+    # rate, otherwise a fast one-shot swing is compared across two different
+    # control rates (see the kick transfer investigation in logs/kick_r1_report.md).
+    CONTROL_HZ = 50.0
+    global KICK_BALL_DX, KICK_BALL_DY
+    KICK_BALL_DX, KICK_BALL_DY = args.kick_ball_dx, args.kick_ball_dy
+    if KICK_BALL_DX or KICK_BALL_DY:
+        print(f"KICK BALL PLACEMENT SHIFT: dx={KICK_BALL_DX:+.3f} dy={KICK_BALL_DY:+.3f}")
+
+    replay_actions = None
+    if args.action_replay:
+        replay_actions = np.load(args.action_replay).astype(np.float32)
+        print(f"ACTION REPLAY: {replay_actions.shape} from {args.action_replay}, "
+              f"starting at control step {args.action_replay_start}")
+
+    decimation = max(1, int(round((1.0 / CONTROL_HZ) / model.opt.timestep)))
     control_step_count = 0
     control_dt = decimation * model.opt.timestep
+    print(f"Control frequency: {1.0 / control_dt:.1f} Hz (decimation: {decimation}, "
+          f"dt {model.opt.timestep}s)")
 
     # Rolling buffer of trunk world-frame xy velocity over the last 1 s, used
     # to print a running average so we can compare commanded vs achieved speed.
@@ -1440,6 +1635,46 @@ def main():
     vel_history = deque(maxlen=_vel_window_steps)
 
     csv_data = [] if args.save_csv else None
+    contact_data = [] if args.contact_log else None
+    schedule = []
+    if args.cmd_schedule:
+        for part in args.cmd_schedule.split(";"):
+            part = part.strip()
+            if not part:
+                continue
+            t_s, _, v_s = part.partition(":")
+            vals = [float(x) for x in v_s.split(",")]
+            assert len(vals) == 3, f"schedule entries need vx,vy,wz: {part!r}"
+            schedule.append((float(t_s), vals))
+        schedule.sort(key=lambda e: e[0])
+        print(f"Command schedule: {schedule}")
+    schedule_index = 0
+    if args.head_cmd is not None:
+        policy.head_offset = np.array(
+            [float(np.clip(v, -policy.head_max, policy.head_max)) for v in args.head_cmd],
+            dtype=np.float32,
+        )
+        policy._update_command()
+        print(f"Head command set to (neck, pitch, yaw, roll) = {policy.head_offset} rad")
+    # Crouch rehearsal (--crouch): the RollerCrouch task is phase-driven via GroundPickPhaseCommand,
+    # so the policy must RECEIVE the phase in the twist slot. Without this it is driven as if it were
+    # a roller policy and the crouch cycle is never exercised - which is how its skill was mis-judged
+    # as "collapsed" (logs/optimization_plan.md D2). Periodic: the phase wraps, unlike ground_pick.
+    if args.crouch:
+        policy.crouch_mode = True
+        policy.ground_pick_period = args.ground_pick_period
+        policy.ground_pick_phase = 0.0
+        print(f"CROUCH MODE: roller model + periodic phase in the twist slot "
+              f"(period {args.ground_pick_period:.2f} s, phase 0 = standing)")
+    policy._update_command()
+    # Geoms whose contacts identify a foot on the ground (see the env cfg's
+    # foot_frictions_geom_names); the floor is the other side of the pair.
+    _foot_geoms = {"left_foot_collision": 0, "right_foot_collision": 1}
+    _foot_geom_ids = {}
+    for _gid in range(model.ngeom):
+        _gn = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, _gid)
+        if _gn in _foot_geoms:
+            _foot_geom_ids[_gid] = _foot_geoms[_gn]
     recorded_observations = [] if args.record else None
     policy_enabled = not args.record
     policy_enable_time = None
@@ -1660,7 +1895,28 @@ def main():
             prev_step_time = time.time()
 
             while viewer.is_running() and not quit_requested:
+                # --duration: exit the loop CLEANLY after N seconds so the
+                # post-loop work (--save-csv, the summary tables) actually runs.
+                # Killing with `timeout` instead skips everything after the loop
+                # — which is why the 2026-09-18 CSV dumps came back empty.
+                if args.duration is not None and (time.time() - start_time) >= args.duration:
+                    print(f"\nDuration limit reached ({args.duration:.0f} s) — closing")
+                    break
                 step_start = time.time()
+
+                # Scripted command steps (--cmd-schedule): measured in SIMULATED
+                # control steps, so the response is reproducible regardless of
+                # wall-clock jitter.
+                if schedule:
+                    sim_t = control_step_count * control_dt
+                    while (
+                        schedule_index < len(schedule)
+                        and sim_t >= schedule[schedule_index][0]
+                    ):
+                        _t, (_vx, _vy, _wz) = schedule[schedule_index]
+                        policy.set_vel_cmd(_vx, _vy, _wz)
+                        print(f"[schedule] t={sim_t:.2f}s -> cmd ({_vx}, {_vy}, {_wz})")
+                        schedule_index += 1
 
                 for key in term.get_keys():
                     handle_key(key)
@@ -1677,10 +1933,14 @@ def main():
                 prev_step_time = step_start
 
                 policy.update_ground_pick_phase(actual_dt)
+                policy.update_crouch_phase(actual_dt)
                 policy.update_behavior(actual_dt)
 
                 if policy_enabled:
                     action = policy.infer()
+                    if replay_actions is not None and control_step_count >= args.action_replay_start:
+                        _i = min(control_step_count - args.action_replay_start, len(replay_actions) - 1)
+                        action = replay_actions[_i]
                     policy.apply_action(action)
                 else:
                     # Paused: keep last ctrl, don't query the policy. Motors
@@ -1703,7 +1963,11 @@ def main():
                 ], dtype=np.float32)
                 v_body = policy.quat_rotate_inverse(quat, v_world)
                 yaw_rate = float(data.qvel[_trunk_qvel_adr + 5])  # body-frame wz
-                vel_history.append((float(v_body[0]), float(v_body[1]), yaw_rate))
+                wx_rate = float(data.qvel[_trunk_qvel_adr + 3])  # body-frame wx
+                wy_rate = float(data.qvel[_trunk_qvel_adr + 4])  # body-frame wy
+                vel_history.append(
+                    (float(v_body[0]), float(v_body[1]), yaw_rate, wx_rate, wy_rate)
+                )
                 if control_step_count % _vel_window_steps == 0 and len(vel_history) > 0:
                     n = len(vel_history)
                     avg_fwd = sum(v[0] for v in vel_history) / n
@@ -1711,15 +1975,104 @@ def main():
                     avg_yaw = sum(v[2] for v in vel_history) / n
                     cmd_x, cmd_y, cmd_yaw = policy.vel_cmd[0], policy.vel_cmd[1], policy.vel_cmd[2]
                     trunk_z = float(data.qpos[qpos_adr + 2])
+                    # TILT readout (2026-09-22). Height alone cannot tell a stand from the "half
+                    # stand" both stand-up policies park in: measured, the pre-fix policy reads
+                    # 113.8 mm at 33 deg of tilt while the fixed one reads 116.0 mm at 7 deg - and
+                    # this line used to print only the height, so the rehearsal showed them as the
+                    # same result. Angle from vertical, in degrees, from the free-joint quaternion.
+                    _qw, _qx, _qy, _qz = (float(data.qpos[qpos_adr + 3 + _i]) for _i in range(4))
+                    _sin_p2 = 2.0 * (_qw * _qy - _qz * _qx)      # sin(pitch), body x-axis rotation
+                    _tilt_deg = math.degrees(math.asin(max(-1.0, min(1.0, _sin_p2))))
                     print(
                         f"[vel 1s avg] achieved/cmd  fwd={avg_fwd:+.2f}/{cmd_x:+.2f}  "
                         f"lat={avg_lat:+.2f}/{cmd_y:+.2f} m/s  "
                         f"yaw={avg_yaw:+.2f}/{cmd_yaw:+.2f} rad/s   "
-                        f"trunk_z={trunk_z*1000:.1f} mm"
+                        f"trunk_z={trunk_z*1000:.1f} mm  tilt={abs(_tilt_deg):.1f} deg"
+                    )
+                    # DC/AC split of the turn: |wz| mean and rms vs the signed
+                    # mean above say how much of the yaw activity is a SUSTAINED
+                    # turn (what deployment asks for) and how much is the
+                    # stepping oscillation a ~0.5 s EMA would filter out.
+                    # wxy is the roll/pitch wobble the wobble cost prices.
+                    abs_yaw = sum(abs(v[2]) for v in vel_history) / n
+                    rms_yaw = (sum(v[2] * v[2] for v in vel_history) / n) ** 0.5
+                    wxy = sum((v[3] * v[3] + v[4] * v[4]) ** 0.5 for v in vel_history) / n
+                    print(
+                        f"[vel 1s ref] mean|yaw|={abs_yaw:.3f}  rms_yaw={rms_yaw:.3f}  "
+                        f"mean|wxy|={wxy:.3f} rad/s"
                     )
 
+                    # Ball readout (kick tasks only): the reward is ball FORWARD
+                    # speed along the heading at reset, so report the same
+                    # quantity — peak-hold, because a kick is a transient that a
+                    # 1 s average would dilute into the rolling-decay tail.
+                    if policy.ball_qvel_adr is not None:
+                        bq = policy.ball_qpos_adr
+                        bv = data.qvel[policy.ball_qvel_adr:policy.ball_qvel_adr + 3]
+                        qw, qx, qy, qz = data.qpos[qpos_adr + 3:qpos_adr + 7]
+                        yaw = math.atan2(
+                            2.0 * (qw * qz + qx * qy), 1.0 - 2.0 * (qy * qy + qz * qz)
+                        )
+                        fwd_ball = float(bv[0]) * math.cos(yaw) + float(bv[1]) * math.sin(yaw)
+                        speed_ball = float(math.hypot(float(bv[0]), float(bv[1])))
+                        policy.ball_peak_fwd = max(policy.ball_peak_fwd, fwd_ball)
+                        # Robot-frame offset of the ball — the same quantity the
+                        # kick task spawns it with (nominal (0.09, ∓0.042)), so a
+                        # placement/rehearsal frame mismatch is visible directly.
+                        bx_rel = float(data.qpos[bq]) - float(data.qpos[qpos_adr])
+                        by_rel = float(data.qpos[bq + 1]) - float(data.qpos[qpos_adr + 1])
+                        rel_x = bx_rel * math.cos(yaw) + by_rel * math.sin(yaw)
+                        rel_y = -bx_rel * math.sin(yaw) + by_rel * math.cos(yaw)
+                        # Toe reach: the ball's rear surface sits at rel_x - 35mm,
+                        # so this trace says whether the swing gets there.
+                        if policy.right_foot_site_id >= 0:
+                            sp = data.site_xpos[policy.right_foot_site_id]
+                            fx = float(sp[0]) - float(data.qpos[qpos_adr])
+                            fy = float(sp[1]) - float(data.qpos[qpos_adr + 1])
+                            foot_x = fx * math.cos(yaw) + fy * math.sin(yaw)
+                            foot_z = float(sp[2]) * 1000.0
+                        else:
+                            foot_x, foot_z = float("nan"), float("nan")
+                        print(
+                            f"[ball 1s ref] fwd={fwd_ball:+.3f}  speed={speed_ball:.3f} m/s  "
+                            f"peak_fwd={policy.ball_peak_fwd:+.3f} m/s  "
+                            f"rel=(x{rel_x:+.3f}, y{rel_y:+.3f})  z={float(data.qpos[bq + 2])*1000:.1f} mm  "
+                            f"toe=(x{foot_x:+.3f}, z{foot_z:.0f} mm)"
+                        )
+
+                # High-rate trace while a kick policy is active: the swing is a
+                # ~0.2 s transient, so the 1 s line above samples it by luck. This
+                # says where the toe actually goes and whether the ball moves —
+                # the two numbers that decide a kick.
+                if (
+                    policy.behavior_mode in ("kick_left", "kick_right")
+                    and policy.ball_qpos_adr is not None
+                ):
+                    qw, qx, qy, qz = data.qpos[qpos_adr + 3:qpos_adr + 7]
+                    yaw_k = math.atan2(
+                        2.0 * (qw * qz + qx * qy), 1.0 - 2.0 * (qy * qy + qz * qz)
+                    )
+                    sp = data.site_xpos[policy.right_foot_site_id]
+                    fx = float(sp[0]) - float(data.qpos[qpos_adr])
+                    fy = float(sp[1]) - float(data.qpos[qpos_adr + 1])
+                    toe_x_now = fx * math.cos(yaw_k) + fy * math.sin(yaw_k)
+                    toe_z_now = float(sp[2]) * 1000.0
+                    # Peaks EVERY control step (the swing is ~0.2 s); the printed
+                    # trace stays at the 0.1 s cadence to keep the log readable.
+                    policy.kick_peak_toe_x = max(policy.kick_peak_toe_x, toe_x_now)
+                    policy.kick_peak_toe_z = max(policy.kick_peak_toe_z, toe_z_now)
+                    if control_step_count % 5 == 0:
+                        bq = policy.ball_qpos_adr
+                        bv = data.qvel[policy.ball_qvel_adr:policy.ball_qvel_adr + 3]
+                        print(
+                            f"[kick trace] t={policy.behavior_time_left:5.2f}s left  "
+                            f"toe_x={toe_x_now:+.4f}  toe_z={toe_z_now:5.1f} mm  "
+                            f"ball_x={float(data.qpos[bq]) - float(data.qpos[qpos_adr]):+.4f}  "
+                            f"ball_v={math.hypot(float(bv[0]), float(bv[1])):.3f} m/s"
+                        )
+
                 if csv_data is not None:
-                    obs = policy.get_observations()
+                    obs = policy.get_observations(advance=False)
                     row = {'step': control_step_count, 'time': control_step_count * control_dt}
                     for i in range(obs.size):
                         row[f'obs_{i}'] = obs[i]
@@ -1728,14 +2081,14 @@ def main():
                     csv_data.append(row)
 
                 if recorded_observations is not None:
-                    obs = policy.get_observations()
+                    obs = policy.get_observations(advance=False)
                     timestamp = time.time() - start_time
                     recorded_observations.append({'timestamp': timestamp, 'observation': obs.tolist()})
 
                 if args.debug:
                     should_print = control_step_count <= 10 or control_step_count % 50 == 0
                     if should_print:
-                        obs = policy.get_observations()
+                        obs = policy.get_observations(advance=False)
                         pos = data.qpos[qpos_adr:qpos_adr + 3]
                         quat = data.qpos[qpos_adr + 3:qpos_adr + 7]
                         com_height = pos[2]
@@ -1782,6 +2135,36 @@ def main():
                         odom_compare.print_status(data)
                 if odom_overlay is not None:
                     odom_overlay.draw(data, viewer.user_scn, odom_compare)
+                if contact_data is not None:
+                    # Per control step: which feet are on the ground and how hard.
+                    # Both feet off the ground simultaneously == a ballistic phase
+                    # (running); a gait with no such overlap is walking.
+                    _ncon = [0, 0]
+                    _fz = [0.0, 0.0]
+                    for _ci in range(data.ncon):
+                        _c = data.contact[_ci]
+                        for _side, _gid in ((0, _c.geom1), (1, _c.geom2)):
+                            _foot = _foot_geom_ids.get(int(_gid))
+                            if _foot is None:
+                                continue
+                            _f6 = np.zeros(6, dtype=np.float64)
+                            mujoco.mj_contactForce(model, data, _ci, _f6)
+                            _ncon[_foot] += 1
+                            _fz[_foot] += abs(float(_f6[0]))
+                    contact_data.append(
+                        (
+                            control_step_count * control_dt,
+                            float(v_body[0]),
+                            float(v_body[1]),
+                            yaw_rate,
+                            float(data.qpos[qpos_adr + 2]),
+                            _ncon[0],
+                            _ncon[1],
+                            _fz[0],
+                            _fz[1],
+                        )
+                    )
+
                 viewer.sync()
 
                 elapsed = time.time() - step_start
@@ -1806,6 +2189,14 @@ def main():
         print(f"CSV file saved successfully!")
         print(f"  Columns: {len(fieldnames)}")
         print(f"  Rows: {len(csv_data)}")
+
+    if contact_data is not None and len(contact_data) > 0:
+        print(f"\nSaving {len(contact_data)} control steps to: {args.contact_log}")
+        with open(args.contact_log, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["t", "fwd", "lat", "yaw", "trunk_z", "ncon_L", "ncon_R", "Fz_L", "Fz_R"])
+            writer.writerows(contact_data)
+        print("Contact log saved.")
 
     if recorded_observations is not None and len(recorded_observations) > 0:
         print(f"\nSaving {len(recorded_observations)} recorded observations to: {args.record}")

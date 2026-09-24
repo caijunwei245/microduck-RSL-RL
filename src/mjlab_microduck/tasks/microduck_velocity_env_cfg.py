@@ -17,12 +17,196 @@ gait/feet terms, curriculum-ramped action-rate smoothing), with:
 """
 
 import math
+import os
 from copy import deepcopy
 
 NUM_STEPS_PER_ENV = 24
 
 # Fraction of envs commanded to spin on the spot (lin=0, |ang| ∈ [0.4·max, max]).
-TURN_IN_PLACE_FRACTION = 0.15
+TURN_IN_PLACE_FRACTION = 0.20
+
+
+def angular_wobble_weight() -> float:
+    """Weight of the ``angular_wobble`` cost (the roll/pitch half of the term
+    the yaw-only reward was split out of; see ``mdp.angular_wobble_cost``).
+
+    Read when the cfg is BUILT rather than at import, so arms of an A/B can run
+    the same code from the same checkpoint:
+
+        MICRODUCK_ANGULAR_WOBBLE=0     → yaw-only arm (no wobble cost)
+        MICRODUCK_WOBBLE_WEIGHT=-3.0   → the strong setting used in ①/②
+        (neither set)                  → -1.5, the measured default
+
+    The default is -1.5 because the 2026-09-17 weight sweep (3000 matched
+    iterations each from model_63998, ±0.5 rad/s, same code) put the three
+    settings on one trade-off curve:
+
+        weight   err_xy    mean(w_xy²)
+         0.0     0.2010      0.726      (yaw-only arm A')
+        -1.5     0.2000      0.290      ← default
+        -3.0     0.2068      0.207
+
+    i.e. -1.5 buys the whole ~3.3% linear-tracking cost back (it even edges out
+    the no-wobble arm) for 40% more trunk wobble than -3.0 — still 2.5x below
+    no-wobble — while yaw tracking moves by less than a percent.  -3.0 is
+    dominated unless a deployment specifically values the last of the wobble.
+    """
+    if os.environ.get("MICRODUCK_ANGULAR_WOBBLE", "1").strip() == "0":
+        return 0.0
+    return float(os.environ.get("MICRODUCK_WOBBLE_WEIGHT", "-1.5"))
+
+
+def thrash_termination_enabled() -> bool:
+    """Whether to terminate an episode when a servo joint exceeds
+    ``MICRODUCK_THRASH_QVEL`` (default 15 rad/s; see mdp.thrash_termination).
+
+    **Default OFF (opt-in), on measured evidence.** The root cause it targets is
+    real — 2400 forensics dumps (2026-09-17) show the reward blow-ups are falls,
+    the policy thrashing its joints (|qvel| up to 18.9 rad/s, actions to 22.7
+    rad) from ~30 deg of tilt until bad_orientation(70 deg) recycles it — but
+    the A/B did not earn it a place in the default recipe:
+
+        3000 matched iterations x 2 arms from model_66997, ±0.5 rad/s, same code
+          ctrl (off): err_yaw 0.6908  err_xy 0.1971  mean(w_xy^2) 0.3012  bursts 0
+          trt  (>15): err_yaw 0.6970  err_xy 0.1960  mean(w_xy^2) 0.3040  bursts 0
+          tail: act_rate min -1.07 -> -1.17, max|da| p99.9 0.569 -> 0.586
+
+    No burst occurred in EITHER arm (so burst reduction is untested at this
+    sample size), the task metrics moved <1% in both directions, and the
+    action-rate tail came out marginally FATTER with it on — the 15 rad/s
+    threshold cuts fast-joint moments that were not going to become bursts.
+
+    Keep it as an option for a run that actually bursts, or sweep the threshold
+    (10 / 15 / 20) with enough iterations to see events.  Do not enable it by
+    default on the strength of the mechanism alone (repo rule: every convention
+    has to earn its place).
+
+        MICRODUCK_THRASH_TERMINATION=1   -> enable
+        (unset / 0)                      -> disabled (default)
+    """
+    return os.environ.get("MICRODUCK_THRASH_TERMINATION", "0").strip() != "0"
+
+
+def thrash_qvel_threshold() -> float:
+    return float(os.environ.get("MICRODUCK_THRASH_QVEL", "15.0"))
+
+
+def yaw_command_range() -> tuple[float, float]:
+    """Commanded yaw-rate range, ``MICRODUCK_YAW_RANGE=<max>`` (default 0.5).
+
+    The turn-in-place bucket scales with it (|ω| ∈ [0.4·max, max]), so the whole
+    yaw command distribution moves with one number — which is what makes the
+    ±0.5 → ±1.0 experiment single-variable.  Before 2026-09-16 the range had to
+    stay at ±0.5 because the tracking reward was wobble-locked and could not
+    price yaw at all; with the yaw-only reward that constraint is gone.
+    """
+    hi = abs(float(os.environ.get("MICRODUCK_YAW_RANGE", "0.5")))
+    return (-hi, hi)
+
+
+def linear_track_weight() -> float:
+    """Weight of the linear-velocity tracking term, ``MICRODUCK_LINEAR_WEIGHT`` (5.0).
+
+    Reason to change it (2026-09-19): raising the yaw weight to 8 reaches 97% of the
+    0.5 rad/s requirement but costs walking (forward rehearsal 0.179 m/s = 60% of the
+    command, against the parent's 0.220 = 73%), and err_xy rises to 0.222.  The two
+    tracking terms are the task; the regularizers are not.  Rebalancing by lifting the
+    linear weight alongside the yaw weight keeps both task terms dominant and leaves the
+    regularizers relatively weaker - a different intervention from lowering a penalty.
+
+    """
+    return float(os.environ.get("MICRODUCK_LINEAR_WEIGHT", "5.0"))
+
+
+def yaw_track_weight() -> float:
+    """Weight of the yaw-tracking term, ``MICRODUCK_YAW_WEIGHT`` (default 3.0).
+
+    The last structural lever left after three NULL arms (2026-09-18): the whole
+    recipe's deployment plateau is ~0.25 with a best-ever single measurement of
+    0.338, and neither the yaw reward's shape (dc arm), the wobble cost (wb arm)
+    nor the action-rate mass (ar arm) moved it.  If the turn is simply out-competed
+    by the rest of the reward stack rather than mis-priced at the margin, the
+    remaining move is to make it matter more - 3.0 -> 8-10 - which is a different
+    change from tightening std (the dc arm did that and gained nothing).
+
+    """
+    return float(os.environ.get("MICRODUCK_YAW_WEIGHT", "3.0"))
+
+
+def yaw_track_std() -> float:
+    """std of the yaw-only tracking Gaussian (``MICRODUCK_YAW_TRACK_STD``, 0.5).
+
+    ``std`` is the yaw error still worth caring about.  0.5 was picked when the
+    term was measured against the INSTANTANEOUS rate, whose error is ~90%
+    command-independent wobble — a smaller std there taxed the gait instead of
+    the command.  With ``MICRODUCK_YAW_EMA_TAU`` on, the wobble is filtered out
+    and the remaining error is escapable, so a smaller std (0.2-0.3) is the
+    point: it is what makes "ignore the command" stop being a near-free option.
+    """
+    return float(os.environ.get("MICRODUCK_YAW_TRACK_STD", "0.5"))
+
+
+def yaw_ema_tau() -> float:
+    """EMA time constant (s) for the measured yaw rate, ``MICRODUCK_YAW_EMA_TAU``.
+
+    0.0 (default) = score the instantaneous rate, i.e. the recipe as it has run
+    through 2026-09-18.  Reason to change it: the deployment rehearsal showed the
+    SUSTAINED in-place turn decaying 0.317 → 0.144 rad/s across 15k iterations of
+    continued training under this reward while every training-side metric
+    (including this tracking term, flat to 3 decimals) stayed put.  A DC turn is
+    what deployment commands — the runtime holds one twist for 140 s — so the
+    term has to price the filtered rate, not the per-step one, or it cannot see
+    the thing being shipped.
+    """
+    return float(os.environ.get("MICRODUCK_YAW_EMA_TAU", "0.0"))
+
+
+def action_rate_scale() -> float:
+    """Scale factor on the ``action_rate_l2`` curriculum, ``MICRODUCK_ACTION_RATE_SCALE``.
+
+    1.0 (default) = the ramp every run so far used, -0.1 -> -1.0 by iteration 1500.
+    Reason to change it (2026-09-18): ``action_rate_l2`` is the LARGEST penalty in
+    the stack by reward mass (logged -1.00 per step against ``angular_wobble``
+    -0.45 and ``body_ang_vel`` -0.015), and the deployment rehearsal shows the
+    sustained turn costs action rate directly: mean SUM(da^2) per control step is
+    0.279 for the 63% checkpoint and 0.131 for the 29% one.  Training's own value
+    (-1.0) is ~3.6x the rehearsal's (-0.28), so on training's scale the extra
+    motion of a real 0.5 rad/s turn plausibly costs more than the yaw term can pay
+    (+0.82/step under std 0.5).  If so, the turn is being throttled by smoothness,
+    not by the yaw reward at all - which is exactly why the DC-reward A/B and the
+    wobble-weight arm both came back flat.
+
+    """
+    return float(os.environ.get("MICRODUCK_ACTION_RATE_SCALE", "1.0"))
+
+
+def sustained_walk_fraction() -> float:
+    """Fraction of envs held on a SUSTAINED FORWARD command, ``MICRODUCK_SUSTAINED_WALK``.
+
+    0.0 (default) = the recipe that has been running. `rel_standing_envs` ramps to 0.50, so half of
+    all experience is "stand still", while every deployment/eval episode starts with a non-zero
+    forward command - measured consequence: velocity walk passes 12/25 demo rounds, failing by
+    standing still (v ~ 0.05-0.12 m/s at g = -1.00), not by falling. Setting this (e.g. 0.2) makes
+    "walk from step 0" a populated region of the command distribution.
+    """
+    return float(os.environ.get("MICRODUCK_SUSTAINED_WALK", "0.0"))
+
+
+def sustained_walk_speed() -> float:
+    """Speed of the sustained-forward bucket, ``MICRODUCK_SUSTAINED_WALK_SPEED`` (default 0.3)."""
+    return float(os.environ.get("MICRODUCK_SUSTAINED_WALK_SPEED", "0.3"))
+
+
+def sustained_turn_fraction() -> float:
+    """Fraction of envs held on the deployment command, ``MICRODUCK_SUSTAINED_TURN``.
+
+    0.0 (default) = the stock command mix: uniform ±range resampled every 3-8 s,
+    plus the turn-in-place bucket.  Setting it (e.g. 0.15) puts that fraction of
+    envs in place with |yaw| pinned to the TOP of the range and no resample for
+    the rest of the episode — the deployment command (which uniform sampling
+    gives measure zero) becomes a populated region of the command distribution.
+    """
+    return float(os.environ.get("MICRODUCK_SUSTAINED_TURN", "0.0"))
 
 # Symmetry
 ENABLE_SYMMETRY = False
@@ -96,6 +280,7 @@ from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.managers import (
     CurriculumTermCfg,
     EventTermCfg,
+    MetricsTermCfg,
     ObservationTermCfg,
     RewardTermCfg,
     TerminationTermCfg,
@@ -339,10 +524,69 @@ def make_microduck_velocity_env_cfg(
     cfg.rewards["angular_momentum"].weight = -0.02
 
     # Velocity tracking rewards
-    cfg.rewards["track_linear_velocity"].weight = 2.0
+    # Boost linear velocity reward (was 2.0): linear tracking is the bottleneck
+    # (track_linear_velocity ~1.29 vs track_angular_velocity ~3.25). Increase to
+    # 5.0 to make XY speed tracking a first-class objective.
+    cfg.rewards["track_linear_velocity"].weight = linear_track_weight()
     cfg.rewards["track_linear_velocity"].params["std"] = math.sqrt(0.1)
-    cfg.rewards["track_angular_velocity"].weight = 2.0
-    cfg.rewards["track_angular_velocity"].params["std"] = math.sqrt(0.5)
+    # Yaw-only angular tracking (2026-09-16). mjlab's stock term folds the
+    # trunk's roll/pitch rates into the same Gaussian and was measured to sit
+    # pinned at the wobble floor (1.69/3.0 for 20k iterations) with the
+    # commanded yaw rate carrying no gradient — see mdp.track_yaw_velocity for
+    # the numbers. Body rates stay priced by body_ang_vel above. std = 0.5:
+    # visible to the CURRENT policy (exp(-0.58) ≈ 0.56 at the measured
+    # 0.76 rad/s wobble) while halving the yaw error roughly doubles it.
+    #
+    # 2026-09-18: std and the EMA time constant are env-var switches, both
+    # defaulting to the values every run so far used (0.5 / off) so a fix arm is
+    # one variable away from its control. See yaw_track_std()/yaw_ema_tau().
+    cfg.rewards["track_angular_velocity"].func = microduck_mdp.track_yaw_velocity
+    cfg.rewards["track_angular_velocity"].weight = yaw_track_weight()
+    cfg.rewards["track_angular_velocity"].params["std"] = yaw_track_std()
+    cfg.rewards["track_angular_velocity"].params["tau"] = yaw_ema_tau()
+
+    # The other half of that split. mjlab's composite term was silently the
+    # recipe's only real roll/pitch-rate regularizer (body_ang_vel above is
+    # -0.05 ≈ 0.015/step): with it gone, yaw error improved 0.85 → 0.74 but
+    # mean(ω_xy²) went 0.28 → 0.53 (+90% trunk thrash). Priced back here
+    # explicitly, same Gaussian shape it implicitly had, so the two terms
+    # together reproduce the old one — with the yaw error on its own std.
+    # Weight from the 2026-09-17 sweep: -1.5 (default) recovers the ~3.3% err_xy
+    # the -3.0 setting cost while keeping wobble 2.5x below the no-wobble arm —
+    # see angular_wobble_weight(). MICRODUCK_ANGULAR_WOBBLE=0 drops it entirely.
+    wobble_weight = angular_wobble_weight()
+    if wobble_weight != 0.0:
+        cfg.rewards["angular_wobble"] = RewardTermCfg(
+            func=microduck_mdp.angular_wobble_cost,
+            weight=wobble_weight,
+            params={"std": math.sqrt(0.5)},
+        )
+
+    # Blow-up diagnostic: mean_action_acc averages the 2026-09-16 action
+    # explosions (RMS |da| ~ 450 rad in a few envs) down to a +0.6 blip.
+    # blowup_probe logs the same per-env max AND dumps the culprit env's state
+    # to $MICRODUCK_BLOWUP_DUMP when it trips (no-op when unset).
+    cfg.metrics["max_action_delta"] = MetricsTermCfg(
+        func=microduck_mdp.blowup_probe, params={"threshold": 2.0}
+    )
+    # Yaw tracking gain: achieved |ω_z| over commanded |cmd_z|. Directly answers
+    # "does widening the command range produce a robot that turns faster?".
+    cfg.metrics["mean_abs_yaw_rate"] = MetricsTermCfg(func=microduck_mdp.mean_abs_yaw_rate)
+    cfg.metrics["mean_abs_yaw_command"] = MetricsTermCfg(func=microduck_mdp.mean_abs_yaw_command)
+    # Instantaneous max |qvel| over servo joints (episode mean when logged):
+    # shows whether normal walking ever approaches the thrash threshold.
+    cfg.metrics["max_joint_vel"] = MetricsTermCfg(func=microduck_mdp.max_servo_joint_vel)
+    # DC turn gain against the command — the TRAINING-SIDE twin of the rehearsal
+    # metric (2026-09-18). mean_abs_yaw_rate/mean_abs_yaw_command could not see
+    # the sustained turn halving over 15k iterations because both are dominated
+    # by oscillation and by the standing half of the envs; this one filters the
+    # rate first (tau fixed at 0.5 s regardless of the reward's setting, so the
+    # two A/B arms log the SAME quantity) and divides by the command on turning
+    # envs only. 1.0 = tracks the command, ~0.6 = the best checkpoint measured,
+    # ~0.3 = the degraded ones.
+    cfg.metrics["dc_turn_gain"] = MetricsTermCfg(
+        func=microduck_mdp.dc_turn_gain, params={"tau": 0.5, "min_cmd": 0.25}
+    )
 
     # Action smoothness: stage-0 value; the action_rate_weight curriculum below
     # ramps it -0.1 → -1.0 by iter 1500.
@@ -379,6 +623,15 @@ def make_microduck_velocity_env_cfg(
     # MuJoCo can produce NaN joint positions on extreme contact impulses.
     # Terminating immediately resets to a valid state before NaN propagates
     # into the observation buffer and corrupts network weights.
+    # Thrash termination (2026-09-17): see mdp.thrash_termination. Toggleable so
+    # the A/B runs both arms on the same code; MICRODUCK_THRASH_QVEL tunes it.
+    if thrash_termination_enabled():
+        cfg.terminations["thrash"] = TerminationTermCfg(
+            func=microduck_mdp.thrash_termination,
+            time_out=False,
+            params={"max_joint_vel": thrash_qvel_threshold()},
+        )
+
     cfg.terminations["nan_state"] = TerminationTermCfg(
         func=microduck_mdp.robot_state_is_nan,
         time_out=False,
@@ -647,11 +900,22 @@ def make_microduck_velocity_env_cfg(
     # change — it makes turning learnable.
     command.ranges.lin_vel_x = (-0.4, 0.4)
     command.ranges.lin_vel_y = (-0.3, 0.3)
-    command.ranges.ang_vel_z = (-1.0, 1.0)
+    # Turn-rate range: default ±0.5, widened by MICRODUCK_YAW_RANGE (see the
+    # helper). The ±1.0 arm of the 2026-09-17 experiment — "can it really turn
+    # at 1 rad/s now that yaw is priced?" — is one env var away.
+    command.ranges.ang_vel_z = yaw_command_range()
     command.viz.z_offset = 0.5
     cfg.commands["twist"] = microduck_mdp.VelocityCommandCommandOnlyCfg(**vars(command))
     # Explicit turn-in-place bucket (see TURN_IN_PLACE_FRACTION above).
     cfg.commands["twist"].rel_turn_in_place_envs = TURN_IN_PLACE_FRACTION
+    # Optional sustained-turn bucket: the deployment command (in place, |yaw| at
+    # the top of the range) held beyond an episode instead of 3-8 s. 0 by
+    # default — see sustained_turn_fraction() for why the deployment metric
+    # needs it and why the current mix cannot see that operating point.
+    cfg.commands["twist"].rel_sustained_turn_envs = sustained_turn_fraction()
+    # A3: forward-command bucket (see sustained_walk_fraction). Default 0 = off.
+    cfg.commands["twist"].rel_sustained_walk_envs = sustained_walk_fraction()
+    cfg.commands["twist"].sustained_walk_speed = sustained_walk_speed()
 
     # Head pose command (4D deltas from HOME, in joint order:
     #   neck_pitch, head_pitch, head_yaw, head_roll). Tracked as a primary
@@ -780,28 +1044,33 @@ def make_microduck_velocity_env_cfg(
         params={
             "reward_name": "action_rate_l2",
             "weight_stages": [
-                {"step": 0, "weight": -0.1},
-                {"step": 500 * NUM_STEPS_PER_ENV, "weight": -0.2},
-                {"step": 750 * NUM_STEPS_PER_ENV, "weight": -0.4},
-                {"step": 1000 * NUM_STEPS_PER_ENV, "weight": -0.6},
-                {"step": 1250 * NUM_STEPS_PER_ENV, "weight": -0.8},
-                {"step": 1500 * NUM_STEPS_PER_ENV, "weight": -1.0},
+                {"step": s, "weight": w * action_rate_scale()}
+                for s, w in (
+                    (0, -0.1),
+                    (500 * NUM_STEPS_PER_ENV, -0.2),
+                    (750 * NUM_STEPS_PER_ENV, -0.4),
+                    (1000 * NUM_STEPS_PER_ENV, -0.6),
+                    (1250 * NUM_STEPS_PER_ENV, -0.8),
+                    (1500 * NUM_STEPS_PER_ENV, -1.0),
+                )
             ],
         },
     )
 
-    # Gradually increase standing env fraction after walking is established
+    # Gradually increase standing env fraction after walking is established.
+    # Requested training regime: keep more standing envs in the mixture to
+    # stabilize the gait while still exposing the policy to movement commands.
     cfg.curriculum["standing_envs"] = CurriculumTermCfg(
         func=microduck_mdp.standing_envs_curriculum,
         params={
             "command_name": "twist",
             "standing_stages": [
-                {"step": 0,           "rel_standing_envs": 0.02},
-                {"step": 500 * 24,    "rel_standing_envs": 0.05},
-                {"step": 750 * 24,    "rel_standing_envs": 0.1},
-                {"step": 1000 * 24,   "rel_standing_envs": 0.15},
-                {"step": 1500 * 24,   "rel_standing_envs": 0.2},
-                {"step": 2000 * 24,   "rel_standing_envs": 0.25},
+                # 5% → 10% → 15% → 20% → 50%
+                {"step": 0,           "rel_standing_envs": 0.05},
+                {"step": 100 * 24,    "rel_standing_envs": 0.10},
+                {"step": 250 * 24,    "rel_standing_envs": 0.15},
+                {"step": 500 * 24,    "rel_standing_envs": 0.20},
+                {"step": 800 * 24,    "rel_standing_envs": 0.50},
             ],
         },
     )
@@ -812,7 +1081,7 @@ def make_microduck_velocity_env_cfg(
     # Head pose command range curriculum — per-joint, scaled to each joint's
     # reachable delta from HOME (with ~10% margin from XML limits). Same 5-stage
     # shape as before (5% → 15% → 35% → 65% → 100% of each joint's final cap).
-    # neck/head pitch final ±1.10 rad, head_yaw ±1.40, head_roll ±0.31.
+    # neck/head pitch final ±1.10 rad, head_yaw ±1.20, head_roll ±0.31.
     cfg.curriculum["head_pose_range"] = CurriculumTermCfg(
         func=microduck_mdp.pose_command_range_curriculum,
         params={
@@ -823,13 +1092,13 @@ def make_microduck_velocity_env_cfg(
                 {"step": 500 * 24,  "ranges": ((-0.17, 0.17),  (-0.17, 0.17),  (-0.21, 0.21),  (-0.047, 0.047))},
                 {"step": 1000 * 24, "ranges": ((-0.39, 0.39),  (-0.39, 0.39),  (-0.49, 0.49),  (-0.11, 0.11))},
                 {"step": 1500 * 24, "ranges": ((-0.72, 0.72),  (-0.72, 0.72),  (-0.91, 0.91),  (-0.20, 0.20))},
-                {"step": 2000 * 24, "ranges": ((-1.10, 1.10),  (-1.10, 1.10),  (-1.40, 1.40),  (-0.31, 0.31))},
+                {"step": 2000 * 24, "ranges": ((-1.10, 1.10),  (-1.10, 1.10), (-1.20, 1.20), (-0.31, 0.31))},
             ],
         },
     )
 
-    # Body pose command range curriculum: stay small in vel env. Standup env
-    # overrides this curriculum with wide ranges + heavy reward weight.
+    # Body pose command range curriculum. Standup env overrides this
+    # curriculum with its own wide ranges + heavy reward weight.
     cfg.curriculum["body_pose_range"] = CurriculumTermCfg(
         func=microduck_mdp.pose_command_range_curriculum,
         params={
@@ -839,47 +1108,51 @@ def make_microduck_velocity_env_cfg(
                     (-0.005, 0.005),  # x (m)
                     (-0.005, 0.005),  # y (m)
                     (-0.005, 0.005),  # z (m)
-                    (-0.05, 0.05),    # roll
-                    (-0.05, 0.05),    # pitch
-                    (-0.05, 0.05),    # yaw
+                    (-0.03, 0.03),    # roll
+                    (-0.03, 0.03),    # pitch
+                    (-0.03, 0.03),    # yaw
+                )},
+                {"step": 800 * 24, "ranges": (
+                    (-0.15, 0.15),    # x (m)
+                    (-0.15, 0.15),    # y (m)
+                    (-0.15, 0.15),    # z (m)
+                    (-0.15, 0.15),    # roll
+                    (-0.15, 0.15),    # pitch
+                    (-0.15, 0.15),    # yaw
                 )},
             ],
         },
     )
 
-    # CoM randomization range curriculum - start small, ramp up
+    # CoM randomization range curriculum - start small, ramp up.
+    # Requested final cap: ±12 mm.
     if ENABLE_COM_RANDOMIZATION:
         cfg.curriculum["com_range"] = CurriculumTermCfg(
             func=microduck_mdp.com_range_curriculum,
             params={
                 "event_name": "randomize_com",
                 "range_stages": [
-                    # Capped at ±15 mm (2026-07 audit): the previous ramp to ±30 mm
-                    # exceeded the foot support polygon (heel is only 20 mm behind
-                    # the ankle) — the randomized CoM could sit entirely outside
-                    # support, forcing a wide/fast hyper-reactive gait and making
-                    # BACKWARD balance untrainable. Regression timeline matched the
-                    # ramp increases: 0.015 → 0.02 → 0.03 as policies got worse.
-                    {"step": 0,          "range": 0.003},
-                    {"step": 500 * 24,  "range": 0.005},
-                    {"step": 1000 * 24,  "range": 0.01},
-                    {"step": 1500 * 24,  "range": 0.015},
+                    # Final cap: ±20 mm.
+                    {"step": 0,           "range": 0.003},
+                    {"step": 200 * 24,   "range": 0.005},
+                    {"step": 400 * 24,   "range": 0.01},
+                    {"step": 600 * 24,   "range": 0.020},
                 ],
             },
         )
 
     # Head CoM randomization range curriculum - start small, ramp up
+    # Accelerated: reach the reduced ±8 mm cap faster.
     if ENABLE_HEAD_COM_RANDOMIZATION:
         cfg.curriculum["head_com_range"] = CurriculumTermCfg(
             func=microduck_mdp.com_range_curriculum,
             params={
                 "event_name": "randomize_head_com",
                 "range_stages": [
-                    # Capped at ±10 mm (2026-07 audit — same over-conservatism
-                    # concern as trunk CoM; head is a large lever arm).
+                    # Capped at ±8 mm to reduce head-induced balance disturbances.
                     {"step": 0,          "range": 0.003},
-                    {"step": 500 * 24,  "range": 0.005},
-                    {"step": 1000 * 24,  "range": 0.01},
+                    {"step": 200 * 24,  "range": 0.005},
+                    {"step": 400 * 24,   "range": 0.008},
                 ],
             },
         )
@@ -889,10 +1162,9 @@ def make_microduck_velocity_env_cfg(
         del cfg.curriculum["terrain_levels"]
     del cfg.curriculum["command_vel"]
 
-    # head_pose_bias ramp: OFF until iter 600, then 1.0 → 3.0 by iter 1500.
-    # Held at 0 early because a posture-precision term is a distraction before
-    # a gait exists. At weight 3.0 a 15° residual bias costs 0.79/step and a
-    # 2° bias costs 0.10/step.
+    # head_pose_bias ramp: OFF until iter 600, then 1.0 → 1.5 by iter 1500.
+    # Keep this softer than before so posture precision is introduced without
+    # overly penalizing the walking policy.
     cfg.curriculum["head_pose_bias_weight"] = CurriculumTermCfg(
         func=microduck_mdp.reward_weight,
         params={
@@ -900,8 +1172,8 @@ def make_microduck_velocity_env_cfg(
             "weight_stages": [
                 {"step": 0, "weight": 0.0},
                 {"step": 600 * NUM_STEPS_PER_ENV, "weight": 1.0},
-                {"step": 1000 * NUM_STEPS_PER_ENV, "weight": 2.0},
-                {"step": 1500 * NUM_STEPS_PER_ENV, "weight": 3.0},
+                {"step": 1000 * NUM_STEPS_PER_ENV, "weight": 1.5},
+                {"step": 1500 * NUM_STEPS_PER_ENV, "weight": 1.5},
             ],
         },
     )
@@ -926,9 +1198,9 @@ MicroduckRlCfg = RslRlOnPolicyRunnerCfg(
         obs_normalization=True,
     ),
     algorithm=PpoWithSymmetryCfg(
-        value_loss_coef=1.0,
+        value_loss_coef=0.4,
         use_clipped_value_loss=True,
-        clip_param=0.2,
+        clip_param=0.15,
         entropy_coef=0.01,
         num_learning_epochs=5,
         num_mini_batches=4,

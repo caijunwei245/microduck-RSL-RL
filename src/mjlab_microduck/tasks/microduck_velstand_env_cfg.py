@@ -204,7 +204,7 @@ Phases (as before, but with a recovery backstop):
 """
 
 import math
-
+import os
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.managers import (
     CurriculumTermCfg,
@@ -263,6 +263,24 @@ REWARD_GATE_TILT_DEG = 40.0   # recovery rewards: fallen = tilt > 40° ONLY
 # (z≈0.07) and prone (z≈0.05).
 TERM_GATE_Z = 0.08            # fallen_too_long: z < 0.08 OR tilt > 40°
 TERM_GATE_TILT_DEG = 40.0
+
+# DEAD ZONE, audited 2026-09-23: with `fallen = tilt > 40` and `up = tilt < 25`, a robot parked at
+# stand height and 25-40 deg of tilt is in neither state - it is untaxed (`fallen_tax`), unbountied
+# (`recovery_success`), unshaped (every recovery reward is gated at 40 deg) and NEVER recycled
+# (`fallen_too_long` needs z < 0.08 or tilt > 40). Measured: this is exactly where the stand-up
+# family parks (113 mm / 33 deg), and the velstand policy lies flat at 46 mm with its own stall rule
+# misfiring 428 times. The `recovery_stall` tilt clause below is what closes the hole structurally;
+# if a future arm wants the reward-side gates closed as well, 30 deg is the value to test (it must
+# stay above RECOVERED_UP_TILT_DEG or "fallen" and "recovered" would overlap).
+
+
+def _stall_tilt_g():
+    """``MICRODUCK_STALL_TILT_G`` — tilt clause for ``recovery_stall`` (same switch as standup).
+
+    Unset = ``None`` = the original height-only rule, so the baseline stays reproducible.
+    """
+    raw = os.environ.get("MICRODUCK_STALL_TILT_G")
+    return None if raw is None else float(raw)
 
 # "Recovery COMPLETE" definition — shared by the recovery_success bounty and
 # the fallen_tax release (run-5 crouch-endpoint lesson). z threshold must sit
@@ -606,6 +624,24 @@ def make_microduck_velstand_env_cfg(play: bool = False, rough: bool = False) -> 
 
     # ── Terminations ──────────────────────────────────────────────────────────
     # Failed-recovery backstop (see module docstring, Phase 2).
+    # Structural recovery constraint (same recipe as the StandUp fix, 2026-09-22): still LOW and no
+    # progress for 2 s ends the episode, so a parked slump cannot collect the remaining seconds of
+    # reward. VelStand's recovery audit: low-spawn recovery 23.0 % overall, 0/32 from supine, and the
+    # reward-side levers alone moved nothing (three bit-identical per-bucket re-checks on StandUp).
+    cfg.terminations["recovery_stall"] = TerminationTermCfg(
+        func=microduck_mdp.recovery_stall_termination,
+        time_out=False,
+        params={
+            "threshold_z": 0.09,
+            "stall_steps": 100,
+            # MICRODUCK_STALL_TILT_G (ported from standup, 2026-09-23, same switch). The rule's only
+            # clause was `z < 0.09`, which cannot see the 25-40 deg / stand-height dead zone - and
+            # on the standup family the identical clause made a 3,000-iteration retrain change the
+            # floor-flip rate by NOTHING (0/184) while the tilt version took it to 184/184.
+            "tilt_clause_g": _stall_tilt_g(),
+        },
+    )
+
     cfg.terminations["fallen_too_long"] = TerminationTermCfg(
         func=microduck_mdp.fallen_too_long,
         time_out=False,

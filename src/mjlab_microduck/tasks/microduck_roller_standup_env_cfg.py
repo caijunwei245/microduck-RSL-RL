@@ -34,6 +34,7 @@ import os
 
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.managers import (
+    TerminationTermCfg,
     CurriculumTermCfg,
     EventTermCfg,
     RewardTermCfg,
@@ -42,6 +43,24 @@ from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.rl import RslRlModelCfg, RslRlOnPolicyRunnerCfg
 
 from mjlab_microduck.tasks import mdp as microduck_mdp
+
+
+def _faceup_roll_deg() -> float:
+    """``MICRODUCK_ROLLER_STANDUP_FACEUP_ROLL`` — spread (deg) on face-up spawns, default 0 = off.
+
+    Ported from the standup family (optimization_plan.md step 5b / A4): its face-up and near-side
+    starts are spread +/-90 deg about the long axis, which puts starts PARTWAY ALONG the roll - a
+    built-in reverse curriculum for the hardest direction. RollerStandUp had no such spread: its
+    face-down starts are a single flat pose, and the 5-round demo showed a round that never left the
+    ground (80 mm for the whole 6 s episode).
+    """
+    return math.radians(float(os.environ.get("MICRODUCK_ROLLER_STANDUP_FACEUP_ROLL", "0")))
+
+
+def _stall_tilt_g():
+    """``MICRODUCK_STALL_TILT_G`` — same shared switch as standup/velstand (default None = off)."""
+    raw = os.environ.get("MICRODUCK_STALL_TILT_G")
+    return None if raw is None else float(raw)
 from mjlab_microduck.tasks.microduck_velocity_rollers_env_cfg import (
     make_microduck_velocity_rollers_env_cfg,
 )
@@ -106,7 +125,15 @@ def _resolve_play_face_up():
 # _WHEEL_JOINTS servent à la documentation et au test d'indices : le cou est
 # résolu par NOM (neck_joint_pos_l2 appelle find_joints(r".*(neck|head).*") à
 # chaque pas) et les roues par la regex ^passive_.*.
+# Model-order map (THIS model's joint array), used by the index test and any raw qpos
+# math. Do NOT pass it as an mdp ``joint_indices`` param: those index the SERVO-ONLY
+# view (_servo_joint_pos / _servo_default_joint_pos), which is already 14 wide with the
+# canonical layout, so 14/15 run off the end -- that crashed every RollerStandUp run
+# with a CUDA device-side assert in pose_target_match (found 2026-09-20 by
+# logs/verify_tasks.py). Use _LEG_SERVO_IDX there.
 _LEG_JOINTS   = [0, 1, 2, 3, 4, 11, 12, 13, 14, 15]
+# The same ten leg joints in the servo view (left leg 0-4, neck 5-8, right leg 9-13).
+_LEG_SERVO_IDX = [0, 1, 2, 3, 4, 9, 10, 11, 12, 13]
 _NECK_JOINTS  = [7, 8, 9, 10]
 _WHEEL_JOINTS = [5, 6, 16, 17]
 
@@ -180,7 +207,7 @@ def make_microduck_roller_standup_env_cfg(play: bool = False) -> ManagerBasedRlE
         weight=8.0,
         params={
             "std": 0.5,
-            "joint_indices": _LEG_JOINTS,
+            "joint_indices": _LEG_SERVO_IDX,
             "target_overrides": None,
         },
     )
@@ -189,7 +216,7 @@ def make_microduck_roller_standup_env_cfg(play: bool = False) -> ManagerBasedRlE
         func=microduck_mdp.pose_l1_penalty,
         weight=5.0,
         params={
-            "joint_indices": _LEG_JOINTS,
+            "joint_indices": _LEG_SERVO_IDX,
             "target_overrides": None,
         },
     )
@@ -294,7 +321,7 @@ def make_microduck_roller_standup_env_cfg(play: bool = False) -> ManagerBasedRlE
             "height_std": 0.04,
             "upright_std": 0.40,
             "pose_std": 0.40,
-            "joint_indices": _LEG_JOINTS,
+            "joint_indices": _LEG_SERVO_IDX,
             "target_overrides": None,
             "asset_cfg": SceneEntityCfg("robot", body_names=("trunk_base",)),
         },
@@ -372,6 +399,10 @@ def make_microduck_roller_standup_env_cfg(play: bool = False) -> ManagerBasedRlE
             # un artefact bien plus doux qu'un pushout de contact.
             "prone_z_min":    0.076,
             "prone_z_max":    0.09,
+            # 0 by default: the recipe that has been running. Setting the switch spreads face-up
+            # (and near-side) starts partway along the roll, so the hardest direction gets frontier
+            # data instead of only its two endpoints.
+            "face_up_roll_max": _faceup_roll_deg(),
             # Debout sur roues : ROLLER_STAND_Z = 0.138 (contre 0.11–0.12 sans roues).
             "standing_z_min": 0.134,
             "standing_z_max": 0.144,
@@ -386,6 +417,22 @@ def make_microduck_roller_standup_env_cfg(play: bool = False) -> ManagerBasedRlE
     # Le robot DÉMARRE tombé → la terminaison sur inclinaison n'a aucun sens ici
     # (elle tuerait l'épisode au premier pas). nan_state, hérité, reste.
     cfg.terminations.pop("fell_over", None)
+
+    # STRUCTURAL backstop (optimization_plan.md step 5b, 2026-09-23): this family had NO termination
+    # that recycles a parked episode, so an env that never leaves the ground farms the whole 6 s
+    # (measured in the 5-round demo: one round reached only 80 mm and stayed there). The standup
+    # family's lesson applies directly - the reward side is not the binding constraint, the economy
+    # is - so a stalled env is terminated instead. The tilt clause is what makes the rule able to see
+    # a robot that is up-but-leaning, the same blind spot `recovery_stall` had before 2026-09-23.
+    cfg.terminations["recovery_stall"] = TerminationTermCfg(
+        func=microduck_mdp.recovery_stall_termination,
+        time_out=False,
+        params={
+            "threshold_z": 0.10,      # below the 138 mm roller stand, above a lying robot
+            "stall_steps": 100,       # 2 s at 50 Hz, a third of the 300-step episode
+            "tilt_clause_g": _stall_tilt_g(),
+        },
+    )
 
     # Curriculum des poses de départ, easy → hard. Avec un mélange plat dès le
     # départ, la policy optimise la majorité facile et laisse le dos sous-entraîné
