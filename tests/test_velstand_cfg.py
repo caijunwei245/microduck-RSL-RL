@@ -414,6 +414,10 @@ def test_prone_spawn_adds_terrain_origin_z():
 # termination: a parked slump ends the episode instead of being paid for.
 
 def test_velstand_has_a_recovery_stall_termination():
+    # imported locally: upstream's file imports the factory under a different name than the module
+    # path this test was written against (found by the post-rebase test run)
+    from mjlab_microduck.tasks.microduck_velstand_env_cfg import make_microduck_velstand_env_cfg
+
     cfg = make_microduck_velstand_env_cfg()
     assert "recovery_stall" in cfg.terminations
     term = cfg.terminations["recovery_stall"]
