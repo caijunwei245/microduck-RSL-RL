@@ -41,3 +41,9 @@ logdir/.claude/worktrees/
 
 # MuJoCo writes this into the CWD whenever the model warns (rehearsals, smoke tests)
 MUJOCO_LOG.TXT
+
+# Session checkpoints are committed on purpose (see checkpoints/<date>/README.md for the
+# recipe and measured result behind each file) — the global *.pt / *.onnx ignores above
+# would otherwise drop them silently.
+!checkpoints/**/*.pt
+!checkpoints/**/*.onnx
