@@ -47,3 +47,8 @@ MUJOCO_LOG.TXT
 # would otherwise drop them silently.
 !checkpoints/**/*.pt
 !checkpoints/**/*.onnx
+
+# local render/debug artefacts of the viewer work (297 MB of PNG/MP4, one file over GitHub's
+# 100 MB limit) - never meant to be committed; a stray "git add -A" swept them in once (2026-09-25).
+renders/
+MJDATA.TXT

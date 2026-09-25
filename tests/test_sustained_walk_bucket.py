@@ -255,3 +255,47 @@ def test_sitstand_hold_bucket_off_leaves_the_dwell_alone():
     assert torch.allclose(obj.time_left, torch.full((2000,), 4.0)), (
         "with the bucket off the dwell timer must not be overwritten"
     )
+
+
+# ── actuator latency: range and coherence (2026-09-24) ────────────────────────────────────────────
+# Two defects in the shipped actuator cfg: the declared 3-6 control steps is 60-120 ms while the
+# measured real latency is 20-40 ms (1-2 steps), and mjlab's default buffer re-draws the lag every
+# control step (a dither) rather than holding it coherently as the hardware does. The rehearsal
+# sweep makes the first one stark: the walk deployment candidate gives 0.26-0.27 m/s at delay 1 and
+# 0.24-0.25 at delay 2, but COLLAPSES to 0.00 m/s at delay 4 and 6 (trunk 36 mm, 28 deg of tilt).
+
+
+def test_actuator_lag_defaults_to_the_recipe_that_ran(monkeypatch):
+    """Defaults are the shipped envelope, so every A/B keeps a reproducible baseline."""
+    import mjlab_microduck.robot.microduck_constants as c
+
+    monkeypatch.delenv("MICRODUCK_ACTUATOR_LAG", raising=False)
+    monkeypatch.delenv("MICRODUCK_ACTUATOR_LAG_HOLD", raising=False)
+    assert c._actuator_lag() == (3, 6)
+    assert c.ACTUATOR_LAG == (3, 6), "module constant must be the historical 3-6 steps"
+    assert c.ACTUATOR_LAG_HOLD == 0, "0 = mjlab's per-step re-draw (the dither)"
+
+
+def test_actuator_lag_arm_matches_the_measured_latency(monkeypatch):
+    """The arm is the latency the robot actually has: 20-40 ms = 1-2 steps at 50 Hz, held coherently."""
+    import mjlab_microduck.robot.microduck_constants as c
+
+    monkeypatch.setenv("MICRODUCK_ACTUATOR_LAG", "1,2")
+    monkeypatch.setenv("MICRODUCK_ACTUATOR_LAG_HOLD", "250")
+    assert c._actuator_lag() == (1, 2)
+    assert c.ACTUATOR_LAG_HOLD == 0, (
+        "the module-level constant stays the default; the arm is applied by re-import in a fresh "
+        "process (reloading it inside a test leaks module identity into other tests)"
+    )
+
+
+def test_actuator_lag_rejects_a_bad_spec(monkeypatch):
+    import pytest
+
+    import mjlab_microduck.robot.microduck_constants as c
+
+    monkeypatch.setenv("MICRODUCK_ACTUATOR_LAG", "6,3")
+    with pytest.raises(AssertionError):
+        c._actuator_lag()
+    monkeypatch.setenv("MICRODUCK_ACTUATOR_LAG", "2")
+    assert c._actuator_lag() == (2, 2), "a single value means a fixed lag"

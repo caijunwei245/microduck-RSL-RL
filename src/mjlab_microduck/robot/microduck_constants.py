@@ -153,6 +153,32 @@ FULL_COLLISION = CollisionCfg(
     # base_cfg=XmlPositionActuatorCfg(joint_names_expr=(r".*",)),
 # )
 
+# ── Actuator latency: how much, and coherent or dithered? (2026-09-24) ────────
+# Two separate defects lived in the two lines below:
+#   1. RANGE. `delay_min_lag=3, delay_max_lag=6` is 60-120 ms at 50 Hz, but the latency MEASURED on
+#      the real robot is 20-40 ms = 1-2 control steps (owner-ratified, logs/kick_r1_report.md
+#      §45/§801). Training was therefore hardened against a 3x-larger lag than the hardware has.
+#   2. COHERENCE. mjlab's DelayBuffer with the defaults (delay_update_period=0, delay_hold_prob=0.0)
+#      re-draws each env's lag EVERY control step, so "3-6 steps" is a dither around ~4.5, never a
+#      coherent delay. The robot's is coherent (and so is the rehearsal's --delay). The kick task
+#      measured what that costs: same checkpoint, same env, dithered 0.2433/0.2448 m/s ball speed vs
+#      held 0.1215/0.1404 - the held version reproducing the deployment rehearsal (logs/kick_r1_report.md
+#      §34). Walking is quasi-static and was fine either way, which is why nothing caught it.
+# Switches (defaults = the recipe that has been running, so every A/B keeps a baseline):
+#   MICRODUCK_ACTUATOR_LAG="min,max"   control-step lag range; measured truth is "1,2"
+#   MICRODUCK_ACTUATOR_LAG_HOLD=<N>    hold each env's lag for N control steps (0 = mjlab's dither;
+#                                      a whole episode is EPISODE_LENGTH_S * 50, e.g. 250)
+def _actuator_lag() -> tuple[int, int]:
+    raw = os.environ.get("MICRODUCK_ACTUATOR_LAG", "3,6")
+    lo_s, _, hi_s = raw.partition(",")
+    lo, hi = int(lo_s), int(hi_s or lo_s)
+    assert 0 <= lo <= hi, f"MICRODUCK_ACTUATOR_LAG must be 'min,max' with 0<=min<=max, got {raw!r}"
+    return lo, hi
+
+
+ACTUATOR_LAG = _actuator_lag()
+ACTUATOR_LAG_HOLD = int(os.environ.get("MICRODUCK_ACTUATOR_LAG_HOLD", "0"))
+
 # -- BAM M6 actuator (full voltage control + load-dependent friction) --
 # Exclude passive_* joints (jaw linkage in the new model has no XML actuator).
 # Voltage domain randomization (mirrors mjlab_microban):
@@ -170,8 +196,10 @@ _BAM_ACTUATOR_KWARGS = dict(
     vin_drop_gain_range=(0.0, 0.2),
     vin_min=6.0,
     # max_current=1.75,
-    delay_min_lag=3,
-    delay_max_lag=6,
+    delay_min_lag=ACTUATOR_LAG[0],
+    delay_max_lag=ACTUATOR_LAG[1],
+    # 0 = mjlab's per-step re-draw (dither); N>0 = hold each env's lag for N control steps
+    delay_update_period=ACTUATOR_LAG_HOLD,
 )
 actuators = FrictionDRBamActuatorCfg(**_BAM_ACTUATOR_KWARGS)
 

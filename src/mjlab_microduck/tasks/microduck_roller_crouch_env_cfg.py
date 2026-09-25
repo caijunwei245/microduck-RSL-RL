@@ -459,6 +459,12 @@ def make_microduck_roller_crouch_env_cfg(play: bool = False) -> ManagerBasedRlEn
             },
         )
 
+    # Publishability (2026-09-24): with MICRODUCK_INTERNAL_PHASE=1 the actor stops seeing the phase,
+    # so the skill runs from an internal clock and ships as an EPISODIC policy (see mdp.
+    # internal_phase_enabled for why the contract needs this and what to measure).
+    if microduck_mdp.hide_phase_from_actor(cfg):
+        print("INTERNAL PHASE: actor's twist-command obs zeroed (reward + critic keep the phase)")
+
     return cfg
 
 

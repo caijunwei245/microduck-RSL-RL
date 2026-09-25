@@ -1004,6 +1004,54 @@ def neck_action_acceleration_l2(
     return torch.sum(torch.square(action_acc), dim=1)
 
 
+def internal_phase_enabled() -> bool:
+    """``MICRODUCK_INTERNAL_PHASE=1`` — hide the phase from the ACTOR (publishability, 2026-09-24).
+
+    The publish contract (schema 2) has two kinds: `episodic` (button -> runs duration_s -> returns
+    by itself) and `perpetual` (holds until told). A PHASE-DRIVEN skill fits neither: its cycle lives
+    in the 3-D twist slot as ``[cos(2*pi*phi), sin(2*pi*phi), 0]``, and the runtime sends a constant
+    command, so ground_pick / spin / roller_crouch / sitstand are unpublishable as they stand.
+
+    The house precedent for a button-triggered trick is roulade: "policy switch = roll starts
+    immediately; no phase clock, no reference motion" - an EPISODIC policy whose schedule is internal.
+    This switch turns a phase-driven task into that shape: the reward keeps reading the real phase
+    from the command manager (so the task is unchanged), the CRITIC keeps it too (legitimate
+    privileged information), but the ACTOR sees a zeroed twist slot - exactly what the daemon sends
+    when a button triggers an episodic policy.
+
+    Trade-off to measure, not assume: the cycle becomes OPEN LOOP for the actor (it must infer where
+    it is from proprioception and time), so the retrained policy may be weaker than the
+    phase-commanded one. Compare with `logs/acceptance_gate.sh` before shipping.
+    """
+    return os.environ.get("MICRODUCK_INTERNAL_PHASE", "0") == "1"
+
+
+def hide_phase_from_actor(cfg) -> bool:
+    """Zero the actor's twist-command obs term when ``internal_phase_enabled()`` (returns True if it
+    was applied). The reward keeps the real phase, and so does the critic.
+
+    NOTE: mjlab's base cfg hands the SAME ObservationTermCfg object to the actor and the critic
+    groups, so assigning `actor.terms["command"].scale = 0.0` silently zeroes the critic's too
+    (measured). The critic therefore gets its own copy with the scale restored to None - otherwise
+    the value function loses privileged phase information for no reason.
+    """
+    if not internal_phase_enabled():
+        return False
+    actor_term = cfg.observations["actor"].terms.get("command")
+    if actor_term is None:
+        return False
+    critic_group = cfg.observations.get("critic")
+    critic_term = critic_group.terms.get("command") if critic_group is not None else None
+    shared = critic_term is actor_term
+    actor_term.scale = 0.0
+    if shared:
+        import copy as _copy
+
+        critic_group.terms["command"] = _copy.deepcopy(actor_term)
+        critic_group.terms["command"].scale = None
+    return True
+
+
 def _fallen_mask(
     env: ManagerBasedRlEnv,
     asset,
