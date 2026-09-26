@@ -344,13 +344,32 @@ ball); roller tasks leave head/body command slots zero-padded.
   +0.069 before, +0.430 after). `Episode_Metrics/dc_turn_gain` = EMA(w_z)/cmd
   over envs with |cmd_z| > 0.25 is the training-side twin of the rehearsal
   (mjlab logs the mean over ALL envs, so a good policy reads ~0.20, a degraded
-  one ~0.08, ceiling = the share of envs above the threshold).
+  one ~0.08, ceiling = the share of envs above the threshold). **The same tax
+  also creates the low-command dead zone**, which is the sharper form of the
+  lesson — see the next bullet.
+- **A tax on the behaviour a command requires makes that command unreachable,
+  and pinning the command does NOT fix it.** Measured 2026-09-26 over 3 seeds x
+  5 rounds (pre-registered in `logs/turn_deadzone_plan.md`, verdict in
+  `logs/turn_deadzone_verdict.md`), in-place achieved |yaw| at a commanded 0.3:
+  deployed policy 0.081 (gain 0.27); from scratch with the command pinned 0.173
+  (0.58); from scratch without the pin 0.038 (0.13); **pinned AND with
+  `MICRODUCK_ANGULAR_WOBBLE=0` 0.256 (0.85)**; a fully wobble-free older recipe
+  **0.309 (1.03)**. At cmd 0.5 the same ordering holds (0.341 -> 0.471 -> 0.554).
+  So the earlier "either train it from scratch or the gait cannot do it" reading
+  was wrong on both branches: removing the tax is the dominant lever, the pin is
+  second-order, and a fresh optimization does not find the exit while the tax is
+  in place. Two process notes: a **matched pair** (same source checkpoint, same
+  code, ONE env var apart — here `yawwobble_long` vs `yawonly_long`) can identify
+  a mechanism with zero GPU-hours, so run it *before* booking the from-scratch
+  run; and a pin is necessary-but-not-sufficient — populating a command region
+  only pays if nothing else prices the behaviour that region needs.
 - **The deployment command must be an actual point of the command
   distribution.** Uniform ±range resampled every 3-8 s gives the runtime's
   held command (|yaw| = range max, in place, 140 s) measure zero, and the
   policy learned a dead zone below ~0.25 rad/s (0.00 rad/s achieved at
   commanded 0.10 and 0.20). `rel_sustained_turn_envs` pins that fraction of
-  envs on the deployment command for longer than an episode.
+  envs on the deployment command for longer than an episode — but read the
+  bullet above before concluding that a pin alone will open a dead zone.
 - Env-var A/B switches are the house pattern for reward experiments (read at
   cfg build, defaults = the recipe that has been running): `MICRODUCK_YAW_EMA_TAU`,
   `MICRODUCK_YAW_TRACK_STD`, `MICRODUCK_SUSTAINED_TURN`, `MICRODUCK_WOBBLE_WEIGHT`,

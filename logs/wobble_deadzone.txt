@@ -1,0 +1,25 @@
+############ WOBBLE TAX vs the in-place turn dead zone ############
+date: 2026-09-26T15:46:54+08:00
+PRIMARY matched pair (yawonly_lrbound@57999 + 6000 iters, one env var apart):
+  wobble ON : logs/rsl_rl/velocity/2026-09-17_00-02-38_yawwobble_long/model_63998.pt
+  wobble OFF: logs/rsl_rl/velocity/2026-09-17_00-03-38_yawonly_long/model_63998.pt
+cmd 0.5  wobble_ON    velocity turn          yawwobble_long                     1:XX |yaw|=0.370 gain=0.74 abs0.3=OK | 2:XX |yaw|=0.359 gain=0.72 abs0.3=OK | 3:XX |yaw|=0.394 gain=0.79 abs0.3=OK
+cmd 0.5  wobble_ON    velocity turn            0/3  FAIL   (yawwobble_long)
+cmd 0.5  wobble_OFF   velocity turn          yawonly_long                       1:OK |yaw|=0.568 gain=1.14 abs0.3=OK | 2:OK |yaw|=0.554 gain=1.11 abs0.3=OK | 3:OK |yaw|=0.563 gain=1.13 abs0.3=OK
+cmd 0.5  wobble_OFF   velocity turn            3/3  ALL PASS   (yawonly_long)
+cmd 0.3  wobble_ON    velocity turn          yawwobble_long                     1:XX |yaw|=0.108 gain=0.36 abs0.3=XX | 2:XX |yaw|=0.128 gain=0.43 abs0.3=XX | 3:XX |yaw|=0.150 gain=0.50 abs0.3=XX
+cmd 0.3  wobble_ON    velocity turn            0/3  FAIL   (yawwobble_long)
+cmd 0.3  wobble_OFF   velocity turn          yawonly_long                       1:OK |yaw|=0.345 gain=1.15 abs0.3=OK | 2:OK |yaw|=0.334 gain=1.11 abs0.3=OK | 3:OK |yaw|=0.346 gain=1.15 abs0.3=OK
+cmd 0.3  wobble_OFF   velocity turn            3/3  ALL PASS   (yawonly_long)
+cmd 0.2  wobble_ON    velocity turn          yawwobble_long                     1:XX |yaw|=0.022 gain=0.11 abs0.3=XX | 2:XX |yaw|=0.022 gain=0.11 abs0.3=XX | 3:XX |yaw|=0.032 gain=0.16 abs0.3=XX
+cmd 0.2  wobble_ON    velocity turn            0/3  FAIL   (yawwobble_long)
+cmd 0.2  wobble_OFF   velocity turn          yawonly_long                       1:XX |yaw|=0.010 gain=0.05 abs0.3=XX | 2:XX |yaw|=0.008 gain=0.04 abs0.3=XX | 3:XX |yaw|=0.012 gain=0.06 abs0.3=XX
+cmd 0.2  wobble_OFF   velocity turn            0/3  FAIL   (yawonly_long)
+
+SECONDARY dose-response at cmd 0.3 (confounded: yaw05 recipe, xy tracking on):
+  wobble -3.0: logs/rsl_rl/velocity/2026-09-17_09-30-08_yaw05_long/model_69997.pt
+  wobble -1.5: logs/rsl_rl/velocity/2026-09-17_14-08-20_yaw05_wob15/model_66997.pt
+cmd 0.3  wobble_-3.0  velocity turn          yaw05_long                         1:XX |yaw|=0.079 gain=0.26 abs0.3=XX | 2:XX |yaw|=0.090 gain=0.30 abs0.3=XX | 3:XX |yaw|=0.122 gain=0.41 abs0.3=XX
+cmd 0.3  wobble_-3.0  velocity turn            0/3  FAIL   (yaw05_long)
+cmd 0.3  wobble_-1.5  velocity turn          yaw05_wob15                        1:XX |yaw|=0.117 gain=0.39 abs0.3=XX | 2:XX |yaw|=0.105 gain=0.35 abs0.3=XX | 3:XX |yaw|=0.153 gain=0.51 abs0.3=XX
+cmd 0.3  wobble_-1.5  velocity turn            0/3  FAIL   (yaw05_wob15)
