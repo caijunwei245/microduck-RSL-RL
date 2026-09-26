@@ -272,8 +272,11 @@ def detail(kind: str, r: dict) -> str:
     if kind == "walk":
         return f"v={r['v_mean']:+.3f} m/s z={r['z_last']:.0f} g={r['g_last']:+.2f}"
     if kind == "turn":
+        # z/g/`fell` are here because a turn round can miss the criterion two very different ways -
+        # "stood still" (upright, no rotation) or "fell over" - and the two need opposite fixes.
         return (f"|yaw|={r['yaw_abs_mean']:.3f} gain={r.get('gain', 0):.2f} "
-                f"abs0.3={'OK' if r.get('ok_abs03') else 'XX'}")
+                f"abs0.3={'OK' if r.get('ok_abs03') else 'XX'} "
+                f"z={r['z_last']:.0f} g={r['g_last']:+.2f}{' FELL' if r.get('fell') else ''}")
     if kind == "spin":
         return f"|yaw|={r['yaw_abs_mean']:.2f} rad/s g={r['g_last']:+.2f}"
     if kind == "floor_flip":
@@ -354,6 +357,10 @@ def main() -> int:
                     help="commanded yaw rate for the turn rows (rad/s)")
     ap.add_argument("--video", action="store_true",
                     help="record one video per skill (all rounds back to back, offscreen renderer)")
+    ap.add_argument("--play-cfg", action="store_true",
+                    help="load the PLAY cfg (domain randomization off) - a DIAGNOSTIC: if the failing "
+                         "rounds recover without DR, the residual is a DR-tail robustness gap, not a "
+                         "policy-shape problem. Never used for the numbers quoted in the docs.")
     ap.add_argument("--video-dir", default="logs/demo_videos")
     ap.add_argument("--video-fps", type=int, default=25)
     ap.add_argument("--video-stride", type=int, default=2,
@@ -367,17 +374,20 @@ def main() -> int:
                     help="env seed; sweep it to separate spawn sensitivity from seed noise (A3)")
     ap.add_argument("--ckpt", default=None,
                     help="gate a SPECIFIC checkpoint instead of the newest match of each row's glob")
+    ap.add_argument("--turn-ckpt", default=os.environ.get(
+                        "MICRODUCK_TURN_CKPT", "logs/rsl_rl/velocity/*dc_long_0919_0125/model_*.pt"),
+                    help="checkpoint glob for the two TURN rows. Default = the deployed walking "
+                         "candidate; point it at the wobble-free turn policy to show the fixed turn "
+                         "without touching the other rows.")
     args = ap.parse_args()
 
     global TURN_CMD
     TURN_CMD = args.turn
     torch.manual_seed(args.seed)
     SKILLS.insert(1, ("velocity turn", "Mjlab-Velocity-Flat-MicroDuck",
-                      "logs/rsl_rl/velocity/*dc_long_0919_0125/model_*.pt", "turn",
-                      0.0, TURN_CMD, None, None))
+                      args.turn_ckpt, "turn", 0.0, TURN_CMD, None, None))
     SKILLS.insert(2, ("walk+turn", "Mjlab-Velocity-Flat-MicroDuck",
-                      "logs/rsl_rl/velocity/*dc_long_0919_0125/model_*.pt", "turn",
-                      0.3, TURN_CMD, None, None))
+                      args.turn_ckpt, "turn", 0.3, TURN_CMD, None, None))
 
     print(f"{'skill':22s} {'task env':34s} rounds")
     print("-" * 110)
@@ -392,7 +402,7 @@ def main() -> int:
             summary.append((name, None, 0, args.rounds))
             continue
         torch.manual_seed(args.seed)
-        env_cfg = load_env_cfg(task, play=False)
+        env_cfg = load_env_cfg(task, play=args.play_cfg)
         env_cfg.scene.num_envs = 1
         if args.video:
             env_cfg.viewer.width = 640 * args.video_scale

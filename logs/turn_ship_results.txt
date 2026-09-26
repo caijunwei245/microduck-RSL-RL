@@ -1,0 +1,121 @@
+############ TURN FIX CONSOLIDATION: pre-registered sweep ############
+design: logs/turn_ship_plan.md   date: 2026-09-26 21:20
+pin + wobble-off, continued to 5k : logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt
+wobble-off, NO pin, 5k            : logs/rsl_rl/velocity/2026-09-26_19-46-52_turn00_ship/model_4999.pt
+
+=== turn03_woboff5k : logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt
+velocity walk          turn03_woboff                      1:OK v=+0.250 m/s z=117 g=-1.00 | 2:OK v=+0.257 m/s z=116 g=-1.00 | 3:OK v=+0.251 m/s z=119 g=-1.00
+velocity walk            3/3  ALL PASS   (turn03_woboff)
+  [turn 0.5 seed 0] velocity turn          turn03_woboff                      1:OK |yaw|=0.610 gain=1.22 abs0.3=OK | 2:OK |yaw|=0.600 gain=1.20 abs0.3=OK | 3:OK |yaw|=0.631 gain=1.26 abs0.3=OK | 4:OK |yaw|=0.565 gain=1.13 abs0.3=OK | 5:XX |yaw|=0.129 gain=0.26 abs0.3=XX
+  [turn 0.5 seed 0] walk+turn              turn03_woboff                      1:OK |yaw|=0.581 gain=1.16 abs0.3=OK | 2:OK |yaw|=0.597 gain=1.19 abs0.3=OK | 3:OK |yaw|=0.561 gain=1.12 abs0.3=OK | 4:OK |yaw|=0.549 gain=1.10 abs0.3=OK | 5:XX |yaw|=0.129 gain=0.26 abs0.3=XX
+  [turn 0.5 seed 0] velocity turn            4/5  PARTIAL   (turn03_woboff)
+  [turn 0.5 seed 0] walk+turn                4/5  PARTIAL   (turn03_woboff)
+  [turn 0.5 seed 1] velocity turn          turn03_woboff                      1:OK |yaw|=0.605 gain=1.21 abs0.3=OK | 2:XX |yaw|=0.238 gain=0.48 abs0.3=XX | 3:OK |yaw|=0.600 gain=1.20 abs0.3=OK | 4:OK |yaw|=0.581 gain=1.16 abs0.3=OK | 5:XX |yaw|=0.027 gain=0.05 abs0.3=XX
+  [turn 0.5 seed 1] walk+turn              turn03_woboff                      1:OK |yaw|=0.562 gain=1.12 abs0.3=OK | 2:XX |yaw|=0.227 gain=0.45 abs0.3=XX | 3:OK |yaw|=0.600 gain=1.20 abs0.3=OK | 4:OK |yaw|=0.590 gain=1.18 abs0.3=OK | 5:XX |yaw|=0.029 gain=0.06 abs0.3=XX
+  [turn 0.5 seed 1] velocity turn            3/5  PARTIAL   (turn03_woboff)
+  [turn 0.5 seed 1] walk+turn                3/5  PARTIAL   (turn03_woboff)
+  [turn 0.5 seed 2] velocity turn          turn03_woboff                      1:OK |yaw|=0.553 gain=1.11 abs0.3=OK | 2:XX |yaw|=0.024 gain=0.05 abs0.3=XX | 3:OK |yaw|=0.562 gain=1.12 abs0.3=OK | 4:XX |yaw|=0.428 gain=0.86 abs0.3=OK | 5:OK |yaw|=0.533 gain=1.07 abs0.3=OK
+  [turn 0.5 seed 2] walk+turn              turn03_woboff                      1:OK |yaw|=0.531 gain=1.06 abs0.3=OK | 2:XX |yaw|=0.026 gain=0.05 abs0.3=XX | 3:OK |yaw|=0.608 gain=1.22 abs0.3=OK | 4:XX |yaw|=0.450 gain=0.90 abs0.3=OK | 5:OK |yaw|=0.541 gain=1.08 abs0.3=OK
+  [turn 0.5 seed 2] velocity turn            3/5  PARTIAL   (turn03_woboff)
+  [turn 0.5 seed 2] walk+turn                3/5  PARTIAL   (turn03_woboff)
+  [turn 0.3 seed 0] velocity turn          turn03_woboff                      1:OK |yaw|=0.355 gain=1.18 abs0.3=OK | 2:OK |yaw|=0.354 gain=1.18 abs0.3=OK | 3:OK |yaw|=0.384 gain=1.28 abs0.3=OK | 4:OK |yaw|=0.376 gain=1.25 abs0.3=OK | 5:XX |yaw|=0.069 gain=0.23 abs0.3=XX
+  [turn 0.3 seed 0] walk+turn              turn03_woboff                      1:OK |yaw|=0.346 gain=1.15 abs0.3=OK | 2:OK |yaw|=0.369 gain=1.23 abs0.3=OK | 3:OK |yaw|=0.349 gain=1.16 abs0.3=OK | 4:OK |yaw|=0.370 gain=1.23 abs0.3=OK | 5:XX |yaw|=0.072 gain=0.24 abs0.3=XX
+  [turn 0.3 seed 0] velocity turn            4/5  PARTIAL   (turn03_woboff)
+  [turn 0.3 seed 0] walk+turn                4/5  PARTIAL   (turn03_woboff)
+  [turn 0.3 seed 1] velocity turn          turn03_woboff                      1:OK |yaw|=0.357 gain=1.19 abs0.3=OK | 2:XX |yaw|=0.141 gain=0.47 abs0.3=XX | 3:OK |yaw|=0.342 gain=1.14 abs0.3=OK | 4:OK |yaw|=0.344 gain=1.15 abs0.3=OK | 5:XX |yaw|=0.018 gain=0.06 abs0.3=XX
+  [turn 0.3 seed 1] walk+turn              turn03_woboff                      1:OK |yaw|=0.367 gain=1.22 abs0.3=OK | 2:XX |yaw|=0.134 gain=0.45 abs0.3=XX | 3:OK |yaw|=0.408 gain=1.36 abs0.3=OK | 4:OK |yaw|=0.464 gain=1.55 abs0.3=OK | 5:XX |yaw|=0.018 gain=0.06 abs0.3=XX
+  [turn 0.3 seed 1] velocity turn            3/5  PARTIAL   (turn03_woboff)
+  [turn 0.3 seed 1] walk+turn                3/5  PARTIAL   (turn03_woboff)
+  [turn 0.3 seed 2] velocity turn          turn03_woboff                      1:OK |yaw|=0.326 gain=1.09 abs0.3=OK | 2:XX |yaw|=0.024 gain=0.08 abs0.3=XX | 3:OK |yaw|=0.340 gain=1.13 abs0.3=OK | 4:XX |yaw|=0.244 gain=0.81 abs0.3=XX | 5:OK |yaw|=0.319 gain=1.06 abs0.3=OK
+  [turn 0.3 seed 2] walk+turn              turn03_woboff                      1:OK |yaw|=0.318 gain=1.06 abs0.3=OK | 2:XX |yaw|=0.028 gain=0.09 abs0.3=XX | 3:OK |yaw|=0.336 gain=1.12 abs0.3=OK | 4:XX |yaw|=0.250 gain=0.83 abs0.3=XX | 5:OK |yaw|=0.330 gain=1.10 abs0.3=OK
+  [turn 0.3 seed 2] velocity turn            3/5  PARTIAL   (turn03_woboff)
+  [turn 0.3 seed 2] walk+turn                3/5  PARTIAL   (turn03_woboff)
+
+=== turn00_ship : logs/rsl_rl/velocity/2026-09-26_19-46-52_turn00_ship/model_4999.pt
+velocity walk          turn00_ship                        1:OK v=+0.260 m/s z=114 g=-1.00 | 2:OK v=+0.260 m/s z=118 g=-0.99 | 3:OK v=+0.266 m/s z=113 g=-1.00
+velocity walk            3/3  ALL PASS   (turn00_ship)
+  [turn 0.5 seed 0] velocity turn          turn00_ship                        1:OK |yaw|=0.535 gain=1.07 abs0.3=OK | 2:OK |yaw|=0.521 gain=1.04 abs0.3=OK | 3:OK |yaw|=0.544 gain=1.09 abs0.3=OK | 4:OK |yaw|=0.506 gain=1.01 abs0.3=OK | 5:XX |yaw|=0.097 gain=0.19 abs0.3=XX
+  [turn 0.5 seed 0] walk+turn              turn00_ship                        1:XX |yaw|=0.483 gain=0.97 abs0.3=OK | 2:OK |yaw|=0.518 gain=1.04 abs0.3=OK | 3:XX |yaw|=0.493 gain=0.99 abs0.3=OK | 4:XX |yaw|=0.490 gain=0.98 abs0.3=OK | 5:XX |yaw|=0.092 gain=0.18 abs0.3=XX
+  [turn 0.5 seed 0] velocity turn            4/5  PARTIAL   (turn00_ship)
+  [turn 0.5 seed 0] walk+turn                1/5  PARTIAL   (turn00_ship)
+  [turn 0.5 seed 1] velocity turn          turn00_ship                        1:OK |yaw|=0.565 gain=1.13 abs0.3=OK | 2:XX |yaw|=0.228 gain=0.46 abs0.3=XX | 3:OK |yaw|=0.560 gain=1.12 abs0.3=OK | 4:OK |yaw|=0.555 gain=1.11 abs0.3=OK | 5:XX |yaw|=0.009 gain=0.02 abs0.3=XX
+  [turn 0.5 seed 1] walk+turn              turn00_ship                        1:OK |yaw|=0.537 gain=1.07 abs0.3=OK | 2:XX |yaw|=0.209 gain=0.42 abs0.3=XX | 3:OK |yaw|=0.549 gain=1.10 abs0.3=OK | 4:OK |yaw|=0.510 gain=1.02 abs0.3=OK | 5:XX |yaw|=0.010 gain=0.02 abs0.3=XX
+  [turn 0.5 seed 1] velocity turn            3/5  PARTIAL   (turn00_ship)
+  [turn 0.5 seed 1] walk+turn                3/5  PARTIAL   (turn00_ship)
+  [turn 0.5 seed 2] velocity turn          turn00_ship                        1:OK |yaw|=0.524 gain=1.05 abs0.3=OK | 2:XX |yaw|=0.017 gain=0.03 abs0.3=XX | 3:OK |yaw|=0.527 gain=1.05 abs0.3=OK | 4:XX |yaw|=0.421 gain=0.84 abs0.3=OK | 5:OK |yaw|=0.513 gain=1.03 abs0.3=OK
+  [turn 0.5 seed 2] walk+turn              turn00_ship                        1:XX |yaw|=0.472 gain=0.94 abs0.3=OK | 2:XX |yaw|=0.010 gain=0.02 abs0.3=XX | 3:XX |yaw|=0.474 gain=0.95 abs0.3=OK | 4:XX |yaw|=0.405 gain=0.81 abs0.3=OK | 5:XX |yaw|=0.484 gain=0.97 abs0.3=OK
+  [turn 0.5 seed 2] velocity turn            3/5  PARTIAL   (turn00_ship)
+  [turn 0.5 seed 2] walk+turn                0/5  FAIL   (turn00_ship)
+  [turn 0.3 seed 0] velocity turn          turn00_ship                        1:XX |yaw|=0.288 gain=0.96 abs0.3=XX | 2:XX |yaw|=0.278 gain=0.93 abs0.3=XX | 3:XX |yaw|=0.289 gain=0.96 abs0.3=XX | 4:XX |yaw|=0.275 gain=0.92 abs0.3=XX | 5:XX |yaw|=0.056 gain=0.19 abs0.3=XX
+  [turn 0.3 seed 0] walk+turn              turn00_ship                        1:XX |yaw|=0.275 gain=0.92 abs0.3=XX | 2:OK |yaw|=0.311 gain=1.04 abs0.3=OK | 3:XX |yaw|=0.295 gain=0.98 abs0.3=XX | 4:OK |yaw|=0.387 gain=1.29 abs0.3=OK | 5:XX |yaw|=0.075 gain=0.25 abs0.3=XX
+  [turn 0.3 seed 0] velocity turn            0/5  FAIL   (turn00_ship)
+  [turn 0.3 seed 0] walk+turn                2/5  PARTIAL   (turn00_ship)
+  [turn 0.3 seed 1] velocity turn          turn00_ship                        1:OK |yaw|=0.302 gain=1.01 abs0.3=OK | 2:XX |yaw|=0.107 gain=0.36 abs0.3=XX | 3:XX |yaw|=0.289 gain=0.96 abs0.3=XX | 4:OK |yaw|=0.319 gain=1.06 abs0.3=OK | 5:XX |yaw|=0.035 gain=0.12 abs0.3=XX
+  [turn 0.3 seed 1] walk+turn              turn00_ship                        1:OK |yaw|=0.346 gain=1.15 abs0.3=OK | 2:XX |yaw|=0.120 gain=0.40 abs0.3=XX | 3:OK |yaw|=0.351 gain=1.17 abs0.3=OK | 4:OK |yaw|=0.346 gain=1.15 abs0.3=OK | 5:XX |yaw|=0.015 gain=0.05 abs0.3=XX
+  [turn 0.3 seed 1] velocity turn            2/5  PARTIAL   (turn00_ship)
+  [turn 0.3 seed 1] walk+turn                3/5  PARTIAL   (turn00_ship)
+  [turn 0.3 seed 2] velocity turn          turn00_ship                        1:XX |yaw|=0.262 gain=0.87 abs0.3=XX | 2:XX |yaw|=0.021 gain=0.07 abs0.3=XX | 3:OK |yaw|=0.320 gain=1.07 abs0.3=OK | 4:XX |yaw|=0.201 gain=0.67 abs0.3=XX | 5:XX |yaw|=0.278 gain=0.93 abs0.3=XX
+  [turn 0.3 seed 2] walk+turn              turn00_ship                        1:XX |yaw|=0.250 gain=0.83 abs0.3=XX | 2:XX |yaw|=0.024 gain=0.08 abs0.3=XX | 3:XX |yaw|=0.299 gain=1.00 abs0.3=XX | 4:XX |yaw|=0.243 gain=0.81 abs0.3=XX | 5:OK |yaw|=0.301 gain=1.00 abs0.3=OK
+  [turn 0.3 seed 2] velocity turn            1/5  PARTIAL   (turn00_ship)
+  [turn 0.3 seed 2] walk+turn                1/5  PARTIAL   (turn00_ship)
+
+############ DECISION TABLE (median over 3 seeds x 5 rounds) ############
+arm                cmd row              n median|yaw|  gain  >=0.30
+base               0.5 velocity turn   15       0.341  0.68  11/15 
+base               0.5 walk+turn       15       0.461  0.92  11/15 
+base               0.3 velocity turn   15       0.081  0.27   0/15 
+base               0.3 walk+turn       15       0.303  1.01   9/15 
+turn05_warm        0.5 velocity turn   15       0.393  0.79  11/15 
+turn05_warm        0.5 walk+turn       15       0.494  0.99  11/15 
+turn05_warm        0.3 velocity turn   15       0.136  0.45   0/15 
+turn05_warm        0.3 walk+turn       15       0.319  1.06  10/15 
+turn00_scratch     0.5 velocity turn   15       0.285  0.57   7/15 
+turn00_scratch     0.5 walk+turn       15       0.484  0.97  11/15 
+turn00_scratch     0.3 velocity turn   15       0.038  0.13   0/15 
+turn00_scratch     0.3 walk+turn       15       0.279  0.93   5/15 
+turn03_scratch     0.5 velocity turn   15       0.410  0.82  11/15 
+turn03_scratch     0.5 walk+turn       15       0.461  0.92  11/15 
+turn03_scratch     0.3 velocity turn   15       0.173  0.58   0/15 
+turn03_scratch     0.3 walk+turn       15       0.404  1.35  11/15 
+turn03_woboff      0.5 velocity turn   15       0.471  0.94  11/15 
+turn03_woboff      0.5 walk+turn       15       0.506  1.01  11/15 
+turn03_woboff      0.3 velocity turn   15       0.256  0.85   0/15 
+turn03_woboff      0.3 walk+turn       15       0.294  0.98   7/15 
+turn03_woboff5k    0.5 velocity turn   15       0.562  1.12  11/15 
+turn03_woboff5k    0.5 walk+turn       15       0.549  1.10  11/15 
+turn03_woboff5k    0.3 velocity turn   15       0.340  1.13  10/15 
+turn03_woboff5k    0.3 walk+turn       15       0.336  1.12  10/15 
+turn00_ship        0.5 velocity turn   15       0.521  1.04  11/15 
+turn00_ship        0.5 walk+turn       15       0.483  0.97  11/15 
+turn00_ship        0.3 velocity turn   15       0.278  0.93   3/15 
+turn00_ship        0.3 walk+turn       15       0.295  0.98   6/15 
+ref_wobbleoff      0.5 velocity turn   15       0.554  1.11  11/15 
+ref_wobbleoff      0.5 walk+turn       15       0.503  1.01  12/15 
+ref_wobbleoff      0.3 velocity turn   15       0.309  1.03  10/15 
+ref_wobbleoff      0.3 walk+turn       15       0.310  1.03   8/15 
+
+labels:
+  base              deployed 68k policy (dc_long_0919_0125)
+  turn05_warm       deployed + WARM_START, pin 0.5, 2000 it
+  turn00_scratch    from scratch, CONTROL (no pin), 5000 it
+  turn03_scratch    from scratch, pin 0.3, 5000 it
+  turn03_woboff     deployed + WARM_START + pin 0.3 + WOBBLE OFF, 2000 it
+  turn03_woboff5k   same, continued to 5000 it
+  turn00_ship       deployed + WARM_START + WOBBLE OFF, no pin, 5000 it
+  ref_wobbleoff     REFERENCE: wobble-free arm of the 2026-09-17 matched pair
+
+############ DECISION RULES (written before the runs they judge) ############
+in-place achieved |yaw|:
+  cmd 0.3 : deployed 0.081  control 0.038  pin-scratch 0.173  pin+woboff 0.256  ship(woboff,no pin) 0.278  ref 0.309
+  cmd 0.5 : deployed 0.341  warm+pin 0.393  pin+woboff 0.471/0.562  ship(woboff,no pin) 0.521  ref 0.554
+
+VERDICT: ship rule 1 - the wobble-free arm tracks 0.3 rad/s WITH THE STOCK COMMAND MIX,
+         so the pin is not needed: the fix is 'remove the angular-wobble tax', nothing
+         else. Re-gate the turn rows on that checkpoint.
+         ship rule 3 also met (gain >= 0.9 at both commands): promote the checkpoint to
+         the rotation's turn rows and re-run logs/acceptance_gate.sh on them.
+         reference ceiling at cmd 0.3 (fully wobble-free older recipe): 0.309 -
+         the gap between the ship arm and this is what more iterations could buy.
+
+Read the walk row of each arm (`logs/turn_eval/<arm>_walk.out`) before trusting any turn
+number: a gait that cannot walk at 0.15 m/s has no meaningful yaw rate either.

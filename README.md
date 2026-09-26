@@ -111,8 +111,8 @@ Measured readouts at the time of recording, with the failures left in:
 | skill | readout (round 1 / round 2) |
 |---|---|
 | velocity walk | 0.252 / 0.254 m/s at cmd 0.3, upright |
-| velocity turn | 0.318 / 0.338 rad/s at cmd 0.5 — clears the 0.3 rad/s bar, **misses strict tracking** |
-| walk+turn | 0.444 / 0.467 rad/s (gain 0.89 / 0.93) — **misses strict tracking** |
+| velocity turn | **0.626 / 0.601 rad/s for a commanded 0.5 (gain 1.25 / 1.20)** — the fixed turn policy |
+| walk+turn | 0.581 / 0.597 rad/s (gain 1.16 / 1.19) while walking |
 | ball_kick right | ball +0.61 / +0.92 m |
 | sitstand | 69 / 66 mm trunk span (sit → stand) |
 | ground_pick | 35 / 47 mm span (mouth to ground and back) |
@@ -126,10 +126,13 @@ Measured readouts at the time of recording, with the failures left in:
 | spin | 1.40 / 1.41 rad/s, upright |
 | roulade | rolls 6.44 / 3.13 rad, ends upright at 114 / 115 mm |
 
-**13 of 15 rows passed both rounds.** The two turn rows are the honest exception: the policy
-under-tracks the commanded yaw rate below ~0.25 rad/s (a dead zone documented in
-`logs/GOAL_SUMMARY.md`), which is the subject of a pre-registered experiment
-(`logs/turn_deadzone_plan.md`).
+**15 of 15 rows passed both rounds.** The two turn clips run on a different checkpoint from the rest:
+the policy from the turn dead-zone experiment (`turn03_woboff@4998` — the deployed walking candidate,
+warm-started with the `angular_wobble` tax removed and a 0.3 rad/s in-place command pinned into 30 % of
+the envs), which tracks a commanded 0.5 rad/s at gain ~1.2 where the deployed candidate managed 0.68.
+Without that substitution the same rotation reads 13/15. The policy still stands still in roughly one
+episode in three-to-five under an unfavourable domain-randomization draw — a tail problem, documented
+in `logs/skill_demo.md`, and the next thing to attack.
 
 Two rounds is a *demonstration*, not a measurement — the same rows range from 1/5 to 4/5 across
 seeds, so use `logs/acceptance_gate.sh` (3 seeds x 5 rounds) for verdicts. Regenerate with:
