@@ -290,6 +290,46 @@ def track_yaw_velocity(
     return torch.exp(-yaw_error / std**2)
 
 
+def turn_focus_bonus(
+    env: "ManagerBasedRlEnv",
+    std: float,
+    command_name: str = "twist",
+    min_yaw: float = 0.25,
+    max_lin: float = 0.05,
+    tau: float = 0.0,
+    asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
+) -> torch.Tensor:
+    """``track_yaw_velocity``, paid ONLY where the turn is the whole task.
+
+    Measured 2026-09-26 (`logs/turn_tail_findings.md`). The fixed turn policy still stands still in a
+    fraction of episodes - upright, never falling, simply not rotating - and the cause is that the two
+    behaviours pay the same: over matched episodes, standing still scored **240.401** against the
+    turning policy's **241.184** (-0.32 %), because not moving already collects the full linear-tracking
+    reward (the commanded linear velocity IS zero), pays 4.6 less ``angular_wobble``, and is slightly
+    more upright. The yaw term is the only thing distinguishing the two basins and it is outweighed by
+    the wobble the turn costs. Small state differences then decide which basin an episode lands in,
+    which is why pinning the spawn pose - or every per-episode DR draw - only ever MOVED the failure
+    instead of removing it.
+
+    So this pays the same Gaussian as ``track_yaw_velocity``, gated to the region where nothing else is
+    at stake: in place (``|cmd_x|, |cmd_y| <= max_lin``) with a real turn commanded
+    (``|cmd_yaw| >= min_yaw``). It is additive and default-OFF (``MICRODUCK_TURN_FOCUS``), and it is an
+    addition rather than a re-pricing precisely because the diagnosis is a MISSING marginal payoff, not
+    a mis-weighted one.
+
+    Returns a value in [0, 1) -> use a POSITIVE weight.
+    """
+    asset: Entity = env.scene[asset_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    assert command is not None, f"Command '{command_name}' not found."
+    measured = asset.data.root_link_ang_vel_b[:, 2]
+    if tau > 0.0:
+        measured = ema_yaw_rate(env, measured, tau)
+    in_place_turn = (command[:, :2].abs().amax(dim=1) <= max_lin) & (command[:, 2].abs() >= min_yaw)
+    yaw_error = torch.square(command[:, 2] - measured)
+    return torch.exp(-yaw_error / std**2) * in_place_turn.to(torch.float32)
+
+
 def angular_wobble_cost(
     env: "ManagerBasedRlEnv",
     std: float,

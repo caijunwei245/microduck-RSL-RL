@@ -1,0 +1,132 @@
+#################### spawn-pin control: is the tail the DRAW or the ENV STATE? ####################
+policy: logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt   cmd 0.3 in place, seed 0, 6 episodes (the run that stands still at 5-6)
+
+==================================================================================
+############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, spawn pin: none
+policies: 2026-09-26_19-46-52_turn03_woboff
+
+ ep   -46-52_turn03_woboff
+  1  0.357 / z113 / g-1.00
+  2  0.360 / z115 / g-1.00
+  3  0.379 / z120 / g-0.98
+  4  0.382 / z115 / g-1.00
+  5  0.073 / z115 / g-1.00   <-- stand-still
+  6  0.042 / z114 / g-1.00   <-- stand-still
+    (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+
+=== 2026-09-26_19-46-52_turn03_woboff
+    2/6 episodes below 0.15 rad/s; median 0.359; min upright_frac 1.00; any fell False
+    factor                         weak     strong        min        max    rho
+    foot_friction[0]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    foot_friction[1]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    trunk_com_x                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_y                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_z                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    armature_mean               0.00127    0.00126    0.00123    0.00128   0.14
+    damping_mean                0.00375    0.00375    0.00375    0.00375    nan  (constant)
+    friction_scale_mean         0.96875    0.99942    0.91514    1.09209   0.26
+    spawn_x                    -0.34208   -0.08110   -0.48906    0.25325   0.89
+    spawn_y                     0.08409   -0.10608   -0.47267    0.38247  -0.49
+    spawn_z                     0.12354    0.12415    0.12089    0.12613  -0.26
+    spawn_yaw_deg             -19.00321  -75.96220 -153.20450   11.12976  -0.20  <== separates
+    joint_pos_abs_mean          0.19317    0.19317    0.19317    0.19317    nan  (constant)
+    encoder_bias_abs_mean       0.00726    0.00726    0.00726    0.00726    nan  (constant)
+
+==================================================================================
+############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, spawn pin: all
+policies: 2026-09-26_19-46-52_turn03_woboff
+
+ ep   -46-52_turn03_woboff
+  1  0.361 / z115 / g-1.00
+  2  0.365 / z114 / g-1.00
+  3  0.381 / z115 / g-1.00
+  4  0.372 / z115 / g-1.00
+  5  0.071 / z115 / g-1.00   <-- stand-still
+  6  0.046 / z116 / g-1.00   <-- stand-still
+    (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+
+=== 2026-09-26_19-46-52_turn03_woboff
+    2/6 episodes below 0.15 rad/s; median 0.363; min upright_frac 1.00; any fell False
+    factor                         weak     strong        min        max    rho
+    foot_friction[0]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    foot_friction[1]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    trunk_com_x                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_y                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_z                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    armature_mean               0.00127    0.00126    0.00123    0.00128   0.26
+    damping_mean                0.00375    0.00375    0.00375    0.00375    nan  (constant)
+    friction_scale_mean         0.96875    0.99942    0.91514    1.09209  -0.03
+    spawn_x                     0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    spawn_y                     0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    spawn_z                     0.12500    0.12500    0.12500    0.12500    nan  (constant)
+    spawn_yaw_deg               0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    joint_pos_abs_mean          0.19317    0.19317    0.19317    0.19317    nan  (constant)
+    encoder_bias_abs_mean       0.00726    0.00726    0.00726    0.00726    nan  (constant)
+
+==================================================================================
+############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, spawn pin: yaw
+policies: 2026-09-26_19-46-52_turn03_woboff
+
+ ep   -46-52_turn03_woboff
+  1  0.362 / z115 / g-0.99
+  2  0.370 / z113 / g-1.00
+  3  0.361 / z120 / g-0.99
+  4  0.355 / z115 / g-1.00
+  5  0.080 / z115 / g-1.00   <-- stand-still
+  6  0.055 / z116 / g-1.00   <-- stand-still
+    (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+
+=== 2026-09-26_19-46-52_turn03_woboff
+    2/6 episodes below 0.15 rad/s; median 0.358; min upright_frac 1.00; any fell False
+    factor                         weak     strong        min        max    rho
+    foot_friction[0]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    foot_friction[1]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    trunk_com_x                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_y                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_z                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    armature_mean               0.00127    0.00126    0.00123    0.00128  -0.54
+    damping_mean                0.00375    0.00375    0.00375    0.00375    nan  (constant)
+    friction_scale_mean         0.96875    0.99942    0.91514    1.09209   0.09
+    spawn_x                    -0.34208   -0.08110   -0.48906    0.25325   0.43
+    spawn_y                     0.08409   -0.10608   -0.47267    0.38247  -0.26
+    spawn_z                     0.12354    0.12415    0.12089    0.12613   0.31
+    spawn_yaw_deg               0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    joint_pos_abs_mean          0.19317    0.19317    0.19317    0.19317    nan  (constant)
+    encoder_bias_abs_mean       0.00726    0.00726    0.00726    0.00726    nan  (constant)
+
+==================================================================================
+
+==================================================================================
+############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, spawn pin: z
+policies: 2026-09-26_19-46-52_turn03_woboff
+
+ ep   -46-52_turn03_woboff
+  1  0.358 / z114 / g-1.00
+  2  0.362 / z115 / g-1.00
+  3  0.383 / z114 / g-1.00
+  4  0.381 / z115 / g-1.00
+  5  0.071 / z115 / g-1.00   <-- stand-still
+  6  0.041 / z114 / g-1.00   <-- stand-still
+    (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+
+=== 2026-09-26_19-46-52_turn03_woboff
+    2/6 episodes below 0.15 rad/s; median 0.360; min upright_frac 1.00; any fell False
+    factor                         weak     strong        min        max    rho
+    foot_friction[0]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    foot_friction[1]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    trunk_com_x                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_y                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_z                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    armature_mean               0.00127    0.00126    0.00123    0.00128   0.26
+    damping_mean                0.00375    0.00375    0.00375    0.00375    nan  (constant)
+    friction_scale_mean         0.96875    0.99942    0.91514    1.09209  -0.03
+    spawn_x                    -0.34208   -0.08110   -0.48906    0.25325   0.77
+    spawn_y                     0.08409   -0.10608   -0.47267    0.38247  -0.37
+    spawn_z                     0.12500    0.12500    0.12500    0.12500    nan  (constant)
+    spawn_yaw_deg             -19.00321  -75.96220 -153.20450   11.12976  -0.09  <== separates
+    joint_pos_abs_mean          0.19317    0.19317    0.19317    0.19317    nan  (constant)
+    encoder_bias_abs_mean       0.00726    0.00726    0.00726    0.00726    nan  (constant)

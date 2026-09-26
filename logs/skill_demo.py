@@ -111,13 +111,25 @@ def force_floor(env, which: str) -> None:
 
 
 def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
-              stride: int = 2, label: str = "", log_cmd: bool = False) -> dict:
+              stride: int = 2, label: str = "", log_cmd: bool = False, probe=None) -> dict:
     name, task, _glob, kind, cmd_x, cmd_yaw, floor, _low = spec
     obs = wrapped.reset()
     if isinstance(obs, tuple):
         obs = obs[0]
     if floor:
         force_floor(env, floor)
+
+    # `probe` is an optional callback (see logs/dr_tail_probe.py) evaluated ONCE per episode, right
+    # after the reset, so an experiment can record the state a round was played under WITHOUT
+    # re-implementing the rollout loop - two copies of the loop diverge (measured 2026-09-26: a
+    # hand-rolled copy changed episodes 5-6 from 0.073/0.042 rad/s to 0.232/0.233, i.e. it hid the
+    # very tail it was built to explain).
+    res_probe: dict = {}
+    if probe is not None:
+        try:
+            res_probe = probe(env) or {}
+        except Exception as _e:  # noqa: BLE001
+            res_probe = {"probe_error": repr(_e)}
 
     robot = env.scene["robot"]
     ball = None
@@ -212,7 +224,7 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
     res = dict(z0=zs[0], z_min=min(zs), z_max=max(zs), z_last=zs[-1], g_last=gs[-1],
                v_mean=v_ss, yaw_abs_mean=yaw_ss, upright_frac=upright_steps / max(1, len(zs)),
                descent=zs[0] - min(zs), held_high=longest_run([z >= 130.0 for z in zs]),
-               hold=hold, steps=steps, fell=fell, ball=ball_max, sums=sums)
+               hold=hold, steps=steps, fell=fell, ball=ball_max, sums=sums, probe=res_probe)
     if cmd_trace:
         res["cmd0_min"] = min(c[0] for c in cmd_trace)
         res["cmd0_max"] = max(c[0] for c in cmd_trace)

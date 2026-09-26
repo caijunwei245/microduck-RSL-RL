@@ -161,6 +161,24 @@ def yaw_ema_tau() -> float:
     return float(os.environ.get("MICRODUCK_YAW_EMA_TAU", "0.0"))
 
 
+def turn_focus_weight() -> float:
+    """Weight of the extra in-place-turn bonus, ``MICRODUCK_TURN_FOCUS`` (default 0.0 = off).
+
+    Measured 2026-09-26 (`logs/turn_tail_findings.md`): with the wobble tax removed the turn policy
+    still stands still in a fraction of episodes, because standing there pays **240.4** against the
+    turning policy's **241.2** — not moving already collects the full linear-tracking reward (the
+    commanded linear velocity is zero), pays less wobble, and is slightly more upright. The yaw term
+    is the only thing separating the two basins and the turn's wobble outweighs it, so which basin an
+    episode lands in is decided by differences far below the DR magnitude (pinning the spawn pose, or
+    every per-episode DR draw, MOVES the failure rather than removing it).
+
+    ``mdp.turn_focus_bonus`` pays the same Gaussian as ``track_angular_velocity``, gated to envs that
+    are in place with a real turn commanded. Positive weight; 0.0 (default) keeps the running recipe
+    bit-identical (a weight-0 term logs zero whatever the behaviour).
+    """
+    return float(os.environ.get("MICRODUCK_TURN_FOCUS", "0.0"))
+
+
 def action_rate_scale() -> float:
     """Scale factor on the ``action_rate_l2`` curriculum, ``MICRODUCK_ACTION_RATE_SCALE``.
 
@@ -544,6 +562,21 @@ def make_microduck_velocity_env_cfg(
     cfg.rewards["track_angular_velocity"].weight = yaw_track_weight()
     cfg.rewards["track_angular_velocity"].params["std"] = yaw_track_std()
     cfg.rewards["track_angular_velocity"].params["tau"] = yaw_ema_tau()
+
+    # The tail fix (default off): the SAME yaw Gaussian, paid again but only for envs that are in
+    # place with a real turn commanded, where the linear term cannot distinguish turning from
+    # standing. See turn_focus_weight() for the measured 240.4 vs 241.2 that motivates it.
+    cfg.rewards["turn_focus"] = RewardTermCfg(
+        func=microduck_mdp.turn_focus_bonus,
+        weight=turn_focus_weight(),
+        params={
+            "std": yaw_track_std(),
+            "command_name": "twist",
+            "min_yaw": 0.25,
+            "max_lin": 0.05,
+            "tau": yaw_ema_tau(),
+        },
+    )
 
     # The other half of that split. mjlab's composite term was silently the
     # recipe's only real roll/pitch-rate regularizer (body_ang_vel above is

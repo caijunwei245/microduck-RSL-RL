@@ -1,0 +1,276 @@
+/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/.venv/lib/python3.12/site-packages/mjlab/entity/entity.py:149: UserWarning: Actuator config matched 14 joint(s) but the same expressions also match 7 site(s): imu, left_foot, head_camera, tof, head_imu, mouth_tip, right_foot. Add a separate config with transmission_type=TransmissionType.SITE if those should be actuated too.
+  self._add_actuators()
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+Warp 1.12.0 initialized:
+   CUDA Toolkit 12.9, Driver 13.0
+   Devices:
+     "cpu"      : "CPU"
+     "cuda:0"   : "NVIDIA GeForce RTX 4090" (24 GiB, sm_89, mempool enabled)
+   Kernel cache:
+     /home/iisr/.cache/warp/1.12.0
+Warp DeprecationWarning: The symbol `warp.context.runtime` will soon be removed from the public API. It can still be accessed from `warp._src.context.runtime` but might be changed or removed without notice.
+Module mujoco_warp._src.smooth 95a0b8b load on device 'cuda:0' took 1.85 ms  (cached)
+Module mujoco_warp._src.collision_driver 88f7770 load on device 'cuda:0' took 0.23 ms  (cached)
+Module _nxn_broadphase__locals__kernel_e73b1315 e73b131 load on device 'cuda:0' took 0.26 ms  (cached)
+Module ccd_kernel_builder__locals__ccd_kernel_079dfa94 079dfa9 load on device 'cuda:0' took 1.33 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_b282a07a b282a07 load on device 'cuda:0' took 0.59 ms  (cached)
+Module mujoco_warp._src.constraint 27c5750 load on device 'cuda:0' took 1.55 ms  (cached)
+Module _efc_contact_init__locals__kernel_fda71e14 fda71e1 load on device 'cuda:0' took 0.29 ms  (cached)
+Module _efc_contact_jac_dense__locals__kernel_7974b597 cc0fc30 load on device 'cuda:0' took 0.33 ms  (cached)
+Module _efc_contact_update__locals__kernel_90315d53 90315d5 load on device 'cuda:0' took 0.29 ms  (cached)
+Module mujoco_warp._src.sensor 7fc0378 load on device 'cuda:0' took 1.84 ms  (cached)
+Module mujoco_warp._src.forward f60f76d load on device 'cuda:0' took 0.86 ms  (cached)
+Module mujoco_warp._src.passive 1a5e55c load on device 'cuda:0' took 0.68 ms  (cached)
+Module mujoco_warp._src.forward 8ebfcb1 load on device 'cuda:0' took 1.01 ms  (cached)
+Module mujoco_warp._src.support dd3f924 load on device 'cuda:0' took 0.27 ms  (cached)
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_b16bf393 b7e5d5f load on device 'cuda:0' took 23.57 ms  (cached)
+Module mujoco_warp._src.solver b116efb load on device 'cuda:0' took 0.97 ms  (cached)
+Module solve_init_jaref__locals__kernel_5208712d 5208712 load on device 'cuda:0' took 0.26 ms  (cached)
+Module mul_m_dense__locals___mul_m_dense_b66df345 b66df34 load on device 'cuda:0' took 0.23 ms  (cached)
+Module update_constraint_efc__locals__kernel_32935e9d 32935e9 load on device 'cuda:0' took 0.26 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_baf8e129 baf8e12 load on device 'cuda:0' took 0.25 ms  (cached)
+Module update_gradient_JTDAJ_dense_tiled__locals__kernel_9404d42c b63011f load on device 'cuda:0' took 0.46 ms  (cached)
+Module update_gradient_cholesky__locals__kernel_5ee47d83 324a2ff load on device 'cuda:0' took 23.72 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_7bf09094 7bf0909 load on device 'cuda:0' took 0.31 ms  (cached)
+Module linesearch_prepare_gauss__locals__kernel_97347d38 97347d3 load on device 'cuda:0' took 0.27 ms  (cached)
+Module update_constraint_efc__locals__kernel_3c1a9816 3c1a981 load on device 'cuda:0' took 0.30 ms  (cached)
+Module _contact_sort__locals__contact_sort_304c86df 6c97b35 load on device 'cuda:0' took 0.28 ms  (cached)
+Module mujoco_warp._src.derivative d0e2fd7 load on device 'cuda:0' took 0.54 ms  (cached)
+Module reset_data__locals__reset_xfrc_applied_e7898c5c e7898c5 load on device 'cuda:0' took 0.30 ms  (cached)
+Module reset_data__locals__reset_qM_10d3c793 10d3c79 load on device 'cuda:0' took 0.21 ms  (cached)
+Module reset_data__locals__reset_mocap_ff71f630 ff71f63 load on device 'cuda:0' took 0.20 ms  (cached)
+Module reset_data__locals__reset_contact_df686d47 df686d4 load on device 'cuda:0' took 0.21 ms  (cached)
+Module reset_data__locals__reset_nworld_6e0d904e 6e0d904 load on device 'cuda:0' took 0.25 ms  (cached)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+Module mujoco_warp._src.render_util 94fd13e load on device 'cuda:0' took 0.41 ms  (cached)
+Module mujoco_warp._src.bvh 08f985a load on device 'cuda:0' took 0.57 ms  (cached)
+Module mujoco_warp._src.ray c8f2bb3 load on device 'cuda:0' took 0.67 ms  (cached)
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_com               |
+|   4   | randomize_head_com          |
+|   5   | randomize_joint_friction    |
+|   6   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | body_mass           |
+|   10  | body_inertia        |
+|   11  | body_iquat          |
+|   12  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 3 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-----------+----------------------------+
+| Index | Name      |            Type            |
++-------+-----------+----------------------------+
+|   0   | twist     | VelocityCommandCommandOnly |
+|   1   | head_pose |     UniformPoseCommand     |
+|   2   | body_pose |     UniformPoseCommand     |
++-------+-----------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (76,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_height                        |    (2,)    |
+|    8     | foot_air_time                      |    (2,)    |
+|    9     | foot_contact                       |    (2,)    |
+|    10    | foot_contact_forces                |    (6,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 17 active terms.
++-----------------------------------------+
+|           Active Reward Terms           |
++-------+------------------------+--------+
+| Index | Name                   | Weight |
++-------+------------------------+--------+
+|   0   | track_linear_velocity  |    5.0 |
+|   1   | track_angular_velocity |    3.0 |
+|   2   | upright                |    2.0 |
+|   3   | pose                   |    1.0 |
+|   4   | body_ang_vel           |  -0.05 |
+|   5   | angular_momentum       |  -0.02 |
+|   6   | dof_pos_limits         |   -1.0 |
+|   7   | action_rate_l2         |   -0.1 |
+|   8   | air_time               |    3.0 |
+|   9   | foot_clearance         |   -2.0 |
+|   10  | foot_swing_height      |  -0.25 |
+|   11  | foot_slip              |   -0.1 |
+|   12  | self_collisions        |   -1.0 |
+|   13  | angular_wobble         |   -1.5 |
+|   14  | head_pose_tracking     |    2.0 |
+|   15  | body_pose_tracking     |    0.0 |
+|   16  | head_pose_bias         |    0.0 |
++-------+------------------------+--------+
+
+[INFO] <CurriculumManager> contains 7 active terms.
++-------------------------------+
+|    Active Curriculum Terms    |
++-------+-----------------------+
+| Index | Name                  |
++-------+-----------------------+
+|   0   | action_rate_weight    |
+|   1   | standing_envs         |
+|   2   | head_pose_range       |
+|   3   | body_pose_range       |
+|   4   | com_range             |
+|   5   | head_com_range        |
+|   6   | head_pose_bias_weight |
++-------+-----------------------+
+
+[INFO] <MetricsManager> contains 6 active terms.
++------------------------------+
+|     Active Metrics Terms     |
++-------+----------------------+
+| Index | Name                 |
++-------+----------------------+
+|   0   | mean_action_acc      |
+|   1   | max_action_delta     |
+|   2   | mean_abs_yaw_rate    |
+|   3   | mean_abs_yaw_command |
+|   4   | max_joint_vel        |
+|   5   | dc_turn_gain         |
++-------+----------------------+
+
+[INFO] <NullRecorderManager> (inactive)
+Module mujoco_warp._src.io 4b387a0 load on device 'cuda:0' took 1.16 ms  (cached)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_a02b7349 3d3b894 load on device 'cuda:0' took 17.35 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_8c82e9f1 95f6085 load on device 'cuda:0' took 17.25 ms  (cached)
+############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, pinned DR groups: none
+policies: 2026-09-26_19-46-52_turn03_woboff
+
+ ep   -46-52_turn03_woboff
+  1  0.357 / z113 / g-1.00
+  2  0.360 / z115 / g-1.00
+  3  0.379 / z120 / g-0.98
+  4  0.382 / z115 / g-1.00
+  5  0.073 / z115 / g-1.00   <-- stand-still
+  6  0.042 / z114 / g-1.00   <-- stand-still
+    (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+
+=== 2026-09-26_19-46-52_turn03_woboff
+    2/6 episodes below 0.15 rad/s; median 0.359; min upright_frac 1.00; any fell False
+    payoff (episode sum)           weak     strong   delta
+    r_total                     240.401    241.184   -0.783
+    r_track_lin                  95.942     95.149   +0.793
+    r_track_yaw                  50.479     54.151   -3.672
+    r_upright                    37.645     36.904   +0.741
+    r_wobble                    -10.978    -15.619   +4.641
+    factor                         weak     strong        min        max    rho
+    foot_friction[0]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    foot_friction[1]            0.33503    0.33503    0.33503    0.33503    nan  (constant)
+    trunk_com_x                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_y                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    trunk_com_z                 0.00000    0.00000    0.00000    0.00000    nan  (constant)
+    armature_mean               0.00127    0.00126    0.00123    0.00128   0.14
+    damping_mean                0.00375    0.00375    0.00375    0.00375    nan  (constant)
+    friction_scale_mean         0.96875    0.99942    0.91514    1.09209   0.26
+    spawn_x                    -0.34208   -0.08110   -0.48906    0.25325   0.89
+    spawn_y                     0.08409   -0.10608   -0.47267    0.38247  -0.49
+    spawn_z                     0.12354    0.12415    0.12089    0.12613  -0.26
+    spawn_yaw_deg             -19.00321  -75.96220 -153.20450   11.12976  -0.20  <== separates
+    joint_pos_abs_mean          0.19317    0.19317    0.19317    0.19317    nan  (constant)
+    encoder_bias_abs_mean       0.00726    0.00726    0.00726    0.00726    nan  (constant)
