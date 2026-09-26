@@ -300,6 +300,23 @@ ball); roller tasks leave head/body command slots zero-padded.
   checkpoints, a success criterion splitting one behavior cluster in half, and
   a pay cap fighting measured physics. Sim metrics can pass while the video
   fails the human eye — watch the video AND check which geom/axis touches.
+- **Pinning the robot on the floor trips the fall termination.** Any evaluation
+  that forces a floor spawn must drop `fell_over` **for that evaluation only**:
+  the robot *is* fallen, so the term fires on the first step, the env recycles
+  the episode, and the metric quietly measures the env's own spawn mix instead
+  of the pin. Measured 2026-09-25: a VelStand prone pin reported `fell_over`
+  64/64 with the trunk frozen at 75.0 mm, and the "0.996 floor-flip rate" it
+  produced was really the spawn mix; with the term dropped the honest number is
+  **0.812** (52/64, sustained). StandUp needs no such fix because its cfg
+  removes `fell_over` by design — and it re-verifies at **0.984** (126/128) from
+  a genuine pin, so quote those two numbers with their difference in mind.
+- **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
+  needs the actor only, and the actor carries its own obs normalizer (that is
+  what the ONNX export bakes in). Building a runner instead drags in the task's
+  training-time machinery — upstream's `distill` runner fetches an expert
+  checkpoint through `wandb.Api()`, which killed every runner-based VelStand
+  evaluation until `logs/family_eval.py` and `logs/skill_demo.py` switched to
+  hand-loading (`Actor` in both: mlp + normalizer, ELU, mean action, clip).
 - Report what rollouts actually show ("rolls but face-plants 1 in 3"), not
   "it works!". The user decides when it's good enough.
 - **A flat training metric is not evidence of a flat policy — and a single
