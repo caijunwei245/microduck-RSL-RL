@@ -54,3 +54,24 @@ so the only difference between them is the new weight:
 
 3 arms x 2,000 iterations at ~1.1 s/iteration, two GPUs -> ~80 min wall clock, then ~30 min of
 readouts.
+
+---
+
+## RESULT (2026-09-27): decision rule 3 fired — the reward side is exhausted
+
+All three arms finished (`logs/turn_focus_results.txt`, `logs/turnfocus*.train.log`). At cmd 0.3,
+seed 0, six rounds, the tail is **identical in every arm**:
+
+| arm | rounds 5-6 |
+|---|---|
+| `turnfocus0` (control, +2k iterations only) | 0.067 / 0.054 |
+| `turnfocus2` (bonus 2.0) | 0.071 / 0.050 |
+| `turnfocus4` (bonus 4.0) | 0.054 / 0.062 |
+| baseline `model_4998` | 0.073 / 0.042 |
+
+Paying 2x and 4x extra for the in-place turn changed nothing, and the 4.0 arm even pulled the
+low-rate median **down** (0.228-0.277 rad/s, gain 0.76-0.92, against the baseline's 0.340 / 1.13)
+while turning at a lower stance (z 99-108 mm vs 112-118). So the missing marginal payoff is *not*
+the binding constraint: `MICRODUCK_TURN_FOCUS` stays **default-off**, and the reward side of this
+problem is closed. The cause turned out to be carried state across in-place episode resets —
+`logs/turn_tail_findings.md` — which is why a reward term could never have reached it.

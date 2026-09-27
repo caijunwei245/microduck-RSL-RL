@@ -1,76 +1,90 @@
-# The turn tail is bistability, and it is a reward-economics problem (2026-09-26)
+# The turn tail is carried state across in-place episode resets (2026-09-27)
 
-Follow-up to `logs/turn_ship_verdict.md`, which found a residual: the fixed turn policy tracks a
-commanded 0.3 rad/s at gain ~1.15 in most episodes but in some **stands still** — upright, g −1.00,
-trunk 115 mm, never falls — and an independently trained wobble-free policy fails the *same* episode
-indices. Instrumentation: `logs/dr_tail_probe.py` (24/6-episode runs in `logs/dr_tail_6.out`,
-`logs/dr_tail_pin.out`).
+Follow-up to `logs/turn_ship_verdict.md`. Instrumentation: `logs/dr_tail_probe.py` (drives
+`skill_demo.run_round` through its `probe` hook — see the method note), evidence in
+`logs/dr_tail_gains.out`, `logs/dr_tail_6.out`, `logs/dr_tail_pin.out`, and the runs quoted below.
 
-## Method note first: the probe must drive the demo's own loop
+**Result in one line**: the policy is fine. Episodes run back to back in one environment inherit
+state that no reset-mode event clears, and in this marginal task that is enough to flip whole
+episodes. With a **fresh env per round the tail disappears: 0 of 6 episodes stand still**, against
+**2 of 6** with in-place resets (same checkpoint, same command, same seed).
 
-A first version re-implemented the rollout loop and reported episodes 5-6 at 0.232/0.233 rad/s — it
-**hid the very tail it existed to explain**. Re-driving `skill_demo.run_round` through a new `probe`
-hook reproduces the demo exactly (0.073 / 0.042, matching `skill_demo` to three decimals). Same code,
-or no conclusion; the hook is now part of `skill_demo.py`.
+## The controls, in the order they were run
 
-## What the DR draw is NOT
+| # | control | result |
+|---|---|---|
+| 1 | pin the spawn pose (all axes / yaw only / z only) | still stands still at rounds 5-6 (0.071 / 0.046) |
+| 2 | **pin every per-episode DR group** (CoM, friction scale, armature, damping, gains, orientation, mass, no pushes) | failure **moves to round 3** (0.047) instead of disappearing |
+| 3 | re-init the BAM actuator's action-delay buffer at every episode start | unchanged (0.047 at round 3) — not the delay queue |
+| 4 | **build a new env for every round** (DR still active) | **0/6 stand still** (0.283-0.352, median 0.317) |
+| 5 | reward arms `MICRODUCK_TURN_FOCUS` = 2.0 / 4.0 / 0.0 (control), +2,000 iterations each | **identical tail in all three** (rounds 5-6: 0.071/0.050, 0.054/0.062, 0.067/0.054) |
 
-| control | result |
-|---|---|
-| pin the spawn pose (all axes) | still stands still at episodes 5-6 (0.071 / 0.046) |
-| pin the spawn yaw only | unchanged (0.080 / 0.055) |
-| pin the spawn z only | unchanged (0.071 / 0.041) |
-| **pin every per-episode DR group** (CoM, friction scale, armature, damping, gains, orientation, mass, and no pushes) | the failure **moves to episode 3** (0.047) instead of disappearing |
+Control 1-3 are the search for a *draw*: pinning everything that is drawn per episode does not remove
+the failure, it relocates it. Control 4 is the decisive one: when the episode starts in a brand-new
+environment — nothing to carry — every round turns.
 
-So it is not a bad draw value, and not the spawn state. Removing all episode-to-episode variation
-just relocates the failure — the signature of a **bistable decision**, where which basin the episode
-lands in is decided by differences far below the DR magnitude.
+Also checked and constant, as the cfg's event table says they must be: foot friction (0.335), trunk
+CoM (0.000), damping, `joint_pos_abs_mean`, `encoder_bias_abs_mean` (0.00726), and `kp_scale` /
+`kd_scale` = 1.000 (`ENABLE_KP_RANDOMIZATION = False`, `ENABLE_KD_RANDOMIZATION = False` in the
+current recipe, so the firmware gains are not drawn at all). The big DR factors (`foot_friction`
+0.7-1.3, `encoder_bias` ±0.015 rad, `base_com` ±25-30 mm, mass/inertia) are `startup` events, drawn
+once per env — structurally unable to explain episode-to-episode differences.
 
-Also checked and constant, as the cfg's event table says they should be: foot friction (0.335), trunk
-CoM (0.000), damping, `joint_pos_abs_mean`, `encoder_bias_abs_mean` (0.00726) — the big DR factors
-(`foot_friction` 0.7-1.3, `encoder_bias` ±0.015 rad, `base_com` ±25-30 mm, mass/inertia) are all
-`startup` events, drawn **once per env**, so they cannot explain episode-to-episode differences at all.
+## Why a residue can flip a whole episode: the task is marginal
 
-## What it IS: the two basins pay almost the same
-
-Episode reward sums, stand-still episodes vs turning episodes (bare term names, same checkpoint, same
-6 episodes):
+Episode reward sums, stand-still rounds vs turning rounds (same checkpoint, same six rounds):
 
 | term | stand still | turning | delta |
 |---|---|---|---|
 | **total** | **240.401** | **241.184** | **−0.783 (−0.32 %)** |
-| `track_linear_velocity` | 95.942 | 95.149 | **+0.793** |
+| `track_linear_velocity` | 95.942 | 95.149 | +0.793 |
 | `track_angular_velocity` | 50.479 | 54.151 | −3.672 |
 | `upright` | 37.645 | 36.904 | +0.741 |
 | `angular_wobble` | −10.978 | −15.619 | **+4.641** |
 
-Standing still gives up **less than one point out of 241** — and it *wins* on three of the four terms:
-it collects the full linear-tracking reward (the commanded linear velocity is zero, so not moving is
-correct), pays 4.6 less wobble, and is slightly more upright. Only the yaw term distinguishes the two,
-and turning costs more wobble than the yaw term gains.
+Standing still gives up under one point in 241 and *wins* on three of the four terms — not moving
+already collects the full linear-tracking reward because the commanded linear velocity is zero. That
+is why the system is *sensitive* to a residue. It is **not** what selects the basin: arms 5 paid 2x
+and 4x extra for turning in exactly that region and changed nothing (the 4.0 arm even pulled the
+low-rate median down from 0.340 to ~0.25 rad/s while turning at a visibly lower stance, z 99-108 mm
+against 112-118). The reward side of this problem is now exhausted, which is what pre-registered
+decision rule 3 in `logs/turn_focus_plan.md` said would end it.
 
-That is exactly why the wobble tax mattered so much (removing it moved the median 4x) and why a
-residual tail survives it: **with the tax gone, turning is only barely better than standing**, so a
-marginally harder episode tips back into the stand basin. It also reframes the "dead zone" finding:
-the tax did not merely suppress the low-rate region, it made the stand basin the *argmax* there.
+## What it costs the numbers already quoted
 
-## The fix this implies (not yet run)
+Same checkpoint, cmd 0.3 rad/s in place, seed 0, six rounds:
 
-Make the yaw term dominate in the region where nothing else is at stake — the sustained-turn bucket
-(`|cmd_vx|, |cmd_vy| ≈ 0`, `|cmd_yaw| ≥ 0.25`) that the cfg already identifies. Concretely: an
-env-var-gated bonus (house pattern, default off) of the same Gaussian form as
-`track_angular_velocity`, paid **only** on that bucket, with a weight large enough that the turn's
-marginal payoff exceeds the wobble it costs — i.e. weight ≳ 2-4x the current yaw term. Not a penalty,
-not a re-pricing: the diagnosis above says the marginal payoff of turning is *too small by
-construction* in that region, which is a different defect from the re-pricings that failed on this
-family before.
+| | r1 | r2 | r3 | r4 | r5 | r6 |
+|---|---|---|---|---|---|---|
+| rounds back to back (default) | 0.357 | 0.360 | 0.379 | 0.382 | **0.073** | **0.042** |
+| fresh env per round (`--fresh-env`) | 0.357 | 0.331 | 0.281 | 0.344 | 0.333 | 0.395 |
 
-Two candidate arms, both from the promoted checkpoint with the tax already off:
+So the artifact is worth roughly one to two rounds in six, and it is the *whole* difference between
+"two rounds where the robot did not rotate at all" and "six rounds that all rotate, one of them at
+0.94 gain". `skill_demo.py --fresh-env` now exposes the artifact-free measurement; the default stays
+in-place because that is what training does, and **every number in these ledgers should say which of
+the two it came from**.
 
-* **focus arm** — the bonus above at weight 2.0 and 4.0, warm-started, 2,000 iterations.
-* **mixture control** — `MICRODUCK_SUSTAINED_TURN=0.5` (half the envs on the turn command) with no
-  reward change, to check whether the fix is merely "more turn data".
+This is not specific to turning: `skill_demo`, `family_eval` and `acceptance_gate.sh` all run episodes
+sequentially in one env, so any marginal task in the set inherits the same fraction. It plausibly
+matters in training too (mjlab resets environments in place).
 
-Readout: the same 3 seeds x 5 rounds at cmd 0.3 and 0.5 — the tail is what must move (count of
-episodes below 0.15 rad/s), since the median is already at gain ~1.15. A fix that moves the median and
-not the tail has not fixed this.
+## What is left to find
+
+The carried state is *not*: the spawn pose, any per-episode DR draw, the actuator's action-delay
+buffer, the action history (`reset_action_history` exists), or the firmware gains. The remaining
+candidates live in per-world simulator state that mjlab's `sim` wrapper does not expose (contact
+cache / solver warm-start), so this is a reset-completeness question at the mjlab/MuJoCo-Warp layer,
+not something a cfg or reward change can reach. Concretely worth doing next: identify which kernel
+state survives `env.reset()` and either clear it or report it upstream — and until then, treat
+in-place-reset multi-episode rates as a *lower bound* for marginal tasks.
+
+## Method note (kept because it nearly cost the finding)
+
+The first version of the probe re-implemented the rollout loop and reported rounds 5-6 at
+0.232/0.233 rad/s — it **hid the very tail it existed to explain**. Driving `skill_demo.run_round`
+through a new `probe` hook reproduces the demo to three decimals (0.073 / 0.042). The same lesson bit
+twice more: the first `--pin all` did not pin the firmware gains (`kp_range` / `kd_range` were not in
+its key list, and they are the one DR term that lives on the actuator rather than the model), and the
+first attribution blamed the delay buffer without a control that could fail. Same code, and a control
+that can fail, or no conclusion.

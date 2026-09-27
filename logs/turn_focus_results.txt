@@ -1,0 +1,173 @@
+############ TURN FOCUS: does the bonus close the tail? ############
+design: logs/turn_focus_plan.md   date: 2026-09-27 09:13
+baseline (before any arm): logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt
+    -> tail measured at cmd 0.3, seed 0: episodes 5-6 = 0.073 / 0.042 rad/s (stand-still)
+
+=== turnfocus0 : logs/rsl_rl/velocity/2026-09-27_08-35-36_turnfocus0/model_6997.pt
+--- the tail itself (6 episodes, cmd 0.3, seed 0; primary readout)
+    ############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+    cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, pinned DR groups: none
+    policies: 2026-09-27_08-35-36_turnfocus0
+    
+     ep   _08-35-36_turnfocus0
+      1  0.294 / z112 / g-1.00
+      2  0.284 / z112 / g-1.00
+      3  0.316 / z118 / g-1.00
+      4  0.269 / z112 / g-1.00
+      5  0.067 / z115 / g-1.00   <-- stand-still
+      6  0.054 / z115 / g-1.00   <-- stand-still
+        (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+--- walk row (must stay >= 0.20 m/s)
+    velocity walk          turnfocus0                         1:OK v=+0.250 m/s z=114 g=-1.00 | 2:OK v=+0.241 m/s z=115 g=-0.99 | 3:OK v=+0.253 m/s z=111 g=-0.98
+    velocity walk            3/3  ALL PASS   (turnfocus0)
+--- 3 seeds x 5 rounds sweep
+    [0.5 s0] velocity turn          turnfocus0                         1:OK |yaw|=0.579 gain=1.16 abs0.3=OK z=112 g=-1.00 | 2:OK |yaw|=0.553 gain=1.11 abs0.3=OK z=112 g=-1.00 | 3:OK |yaw|=0.578 gain=1.16 abs0.3=OK z=118 g=-1.00 | 4:OK |yaw|=0.554 gain=1.11 abs0.3=OK z=114 g=-0.99 | 5:XX |yaw|=0.103 gain=0.21 abs0.3=XX z=115 g=-1.00
+    [0.5 s0] velocity turn            4/5  PARTIAL   (turnfocus0)
+    [0.5 s1] velocity turn          turnfocus0                         1:OK |yaw|=0.578 gain=1.16 abs0.3=OK z=116 g=-1.00 | 2:XX |yaw|=0.223 gain=0.45 abs0.3=XX z=113 g=-1.00 | 3:OK |yaw|=0.545 gain=1.09 abs0.3=OK z=115 g=-0.99 | 4:OK |yaw|=0.544 gain=1.09 abs0.3=OK z=115 g=-0.99 | 5:XX |yaw|=0.011 gain=0.02 abs0.3=XX z=116 g=-1.00
+    [0.5 s1] velocity turn            3/5  PARTIAL   (turnfocus0)
+    [0.5 s2] velocity turn          turnfocus0                         1:OK |yaw|=0.541 gain=1.08 abs0.3=OK z=114 g=-1.00 | 2:XX |yaw|=0.021 gain=0.04 abs0.3=XX z=114 g=-1.00 | 3:OK |yaw|=0.557 gain=1.11 abs0.3=OK z=115 g=-1.00 | 4:XX |yaw|=0.431 gain=0.86 abs0.3=OK z=113 g=-1.00 | 5:OK |yaw|=0.541 gain=1.08 abs0.3=OK z=114 g=-1.00
+    [0.5 s2] velocity turn            3/5  PARTIAL   (turnfocus0)
+    [0.3 s0] velocity turn          turnfocus0                         1:XX |yaw|=0.294 gain=0.98 abs0.3=XX z=112 g=-1.00 | 2:XX |yaw|=0.284 gain=0.95 abs0.3=XX z=112 g=-1.00 | 3:OK |yaw|=0.316 gain=1.05 abs0.3=OK z=118 g=-1.00 | 4:XX |yaw|=0.269 gain=0.90 abs0.3=XX z=112 g=-1.00 | 5:XX |yaw|=0.067 gain=0.22 abs0.3=XX z=115 g=-1.00
+    [0.3 s0] velocity turn            1/5  PARTIAL   (turnfocus0)
+    [0.3 s1] velocity turn          turnfocus0                         1:XX |yaw|=0.299 gain=1.00 abs0.3=XX z=118 g=-0.99 | 2:XX |yaw|=0.090 gain=0.30 abs0.3=XX z=113 g=-1.00 | 3:XX |yaw|=0.279 gain=0.93 abs0.3=XX z=115 g=-1.00 | 4:XX |yaw|=0.288 gain=0.96 abs0.3=XX z=113 g=-1.00 | 5:XX |yaw|=0.015 gain=0.05 abs0.3=XX z=116 g=-1.00
+    [0.3 s1] velocity turn            0/5  FAIL   (turnfocus0)
+    [0.3 s2] velocity turn          turnfocus0                         1:XX |yaw|=0.282 gain=0.94 abs0.3=XX z=114 g=-1.00 | 2:XX |yaw|=0.025 gain=0.08 abs0.3=XX z=116 g=-1.00 | 3:OK |yaw|=0.304 gain=1.01 abs0.3=OK z=116 g=-1.00 | 4:XX |yaw|=0.162 gain=0.54 abs0.3=XX z=112 g=-1.00 | 5:XX |yaw|=0.297 gain=0.99 abs0.3=XX z=115 g=-1.00
+    [0.3 s2] velocity turn            1/5  PARTIAL   (turnfocus0)
+
+=== turnfocus2 : logs/rsl_rl/velocity/2026-09-27_07-59-05_turnfocus2/model_6997.pt
+--- the tail itself (6 episodes, cmd 0.3, seed 0; primary readout)
+    ############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+    cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, pinned DR groups: none
+    policies: 2026-09-27_07-59-05_turnfocus2
+    
+     ep   _07-59-05_turnfocus2
+      1  0.329 / z109 / g-1.00
+      2  0.329 / z109 / g-1.00
+      3  0.343 / z111 / g-1.00
+      4  0.284 / z110 / g-1.00
+      5  0.071 / z114 / g-1.00   <-- stand-still
+      6  0.050 / z114 / g-0.99   <-- stand-still
+        (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+--- walk row (must stay >= 0.20 m/s)
+    velocity walk          turnfocus2                         1:OK v=+0.246 m/s z=117 g=-0.99 | 2:OK v=+0.246 m/s z=119 g=-0.99 | 3:OK v=+0.257 m/s z=116 g=-0.99
+    velocity walk            3/3  ALL PASS   (turnfocus2)
+--- 3 seeds x 5 rounds sweep
+    [0.5 s0] velocity turn          turnfocus2                         1:XX |yaw|=0.499 gain=1.00 abs0.3=OK z=108 g=-1.00 | 2:XX |yaw|=0.495 gain=0.99 abs0.3=OK z=107 g=-1.00 | 3:OK |yaw|=0.525 gain=1.05 abs0.3=OK z=109 g=-1.00 | 4:XX |yaw|=0.465 gain=0.93 abs0.3=OK z=107 g=-1.00 | 5:XX |yaw|=0.087 gain=0.17 abs0.3=XX z=112 g=-1.00
+    [0.5 s0] velocity turn            1/5  PARTIAL   (turnfocus2)
+    [0.5 s1] velocity turn          turnfocus2                         1:OK |yaw|=0.580 gain=1.16 abs0.3=OK z=111 g=-1.00 | 2:XX |yaw|=0.223 gain=0.45 abs0.3=XX z=109 g=-1.00 | 3:OK |yaw|=0.566 gain=1.13 abs0.3=OK z=108 g=-1.00 | 4:OK |yaw|=0.542 gain=1.08 abs0.3=OK z=109 g=-0.99 | 5:XX |yaw|=0.017 gain=0.03 abs0.3=XX z=116 g=-1.00
+    [0.5 s1] velocity turn            3/5  PARTIAL   (turnfocus2)
+    [0.5 s2] velocity turn          turnfocus2                         1:OK |yaw|=0.523 gain=1.05 abs0.3=OK z=108 g=-1.00 | 2:XX |yaw|=0.025 gain=0.05 abs0.3=XX z=114 g=-1.00 | 3:OK |yaw|=0.522 gain=1.04 abs0.3=OK z=107 g=-1.00 | 4:XX |yaw|=0.413 gain=0.83 abs0.3=OK z=108 g=-1.00 | 5:OK |yaw|=0.517 gain=1.03 abs0.3=OK z=109 g=-1.00
+    [0.5 s2] velocity turn            3/5  PARTIAL   (turnfocus2)
+    [0.3 s0] velocity turn          turnfocus2                         1:OK |yaw|=0.329 gain=1.10 abs0.3=OK z=109 g=-1.00 | 2:OK |yaw|=0.329 gain=1.10 abs0.3=OK z=109 g=-1.00 | 3:OK |yaw|=0.343 gain=1.14 abs0.3=OK z=111 g=-1.00 | 4:XX |yaw|=0.267 gain=0.89 abs0.3=XX z=110 g=-1.00 | 5:XX |yaw|=0.071 gain=0.24 abs0.3=XX z=114 g=-1.00
+    [0.3 s0] velocity turn            3/5  PARTIAL   (turnfocus2)
+    [0.3 s1] velocity turn          turnfocus2                         1:OK |yaw|=0.331 gain=1.10 abs0.3=OK z=112 g=-1.00 | 2:XX |yaw|=0.140 gain=0.47 abs0.3=XX z=111 g=-1.00 | 3:XX |yaw|=0.289 gain=0.96 abs0.3=XX z=111 g=-1.00 | 4:OK |yaw|=0.340 gain=1.13 abs0.3=OK z=109 g=-1.00 | 5:XX |yaw|=0.018 gain=0.06 abs0.3=XX z=116 g=-1.00
+    [0.3 s1] velocity turn            2/5  PARTIAL   (turnfocus2)
+    [0.3 s2] velocity turn          turnfocus2                         1:XX |yaw|=0.222 gain=0.74 abs0.3=XX z=111 g=-1.00 | 2:XX |yaw|=0.022 gain=0.07 abs0.3=XX z=115 g=-1.00 | 3:OK |yaw|=0.323 gain=1.08 abs0.3=OK z=109 g=-1.00 | 4:XX |yaw|=0.147 gain=0.49 abs0.3=XX z=112 g=-1.00 | 5:XX |yaw|=0.188 gain=0.63 abs0.3=XX z=111 g=-1.00
+    [0.3 s2] velocity turn            1/5  PARTIAL   (turnfocus2)
+
+=== turnfocus4 : logs/rsl_rl/velocity/2026-09-27_07-59-05_turnfocus4/model_6997.pt
+--- the tail itself (6 episodes, cmd 0.3, seed 0; primary readout)
+    ############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############
+    cmd 0.3 rad/s in place, seed 0, 6 episodes per policy, pinned DR groups: none
+    policies: 2026-09-27_07-59-05_turnfocus4
+    
+     ep   _07-59-05_turnfocus4
+      1  0.252 / z108 / g-1.00
+      2  0.238 / z103 / g-1.00
+      3  0.277 / z108 / g-1.00
+      4  0.228 / z105 / g-1.00
+      5  0.054 / z114 / g-1.00   <-- stand-still
+      6  0.062 / z109 / g-1.00   <-- stand-still
+        (cell = |yaw| rad/s, steady-state window / terminal trunk z mm / terminal gravity z)
+--- walk row (must stay >= 0.20 m/s)
+    velocity walk          turnfocus4                         1:OK v=+0.243 m/s z=112 g=-1.00 | 2:OK v=+0.246 m/s z=111 g=-0.99 | 3:OK v=+0.248 m/s z=114 g=-1.00
+    velocity walk            3/3  ALL PASS   (turnfocus4)
+--- 3 seeds x 5 rounds sweep
+    [0.5 s0] velocity turn          turnfocus4                         1:XX |yaw|=0.497 gain=0.99 abs0.3=OK z=102 g=-1.00 | 2:XX |yaw|=0.477 gain=0.95 abs0.3=OK z=100 g=-1.00 | 3:XX |yaw|=0.496 gain=0.99 abs0.3=OK z=99 g=-0.99 | 4:XX |yaw|=0.467 gain=0.93 abs0.3=OK z=103 g=-0.99 | 5:XX |yaw|=0.101 gain=0.20 abs0.3=XX z=114 g=-1.00
+    [0.5 s0] velocity turn            0/5  FAIL   (turnfocus4)
+    [0.5 s1] velocity turn          turnfocus4                         1:OK |yaw|=0.575 gain=1.15 abs0.3=OK z=104 g=-1.00 | 2:XX |yaw|=0.230 gain=0.46 abs0.3=XX z=106 g=-1.00 | 3:OK |yaw|=0.544 gain=1.09 abs0.3=OK z=102 g=-1.00 | 4:OK |yaw|=0.519 gain=1.04 abs0.3=OK z=105 g=-1.00 | 5:XX |yaw|=0.011 gain=0.02 abs0.3=XX z=117 g=-1.00
+    [0.5 s1] velocity turn            3/5  PARTIAL   (turnfocus4)
+    [0.5 s2] velocity turn          turnfocus4                         1:XX |yaw|=0.475 gain=0.95 abs0.3=OK z=106 g=-1.00 | 2:XX |yaw|=0.031 gain=0.06 abs0.3=XX z=115 g=-1.00 | 3:XX |yaw|=0.471 gain=0.94 abs0.3=OK z=106 g=-1.00 | 4:XX |yaw|=0.394 gain=0.79 abs0.3=OK z=104 g=-1.00 | 5:XX |yaw|=0.488 gain=0.98 abs0.3=OK z=104 g=-1.00
+    [0.5 s2] velocity turn            0/5  FAIL   (turnfocus4)
+    [0.3 s0] velocity turn          turnfocus4                         1:XX |yaw|=0.252 gain=0.84 abs0.3=XX z=108 g=-1.00 | 2:XX |yaw|=0.238 gain=0.79 abs0.3=XX z=103 g=-1.00 | 3:XX |yaw|=0.277 gain=0.92 abs0.3=XX z=108 g=-1.00 | 4:XX |yaw|=0.228 gain=0.76 abs0.3=XX z=105 g=-1.00 | 5:XX |yaw|=0.055 gain=0.18 abs0.3=XX z=114 g=-1.00
+    [0.3 s0] velocity turn            0/5  FAIL   (turnfocus4)
+    [0.3 s1] velocity turn          turnfocus4                         1:OK |yaw|=0.309 gain=1.03 abs0.3=OK z=111 g=-1.00 | 2:XX |yaw|=0.120 gain=0.40 abs0.3=XX z=111 g=-1.00 | 3:XX |yaw|=0.270 gain=0.90 abs0.3=XX z=108 g=-1.00 | 4:XX |yaw|=0.258 gain=0.86 abs0.3=XX z=111 g=-1.00 | 5:XX |yaw|=0.024 gain=0.08 abs0.3=XX z=117 g=-1.00
+    [0.3 s1] velocity turn            1/5  PARTIAL   (turnfocus4)
+    [0.3 s2] velocity turn          turnfocus4                         1:XX |yaw|=0.198 gain=0.66 abs0.3=XX z=110 g=-1.00 | 2:XX |yaw|=0.029 gain=0.10 abs0.3=XX z=116 g=-1.00 | 3:XX |yaw|=0.246 gain=0.82 abs0.3=XX z=110 g=-1.00 | 4:XX |yaw|=0.168 gain=0.56 abs0.3=XX z=108 g=-0.99 | 5:XX |yaw|=0.184 gain=0.61 abs0.3=XX z=109 g=-1.00
+    [0.3 s2] velocity turn            0/5  FAIL   (turnfocus4)
+
+############ DECISION TABLE (median over 3 seeds x 5 rounds) ############
+arm                cmd row              n median|yaw|  gain  >=0.30
+base               0.5 velocity turn   15       0.341  0.68  11/15 
+base               0.5 walk+turn       15       0.461  0.92  11/15 
+base               0.3 velocity turn   15       0.081  0.27   0/15 
+base               0.3 walk+turn       15       0.303  1.01   9/15 
+turn05_warm        0.5 velocity turn   15       0.393  0.79  11/15 
+turn05_warm        0.5 walk+turn       15       0.494  0.99  11/15 
+turn05_warm        0.3 velocity turn   15       0.136  0.45   0/15 
+turn05_warm        0.3 walk+turn       15       0.319  1.06  10/15 
+turn00_scratch     0.5 velocity turn   15       0.285  0.57   7/15 
+turn00_scratch     0.5 walk+turn       15       0.484  0.97  11/15 
+turn00_scratch     0.3 velocity turn   15       0.038  0.13   0/15 
+turn00_scratch     0.3 walk+turn       15       0.279  0.93   5/15 
+turn03_scratch     0.5 velocity turn   15       0.410  0.82  11/15 
+turn03_scratch     0.5 walk+turn       15       0.461  0.92  11/15 
+turn03_scratch     0.3 velocity turn   15       0.173  0.58   0/15 
+turn03_scratch     0.3 walk+turn       15       0.404  1.35  11/15 
+turn03_woboff      0.5 velocity turn   15       0.471  0.94  11/15 
+turn03_woboff      0.5 walk+turn       15       0.506  1.01  11/15 
+turn03_woboff      0.3 velocity turn   15       0.256  0.85   0/15 
+turn03_woboff      0.3 walk+turn       15       0.294  0.98   7/15 
+turn03_woboff5k    0.5 velocity turn   15       0.562  1.12  11/15 
+turn03_woboff5k    0.5 walk+turn       15       0.549  1.10  11/15 
+turn03_woboff5k    0.3 velocity turn   15       0.340  1.13  10/15 
+turn03_woboff5k    0.3 walk+turn       15       0.336  1.12  10/15 
+turn00_ship        0.5 velocity turn   15       0.521  1.04  11/15 
+turn00_ship        0.5 walk+turn       15       0.483  0.97  11/15 
+turn00_ship        0.3 velocity turn   15       0.278  0.93   3/15 
+turn00_ship        0.3 walk+turn       15       0.295  0.98   6/15 
+ref_wobbleoff      0.5 velocity turn   15       0.554  1.11  11/15 
+ref_wobbleoff      0.5 walk+turn       15       0.503  1.01  12/15 
+ref_wobbleoff      0.3 velocity turn   15       0.309  1.03  10/15 
+ref_wobbleoff      0.3 walk+turn       15       0.310  1.03   8/15 
+turnfocus0         0.5 velocity turn   15       0.544  1.09  11/15 
+turnfocus0         0.5 walk+turn       15       0.526  1.05  11/15 
+turnfocus0         0.3 velocity turn   15       0.282  0.94   2/15 
+turnfocus0         0.3 walk+turn       15       0.322  1.07   9/15 
+turnfocus2         0.5 velocity turn   15       0.499  1.00  11/15 
+turnfocus2         0.5 walk+turn       15       0.447  0.89   9/15 
+turnfocus2         0.3 velocity turn   15       0.267  0.89   6/15 
+turnfocus2         0.3 walk+turn       15       0.278  0.93   4/15 
+turnfocus4         0.5 velocity turn   15       0.475  0.95  11/15 
+turnfocus4         0.5 walk+turn       15       0.444  0.89  11/15 
+turnfocus4         0.3 velocity turn   15       0.228  0.76   1/15 
+turnfocus4         0.3 walk+turn       15       0.295  0.98   6/15 
+
+labels:
+  base              deployed 68k policy (dc_long_0919_0125)
+  turn05_warm       deployed + WARM_START, pin 0.5, 2000 it
+  turn00_scratch    from scratch, CONTROL (no pin), 5000 it
+  turn03_scratch    from scratch, pin 0.3, 5000 it
+  turn03_woboff     deployed + WARM_START + pin 0.3 + WOBBLE OFF, 2000 it
+  turn03_woboff5k   same, continued to 5000 it
+  turn00_ship       deployed + WARM_START + WOBBLE OFF, no pin, 5000 it
+  ref_wobbleoff     REFERENCE: wobble-free arm of the 2026-09-17 matched pair
+  turnfocus0        
+  turnfocus2        
+  turnfocus4        
+
+############ DECISION RULES (written before the runs they judge) ############
+in-place achieved |yaw|:
+  cmd 0.3 : deployed 0.081  control 0.038  pin-scratch 0.173  pin+woboff 0.256  ship(woboff,no pin) 0.278  ref 0.309
+  cmd 0.5 : deployed 0.341  warm+pin 0.393  pin+woboff 0.471/0.562  ship(woboff,no pin) 0.521  ref 0.554
+
+VERDICT: ship rule 1 - the wobble-free arm tracks 0.3 rad/s WITH THE STOCK COMMAND MIX,
+         so the pin is not needed: the fix is 'remove the angular-wobble tax', nothing
+         else. Re-gate the turn rows on that checkpoint.
+         ship rule 3 also met (gain >= 0.9 at both commands): promote the checkpoint to
+         the rotation's turn rows and re-run logs/acceptance_gate.sh on them.
+         reference ceiling at cmd 0.3 (fully wobble-free older recipe): 0.309 -
+         the gap between the ship arm and this is what more iterations could buy.
+
+Read the walk row of each arm (`logs/turn_eval/<arm>_walk.out`) before trusting any turn
+number: a gait that cannot walk at 0.15 m/s has no meaningful yaw rate either.

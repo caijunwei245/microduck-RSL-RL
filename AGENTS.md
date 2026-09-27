@@ -310,6 +310,23 @@ ball); roller tasks leave head/body command slots zero-padded.
   **0.812** (52/64, sustained). StandUp needs no such fix because its cfg
   removes `fell_over` by design — and it re-verifies at **0.984** (126/128) from
   a genuine pin, so quote those two numbers with their difference in mind.
+- **Episodes run back to back in ONE env inherit state that no reset clears — and in a
+  marginal task that flips whole episodes.** Measured 2026-09-27 (`logs/turn_tail_findings.md`):
+  the in-place turn policy tracked a commanded 0.3 rad/s at gain ~1.15 but stood still — upright,
+  never falling, simply not rotating — in 2 of 6 rounds. It is not the policy and not a draw:
+  pinning the spawn pose leaves it, pinning EVERY per-episode DR group only MOVES it to another
+  round, re-initialising the actuator's action-delay buffer changes nothing, and a
+  `MICRODUCK_TURN_FOCUS` bonus of 2x and 4x changes nothing (the 4x arm even pulled the median
+  down). **Building a new env per round removes it: 0 of 6 stand still.** Same checkpoint, same
+  command, same seed. The reason a residue can do that is that the task is marginal: the
+  stand-still basin scored 240.401 against the turning policy's 241.184 (−0.32 %), because not
+  moving already collects the full `track_linear_velocity` reward when the commanded linear
+  velocity is zero. So: for "what does the policy do", evaluate with `skill_demo.py --fresh-env`;
+  for the training-faithful number, keep the default in-place resets — and **say which one a
+  quoted rate came from**, because `family_eval` and `acceptance_gate.sh` inherit the same
+  fraction on any marginal task. The remaining suspect is per-world simulator state mjlab's `sim`
+  wrapper does not expose (contact cache / solver warm-start); it is a reset-completeness question,
+  not something a reward change can reach.
 - **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
   needs the actor only, and the actor carries its own obs normalizer (that is
   what the ONNX export bakes in). Building a runner instead drags in the task's

@@ -90,6 +90,21 @@ def dr_vector(env) -> dict[str, float]:
                     scales.extend(float(v) for v in vals)
                 break
     out["friction_scale_mean"] = float(np.mean(scales)) if scales else float("nan")
+    # firmware PD gain scales (mdp.randomize_delayed_actuator_gains, mode="reset" -> EVERY episode).
+    # These live on the actuator, not the model, which is exactly why the first --pin-all missed them.
+    for attr, key in (("kp_scale", "kp_scale"), ("kd_scale", "kd_scale"),
+                      ("_kp_scale", "kp_scale"), ("_kd_scale", "kd_scale")):
+        if key in out:
+            continue
+        vals = []
+        for a in getattr(r, "actuators", []) or []:
+            v = getattr(a, attr, None)
+            if v is not None:
+                arr = np.asarray(_to_np(v)).reshape(-1)
+                if arr.size:
+                    vals.extend(float(x) for x in arr)
+        if vals:
+            out[key] = float(np.mean(vals))
     # spawn state: what the episode starts from
     rp = np.asarray(_to_np(r.data.root_link_pos_w[0])).reshape(-1)
     for ax, v in zip("xyz", rp[:3]):
@@ -110,6 +125,27 @@ def dr_vector(env) -> dict[str, float]:
     except Exception:  # noqa: BLE001
         pass
     return out
+
+
+def reset_actuator_delay(env) -> int:
+    """Re-initialise the BAM actuator's action-delay buffer (the suspected carried state).
+
+    `FrictionDRBamActuator` keeps `_delay_buffer` to emulate the command chain's lag, and no
+    reset-mode event touches it - so after an in-place episode reset the new episode replays up to
+    `max_lag` control steps of the PREVIOUS episode's commands.
+    """
+    n = 0
+    for a in getattr(env.scene["robot"], "actuators", []) or []:
+        for name in ("_init_delay_buffer", "reset"):
+            fn = getattr(a, name, None)
+            if callable(fn) and name == "_init_delay_buffer":
+                try:
+                    fn()
+                    n += 1
+                except Exception:  # noqa: BLE001
+                    pass
+                break
+    return n
 
 
 def spearman(xs, ys):
@@ -146,7 +182,7 @@ PIN_GROUPS: dict[str, tuple[str, ...]] = {
     "mass": ("randomize_mass_inertia",),
 }
 PIN_KEYS = ("ranges", "scale_range", "bias_range", "pose_range", "velocity_range",
-            "position_range", "alpha_range")
+            "position_range", "alpha_range", "kp_range", "kd_range")
 
 
 def _midpoint(v):
@@ -181,14 +217,20 @@ def apply_pins(env_cfg, groups: set[str]) -> None:
         env_cfg.events.pop("push_robot", None)
 
 
-def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none") -> list[dict]:
-    torch.manual_seed(seed)          # identical DR stream for every policy compared
+def make_env(pins: str):
     env_cfg = load_env_cfg(TASK, play=False)
     env_cfg.scene.num_envs = 1
     groups = {p.strip() for p in pins.split(",") if p.strip() and p.strip() != "none"}
     if "push" in groups:
         groups.add("push")
     apply_pins(env_cfg, groups)
+    return env_cfg
+
+
+def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none",
+               fresh_env: bool = False, reset_delay: bool = False) -> list[dict]:
+    torch.manual_seed(seed)          # identical DR stream for every policy compared
+    env_cfg = make_env(pins)
     env = ManagerBasedRlEnv(cfg=env_cfg, device=DEVICE)
     max_steps = int(round(env_cfg.episode_length_s /
                           (env_cfg.sim.mujoco.timestep * env_cfg.decimation)))
@@ -198,10 +240,24 @@ def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none"
     spec = ("velocity turn", TASK, ckpt, "turn", 0.0, cmd, None, None)
     out = []
     for _ in range(rounds):
-        res = run_round(env, wrapped, policy, spec, max_steps, probe=dr_vector)
+        if fresh_env:
+            # DECISIVE CONTROL for "carried state": a brand-new env per episode. Nothing can survive
+            # a reset that is not written by the reset events themselves (actuator delay queues,
+            # action history, solver warm-start data are the usual suspects).
+            del env, wrapped
+            env = ManagerBasedRlEnv(cfg=make_env(pins), device=DEVICE)
+            wrapped = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
+        def _probe(e, _reset=reset_delay):
+            if _reset:
+                reset_actuator_delay(e)
+            return dr_vector(e)
+
+        res = run_round(env, wrapped, policy, spec, max_steps, probe=_probe)
         # episode reward sums (bare term names) - the two basins' PAYOFFS, which is what decides
         # between them. `_episode_sums` is keyed by bare term name, not "Episode_Reward/<term>".
         sums = res.get("sums") or {}
+        if fresh_env:
+            pass
         out.append({**res.get("probe", {}),
                     "yaw_mean": res["yaw_abs_mean"], "z_end": res["z_last"], "g_end": res["g_last"],
                     "upright_frac": res["upright_frac"], "fell": res["fell"], "steps": res["steps"],
@@ -214,11 +270,12 @@ def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none"
     return out
 
 
-def report(rows: dict[str, list[dict]], cmd: float, seed: int, pins: str = "none") -> None:
+def report(rows: dict[str, list[dict]], cmd: float, seed: int, pins: str = "none",
+           fresh_env: bool = False) -> None:
     tags = list(rows)
     print("############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############")
     print(f"cmd {cmd} rad/s in place, seed {seed}, {len(rows[tags[0]])} episodes per policy, "
-          f"pinned DR groups: {pins}")
+          f"pinned DR groups: {pins}, fresh env per episode: {fresh_env}")
     print("policies: " + " | ".join(tags))
     print()
     print(f"{'ep':>3s} " + " ".join(f"{t[-20:]:>22s}" for t in tags))
@@ -278,6 +335,12 @@ def main() -> int:
     ap.add_argument("--rounds", type=int, default=24)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--cmd", type=float, default=0.3)
+    ap.add_argument("--reset-delay", action="store_true",
+                    help="re-init the BAM actuator action-delay buffer at every episode start "
+                         "(the suspected carried state)")
+    ap.add_argument("--fresh-env", action="store_true",
+                    help="build a NEW env for every episode - the control that separates carried "
+                         "state from the policy")
     ap.add_argument("--pin", default="none",
                     help="comma list of per-episode DR groups to pin to their midpoints "
                          "(spawn,com,friction,armature,damping,gains,orientation,mass,push,all) - "
@@ -287,8 +350,9 @@ def main() -> int:
     rows = {}
     for ckpt in [c.strip() for c in args.ckpts.split(",") if c.strip()]:
         tag = os.path.basename(os.path.dirname(ckpt))
-        rows[tag] = run_policy(ckpt, args.rounds, args.seed, args.cmd, args.pin)
-    report(rows, args.cmd, args.seed, args.pin)
+        rows[tag] = run_policy(ckpt, args.rounds, args.seed, args.cmd, args.pin, args.fresh_env,
+                           args.reset_delay)
+    report(rows, args.cmd, args.seed, args.pin, args.fresh_env)
     return 0
 
 

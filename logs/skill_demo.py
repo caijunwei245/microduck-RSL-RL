@@ -369,6 +369,11 @@ def main() -> int:
                     help="commanded yaw rate for the turn rows (rad/s)")
     ap.add_argument("--video", action="store_true",
                     help="record one video per skill (all rounds back to back, offscreen renderer)")
+    ap.add_argument("--fresh-env", action="store_true",
+                    help="build a NEW env before every round: episodes then cannot inherit state "
+                         "that no reset clears (measured to flip 2 of 6 turn rounds into standing "
+                         "still). The default runs rounds back to back in one env, which is what "
+                         "training does - quote which one a number came from.")
     ap.add_argument("--play-cfg", action="store_true",
                     help="load the PLAY cfg (domain randomization off) - a DIAGNOSTIC: if the failing "
                          "rounds recover without DR, the residual is a DR-tail robustness gap, not a "
@@ -432,10 +437,13 @@ def main() -> int:
                 if _t in env_cfg.terminations:
                     env_cfg.terminations.pop(_t)
                     print(f"  {spec[0]}: dropped termination {_t!r} (fires on the pin)")
-        env = ManagerBasedRlEnv(
-            cfg=env_cfg, device=DEVICE,
-            render_mode="rgb_array" if args.video else None,
-        )
+        def _mk_env():
+            return ManagerBasedRlEnv(
+                cfg=env_cfg, device=DEVICE,
+                render_mode="rgb_array" if args.video else None,
+            )
+
+        env = _mk_env()
         max_steps = int(round(env_cfg.episode_length_s / (env_cfg.sim.mujoco.timestep * env_cfg.decimation)))
         from mjlab.rl import RslRlVecEnvWrapper
 
@@ -446,6 +454,15 @@ def main() -> int:
         marks, lines = [], []
         frames = [] if args.video else None
         for r_i in range(args.rounds):
+            if args.fresh_env and r_i > 0:
+                # Measured 2026-09-26/27 (logs/turn_tail_findings.md): episodes run back to back in
+                # ONE env inherit state that no reset-mode event clears, and in a marginal task that
+                # flips whole episodes - the in-place turn stood still in 2 of 6 rounds with in-place
+                # resets and 0 of 6 with a fresh env per round. Use this for "what does the policy
+                # do", and the default (in-place resets) when you want the training-faithful number.
+                del env, wrapped
+                env = _mk_env()
+                wrapped = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
             res = run_round(env, wrapped, policy, spec, max_steps, frames=frames,
                             stride=args.video_stride, log_cmd=args.log_cmd,
                             label=f"{name}  round {r_i + 1}/{args.rounds}")
