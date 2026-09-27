@@ -44,12 +44,17 @@ above:
   `angular_wobble` tax, not the gait and not the optimization history. Removing it while pinning the
   low command takes the in-place rate from 0.081 to 0.256 rad/s (gain 0.27 -> 0.85) on the deployed
   policy, and a fully wobble-free recipe tracks 0.3 rad/s at gain **1.03**.
-* **The residual turn "tail" is an evaluation artifact, not a policy property** (2026-09-27): the
-  policy stands still in ~1 episode in 5 when rounds run back to back in ONE env, and in **0 of 6**
-  when each round gets a fresh env. Pinning the spawn pose, pinning every per-episode DR group, or
-  paying 2x/4x extra for the turn (`MICRODUCK_TURN_FOCUS`, three arms) all leave it unchanged — it
-  is state that survives an in-place reset. `skill_demo.py --fresh-env` measures without it; see
-  `logs/turn_tail_findings.md`.
+* **The residual turn "tail" is a coin flip in a chaotic, non-bit-reproducible simulator** (resolved
+  2026-09-27, `logs/turn_tail_findings.md`): with domain randomization off and the spawn pinned, four
+  trials of the *same 200 actions* from *identical* states diverge from step 1 — `joint_pos_target` is
+  identical every step while `ctrl` differs by 1.1e-06 and reaches O(1) within 40-200 steps. In a task
+  whose two basins are 0.32 % apart (240.401 vs 241.184) that is enough to flip whole episodes, so the
+  in-place turn stands still in 2/6, 1/6 or 0/6 episodes depending on the run — the same number at
+  n=6. Nothing about the policy or the reward is wrong here (three training arms paying 2x/4x for the
+  turn left it identical); **quote episode counts next to rates and never verdicts from single
+  episodes**. The actuator delay dither adds a discrete extra difference on top (first-step `ctrl`
+  5.4e-03 by default, 1.1e-06 with `MICRODUCK_ACTUATOR_LAG="0,0"`), so pinning the lag lowers variance
+  for A/B work without making the environment reproducible.
 * The evaluation machinery itself is now **in the public repo** (`logs/skill_demo.py`,
   `logs/family_eval.py`, `logs/acceptance_gate.sh`, `logs/demo_finish.py`), so every number in these
   ledgers has a reproducible path instead of living in a gitignored directory.
