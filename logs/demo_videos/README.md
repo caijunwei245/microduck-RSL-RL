@@ -30,10 +30,12 @@ wobble-free, command-pinned policy from the turn dead-zone experiment (`logs/tur
 `logs/turn_ship_verdict.md`). Reproduce with
 `MICRODUCK_TURN_CKPT=logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt`.
 
-Read the caveat before quoting any row as a rate: the rotation is a *demonstration*, the turn policy
-still stands still in roughly one episode in three-to-five under an unfavourable DR draw, and across
-seeds the other rows range widely (ball_kick 1/5-4/5, walk 0/5-3/5). Per-skill interpretation:
-`logs/skill_demo.md`; verdicts: `logs/acceptance_gate.sh` (3 seeds x 5 rounds).
+Read the caveat before quoting any row as a rate: the rotation is a *demonstration*. Across seeds the
+rows range widely (ball_kick 1/5-4/5, walk 0/5-3/5), and the simulator is chaotic and **not
+bit-reproducible across resets** — identical state plus identical actions diverge from step 1 — so a
+marginal task like the in-place turn flips whole episodes on noise alone (`logs/turn_tail_findings.md`).
+Quote episode counts next to rates. Per-skill interpretation: `logs/skill_demo.md`; verdicts:
+`logs/acceptance_gate.sh` (3 seeds x 5 rounds).
 
 Reproduce:
 

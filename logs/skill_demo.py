@@ -370,10 +370,11 @@ def main() -> int:
     ap.add_argument("--video", action="store_true",
                     help="record one video per skill (all rounds back to back, offscreen renderer)")
     ap.add_argument("--fresh-env", action="store_true",
-                    help="build a NEW env before every round: episodes then cannot inherit state "
-                         "that no reset clears (measured to flip 2 of 6 turn rounds into standing "
-                         "still). The default runs rounds back to back in one env, which is what "
-                         "training does - quote which one a number came from.")
+                    help="build a NEW env before every round. NOT an artifact fix: the environment "
+                         "is chaotic and not bit-reproducible across resets (see AGENTS.md), so this "
+                         "asks a different question (fresh-episode behaviour), it does not remove "
+                         "noise. The default - rounds back to back in one env - is the "
+                         "training-faithful one; quote episode counts either way.")
     ap.add_argument("--play-cfg", action="store_true",
                     help="load the PLAY cfg (domain randomization off) - a DIAGNOSTIC: if the failing "
                          "rounds recover without DR, the residual is a DR-tail robustness gap, not a "

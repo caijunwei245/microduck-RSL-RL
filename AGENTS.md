@@ -310,23 +310,27 @@ ball); roller tasks leave head/body command slots zero-padded.
   **0.812** (52/64, sustained). StandUp needs no such fix because its cfg
   removes `fell_over` by design — and it re-verifies at **0.984** (126/128) from
   a genuine pin, so quote those two numbers with their difference in mind.
-- **Episodes run back to back in ONE env inherit state that no reset clears — and in a
-  marginal task that flips whole episodes.** Measured 2026-09-27 (`logs/turn_tail_findings.md`):
-  the in-place turn policy tracked a commanded 0.3 rad/s at gain ~1.15 but stood still — upright,
-  never falling, simply not rotating — in 2 of 6 rounds. It is not the policy and not a draw:
-  pinning the spawn pose leaves it, pinning EVERY per-episode DR group only MOVES it to another
-  round, re-initialising the actuator's action-delay buffer changes nothing, and a
-  `MICRODUCK_TURN_FOCUS` bonus of 2x and 4x changes nothing (the 4x arm even pulled the median
-  down). **Building a new env per round removes it: 0 of 6 stand still.** Same checkpoint, same
-  command, same seed. The reason a residue can do that is that the task is marginal: the
-  stand-still basin scored 240.401 against the turning policy's 241.184 (−0.32 %), because not
-  moving already collects the full `track_linear_velocity` reward when the commanded linear
-  velocity is zero. So: for "what does the policy do", evaluate with `skill_demo.py --fresh-env`;
-  for the training-faithful number, keep the default in-place resets — and **say which one a
-  quoted rate came from**, because `family_eval` and `acceptance_gate.sh` inherit the same
-  fraction on any marginal task. The remaining suspect is per-world simulator state mjlab's `sim`
-  wrapper does not expose (contact cache / solver warm-start); it is a reset-completeness question,
-  not something a reward change can reach.
+- **The simulator is chaotic and NOT bit-reproducible across resets, so a marginal task is a
+  coin flip per episode.** Measured 2026-09-27 (`logs/turn_tail_findings.md`): with the play cfg
+  (no DR) and the spawn pinned to the same pose, four trials of *the same 200 actions* from
+  *identical* states end at different trunk heights (0.111-0.122 m) and |Δqvel| up to 0.79 rad/s.
+  A per-step trace localises it: `joint_pos_target` (what the policy asked for) is identical at
+  every step, while `ctrl` (what the actuator wrote) already differs by **1.1e-06 on step 1** and
+  reaches O(1) within 40-200 steps — floating-point, i.e. a non-associative reduction in the GPU
+  kernels, amplified by a 25 cm contact-rich biped whose Lyapunov time is a few tenths of a second.
+  Two practical consequences. (1) **Never quote a per-episode verdict on a marginal task**: the
+  in-place turn tracks at gain ~1.15 and stands still in 2/6, 1/6 or 0/6 episodes depending on the
+  run — all the same number at n=6 — because the stand-still basin is only 0.32 % behind on return
+  (240.401 vs 241.184), and the gate's 3 seeds x 5 rounds resolves roughly ±13 %. Quote episode
+  counts next to rates and compare distributions, never single episodes. (2) The actuator delay
+  DITHER (`delay_update_period=0`, the `MICRODUCK_ACTUATOR_LAG` default) adds a second, discrete
+  difference on top — first-step `ctrl` differs by 5.4e-03, by 2.6e-03 with one fixed lag, by
+  1.1e-06 with `"0,0"` — so pinning the lag for A/B work reduces variance, but cannot make the
+  environment reproducible. What is NOT the cause, each with a control that could have failed: the
+  policy (three arms paying 2x/4x for the turn left it identical), the reward, the spawn pose, any
+  per-episode DR draw, the firmware gains (`ENABLE_KP/KD_RANDOMIZATION = False`), and the delay
+  buffer contents. This also explains the older "walk 0/5 to 3/5 across seeds" / "spawn
+  sensitivity" observations: same phenomenon, sampled too thinly.
 - **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
   needs the actor only, and the actor carries its own obs normalizer (that is
   what the ONNX export bakes in). Building a runner instead drags in the task's

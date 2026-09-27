@@ -50,12 +50,13 @@ falls, it just does not rotate. Two controls localize it:
 Two different policies failing identically at the same indices is a property of those episodes. In
 roughly one episode in three-to-five the policy stands still.
 
-**Resolved 2026-09-27 — it is the harness, not the policy**: episodes run back to back in ONE env
-inherit state that no reset-mode event clears. Pinning the spawn pose or every per-episode DR draw
-leaves it (the second only moves it to another round), and three training arms that paid 2x/4x extra
-for the turn changed nothing; **a new env per round removes it entirely (0 of 6 stand still against 2
-of 6)**. Same checkpoint, command and seed. Use `--fresh-env` for "what does the policy do"; the
-default is the training-faithful number. Full chain: `logs/turn_tail_findings.md`.
+**Resolved 2026-09-27 — it is the simulator, not the policy**: the environment is chaotic and not
+bit-reproducible across resets (identical state + identical actions diverge from step 1, `ctrl`
+differing by 1e-06 and reaching O(1) within 40-200 steps), and this task is marginal — the stand-still
+basin is only 0.32 % behind on return — so a fraction of episodes flips. Pinning the spawn pose, or
+every per-episode DR draw, or paying 2x/4x extra for the turn (three training arms) all leave it
+unchanged. **Quote episode counts next to rates; single episodes of a marginal task are coin flips.**
+Full chain: `logs/turn_tail_findings.md`.
 That is a *tail* problem (gain ~1.15 whenever it turns), separate from the dead zone, which was
 *systematic* (median gain 0.27 across all episodes). Next step is instrumentation of the per-episode
 DR draw, not another reward term.

@@ -1,90 +1,85 @@
-# The turn tail is carried state across in-place episode resets (2026-09-27)
+# The turn "tail" is a coin flip in a chaotic, non-bit-reproducible simulator (2026-09-27)
 
-Follow-up to `logs/turn_ship_verdict.md`. Instrumentation: `logs/dr_tail_probe.py` (drives
-`skill_demo.run_round` through its `probe` hook — see the method note), evidence in
-`logs/dr_tail_gains.out`, `logs/dr_tail_6.out`, `logs/dr_tail_pin.out`, and the runs quoted below.
+Instrumentation: `logs/dr_tail_probe.py` (drives `skill_demo.run_round` through its `probe` hook),
+`logs/sim_determinism_test.py` (no policy at all: reset → same fixed actions → compare). Evidence:
+`logs/dr_tail_gains.out`, `logs/dr_state_spread.out`, and the traces quoted below.
 
-**Result in one line**: the policy is fine. Episodes run back to back in one environment inherit
-state that no reset-mode event clears, and in this marginal task that is enough to flip whole
-episodes. With a **fresh env per round the tail disappears: 0 of 6 episodes stand still**, against
-**2 of 6** with in-place resets (same checkpoint, same command, same seed).
+**Two claims in earlier versions of this file were wrong, and they are corrected here**, because each
+was made on a control too weak to support it: first "bistability with a 0.32 % payoff gap selects the
+basin", then "state carried across in-place resets (a fresh env per round removes it)". What the
+measurements actually support is below.
 
-## The controls, in the order they were run
+## The measurement that settles it
 
-| # | control | result |
+`logs/sim_determinism_test.py`, play cfg (no domain randomization), spawn pose pinned to exactly
+(0, 0, 0.125) m — so every trial starts from the same root pose, the same joint positions
+(`init|dq| vs t1 = 0.000e+00`) and gets the **same 200 actions**:
+
+| trial | root_z | gravity_z |
 |---|---|---|
-| 1 | pin the spawn pose (all axes / yaw only / z only) | still stands still at rounds 5-6 (0.071 / 0.046) |
-| 2 | **pin every per-episode DR group** (CoM, friction scale, armature, damping, gains, orientation, mass, no pushes) | failure **moves to round 3** (0.047) instead of disappearing |
-| 3 | re-init the BAM actuator's action-delay buffer at every episode start | unchanged (0.047 at round 3) — not the delay queue |
-| 4 | **build a new env for every round** (DR still active) | **0/6 stand still** (0.283-0.352, median 0.317) |
-| 5 | reward arms `MICRODUCK_TURN_FOCUS` = 2.0 / 4.0 / 0.0 (control), +2,000 iterations each | **identical tail in all three** (rounds 5-6: 0.071/0.050, 0.054/0.062, 0.067/0.054) |
+| 1 | 0.11352 | −0.984 |
+| 2 | 0.11126 | −0.936 |
+| 3 | 0.12242 | −0.99998 |
+| 4 | 0.11512 | −0.998 |
 
-Control 1-3 are the search for a *draw*: pinning everything that is drawn per episode does not remove
-the failure, it relocates it. Control 4 is the decisive one: when the episode starts in a brand-new
-environment — nothing to carry — every round turns.
+Divergence by |Δqvel| 0.79 rad/s. A per-step trace of two such trials, with the actuator delay fixed
+to a single value, shows where it starts:
 
-Also checked and constant, as the cfg's event table says they must be: foot friction (0.335), trunk
-CoM (0.000), damping, `joint_pos_abs_mean`, `encoder_bias_abs_mean` (0.00726), and `kp_scale` /
-`kd_scale` = 1.000 (`ENABLE_KP_RANDOMIZATION = False`, `ENABLE_KD_RANDOMIZATION = False` in the
-current recipe, so the firmware gains are not drawn at all). The big DR factors (`foot_friction`
-0.7-1.3, `encoder_bias` ±0.015 rad, `base_com` ±25-30 mm, mass/inertia) are `startup` events, drawn
-once per env — structurally unable to explain episode-to-episode differences.
-
-## Why a residue can flip a whole episode: the task is marginal
-
-Episode reward sums, stand-still rounds vs turning rounds (same checkpoint, same six rounds):
-
-| term | stand still | turning | delta |
+| field | first step that differs | max abs diff there | max abs diff over 40 steps |
 |---|---|---|---|
-| **total** | **240.401** | **241.184** | **−0.783 (−0.32 %)** |
-| `track_linear_velocity` | 95.942 | 95.149 | +0.793 |
-| `track_angular_velocity` | 50.479 | 54.151 | −3.672 |
-| `upright` | 37.645 | 36.904 | +0.741 |
-| `angular_wobble` | −10.978 | −15.619 | **+4.641** |
+| `joint_pos_target` (what the policy asked for) | — (identical) | 0 | 0 |
+| `ctrl` (what the actuator wrote) | **1** | 1.1e-06 | 2.7e-02 |
+| `qpos` | 1 | 4.0e-07 | 1.3e-01 |
+| `qvel` | 1 | 2.1e-05 | 1.6e+00 |
 
-Standing still gives up under one point in 241 and *wins* on three of the four terms — not moving
-already collects the full linear-tracking reward because the commanded linear velocity is zero. That
-is why the system is *sensitive* to a residue. It is **not** what selects the basin: arms 5 paid 2x
-and 4x extra for turning in exactly that region and changed nothing (the 4.0 arm even pulled the
-low-rate median down from 0.340 to ~0.25 rad/s while turning at a visibly lower stance, z 99-108 mm
-against 112-118). The reward side of this problem is now exhausted, which is what pre-registered
-decision rule 3 in `logs/turn_focus_plan.md` said would end it.
+The command path is exactly reproducible; the actuation/physics path is not. A **1e-6** difference on
+the first step — floating-point, i.e. a non-associative reduction somewhere in the GPU kernels — is
+amplified to O(1) within 40-200 steps. This is a 25 cm contact-rich biped: its Lyapunov time is a few
+tenths of a second, so "identical inputs" does not mean "identical trajectory" in this simulator.
 
-## What it costs the numbers already quoted
+## Consequences, in order of how much they change practice
 
-Same checkpoint, cmd 0.3 rad/s in place, seed 0, six rounds:
+1. **A single episode of a marginal task is a coin flip, and 15 of them are not a verdict.** The
+   in-place turn tracks at gain ~1.15 and stands still in a fraction of episodes — measured 2/6, 1/6,
+   and (fresh env per round) 0/6 in different runs, which at n=6 is all the same number. The
+   stand-still basin scores **240.401** against the turning policy's **241.184** (−0.32 %), so it does
+   not take much noise to flip an episode. `acceptance_gate.sh` runs 3 seeds x 5 rounds; for a task
+   this marginal that resolves roughly ±13 %, and the docs should quote episode counts next to rates.
+2. **The delay dither adds a second, discrete difference on top.** With the stock
+   `MICRODUCK_ACTUATOR_LAG="3,6"` the first-step `ctrl` difference is 5.4e-03 (a whole lag step of
+   command, not rounding); forcing a single lag (`"2,2"`) cuts it to 2.6e-03; `"0,0"` (no delay) to
+   1.1e-06. So fixing/holding the lag **reduces variance between runs** — useful for A/B work — but it
+   does not make the environment reproducible, because the floating-point floor is still there.
+3. **What is NOT the cause** (all measured, all with controls that could have failed): the policy
+   (three training arms paying 2x/4x extra for the in-place turn left the tail identical, and the 4x
+   arm was slightly worse); the reward shape; the spawn pose (pinning it changes nothing); every
+   per-episode DR draw (pinning them all moves the failure to another round rather than removing it —
+   and the big ones are `startup` events drawn once per env, measured constant); the firmware gains
+   (`ENABLE_KP/KD_RANDOMIZATION = False`, `kp_scale` ≡ 1.0); and the delay buffer's *contents* (its
+   `reset` does clear them).
+4. **`skill_demo --fresh-env` is not an "artifact-free" mode.** It was added to test the carried-state
+   hypothesis; the hypothesis did not survive (0/6 vs 2/6 at n=6 is noise). It is still a legitimate
+   *different* question ("what does the policy do in a fresh episode"), but it must not be advertised
+   as removing an artifact. The default (rounds back to back in one env) is the training-faithful one.
 
-| | r1 | r2 | r3 | r4 | r5 | r6 |
-|---|---|---|---|---|---|---|
-| rounds back to back (default) | 0.357 | 0.360 | 0.379 | 0.382 | **0.073** | **0.042** |
-| fresh env per round (`--fresh-env`) | 0.357 | 0.331 | 0.281 | 0.344 | 0.333 | 0.395 |
+## What this retires
 
-So the artifact is worth roughly one to two rounds in six, and it is the *whole* difference between
-"two rounds where the robot did not rotate at all" and "six rounds that all rotate, one of them at
-0.94 gain". `skill_demo.py --fresh-env` now exposes the artifact-free measurement; the default stays
-in-place because that is what training does, and **every number in these ledgers should say which of
-the two it came from**.
+* The turn dead zone was a real, systematic, *fixable* defect (the `angular_wobble` tax; median 0.081 →
+  0.340 rad/s at cmd 0.3, shipped and re-gated — `logs/turn_deadzone_verdict.md`,
+  `logs/turn_ship_verdict.md`).
+* The residual "tail" is not a defect at all: it is what a marginal task looks like in a chaotic
+  simulator that is not bit-reproducible. No reward, cfg or training change can remove it; the honest
+  response is more episodes per verdict, and distributional (never per-episode) comparisons.
+* This is also the most likely explanation for a family of older observations in this repo
+  ("walk 0/5 to 3/5 across seeds", "spawn sensitivity", single-checkpoint reversals): they are the same
+  phenomenon, sampled too thinly.
 
-This is not specific to turning: `skill_demo`, `family_eval` and `acceptance_gate.sh` all run episodes
-sequentially in one env, so any marginal task in the set inherits the same fraction. It plausibly
-matters in training too (mjlab resets environments in place).
+## Reproduce
 
-## What is left to find
-
-The carried state is *not*: the spawn pose, any per-episode DR draw, the actuator's action-delay
-buffer, the action history (`reset_action_history` exists), or the firmware gains. The remaining
-candidates live in per-world simulator state that mjlab's `sim` wrapper does not expose (contact
-cache / solver warm-start), so this is a reset-completeness question at the mjlab/MuJoCo-Warp layer,
-not something a cfg or reward change can reach. Concretely worth doing next: identify which kernel
-state survives `env.reset()` and either clear it or report it upstream — and until then, treat
-in-place-reset multi-episode rates as a *lower bound* for marginal tasks.
-
-## Method note (kept because it nearly cost the finding)
-
-The first version of the probe re-implemented the rollout loop and reported rounds 5-6 at
-0.232/0.233 rad/s — it **hid the very tail it existed to explain**. Driving `skill_demo.run_round`
-through a new `probe` hook reproduces the demo to three decimals (0.073 / 0.042). The same lesson bit
-twice more: the first `--pin all` did not pin the firmware gains (`kp_range` / `kd_range` were not in
-its key list, and they are the one DR term that lives on the actuator rather than the model), and the
-first attribution blamed the delay buffer without a control that could fail. Same code, and a control
-that can fail, or no conclusion.
+```bash
+uv run python logs/sim_determinism_test.py --steps 200 --trials 4 --play-cfg --pin-spawn
+uv run python logs/sim_determinism_test.py --steps 40 --trace --play-cfg --pin-spawn
+MICRODUCK_ACTUATOR_LAG="2,2" uv run python logs/sim_determinism_test.py --steps 40 --trace \
+    --play-cfg --pin-spawn
+uv run python logs/dr_tail_probe.py --rounds 6 --pin all --dump-state --ckpts <turn ckpt>
+```

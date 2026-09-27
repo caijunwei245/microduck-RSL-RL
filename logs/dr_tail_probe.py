@@ -127,6 +127,43 @@ def dr_vector(env) -> dict[str, float]:
     return out
 
 
+def state_snapshot(env) -> dict:
+    """Everything the FIRST observation of an episode is built from, plus the actuator internals.
+
+    With every DR draw pinned the inputs are identical, so any spread across episodes in here IS the
+    carried state - that is the whole point of the measurement.
+    """
+    out: dict = {}
+    r = env.scene["robot"]
+    for name in ("joint_pos", "joint_pos_biased", "joint_vel", "root_link_pos_w", "root_link_quat_w",
+                 "root_link_ang_vel_b", "projected_gravity_b", "joint_pos_target",
+                 "joint_effort_target"):
+        v = getattr(r.data, name, None)
+        if hasattr(v, "detach"):
+            out[f"data.{name}"] = v.detach().float().cpu().numpy().reshape(-1).copy()
+    am = getattr(env, "action_manager", None)
+    for name in ("action", "_action", "prev_action", "action_history"):
+        v = getattr(am, name, None) if am is not None else None
+        if hasattr(v, "detach"):
+            out[f"action_manager.{name}"] = v.detach().float().cpu().numpy().reshape(-1).copy()
+    for i, a in enumerate(getattr(r, "actuators", []) or []):
+        for name, v in vars(a).items():
+            if hasattr(v, "detach") and getattr(v, "dtype", None) is not None:
+                try:
+                    arr = v.detach().float().cpu().numpy().reshape(-1).copy()
+                except Exception:  # noqa: BLE001
+                    continue
+                if arr.size <= 4096:
+                    out[f"act{i}.{name}"] = arr
+        for name in ("_delay_buffer", "delay_buffer"):
+            buf = getattr(a, name, None)
+            inner = getattr(buf, "_buffer", None) if buf is not None else None
+            if hasattr(inner, "detach"):
+                out[f"act{i}.delay_buffer_contents"] = (
+                    inner.detach().float().cpu().numpy().reshape(-1).copy())
+    return out
+
+
 def reset_actuator_delay(env) -> int:
     """Re-initialise the BAM actuator's action-delay buffer (the suspected carried state).
 
@@ -228,7 +265,8 @@ def make_env(pins: str):
 
 
 def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none",
-               fresh_env: bool = False, reset_delay: bool = False) -> list[dict]:
+               fresh_env: bool = False, reset_delay: bool = False,
+               dump_state: bool = False) -> tuple[list[dict], list[dict]]:
     torch.manual_seed(seed)          # identical DR stream for every policy compared
     env_cfg = make_env(pins)
     env = ManagerBasedRlEnv(cfg=env_cfg, device=DEVICE)
@@ -239,6 +277,7 @@ def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none"
     policy = Actor(ckpt, clip=getattr(agent_cfg, "clip_actions", None))
     spec = ("velocity turn", TASK, ckpt, "turn", 0.0, cmd, None, None)
     out = []
+    states: list[dict] = []
     for _ in range(rounds):
         if fresh_env:
             # DECISIVE CONTROL for "carried state": a brand-new env per episode. Nothing can survive
@@ -250,6 +289,8 @@ def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none"
         def _probe(e, _reset=reset_delay):
             if _reset:
                 reset_actuator_delay(e)
+            if dump_state:
+                states.append(state_snapshot(e))
             return dr_vector(e)
 
         res = run_round(env, wrapped, policy, spec, max_steps, probe=_probe)
@@ -267,11 +308,34 @@ def run_policy(ckpt: str, rounds: int, seed: int, cmd: float, pins: str = "none"
                     "r_wobble": sums.get("angular_wobble", float("nan")),
                     "r_total": sum(sums.values()) if sums else float("nan")})
     del env
-    return out
+    return out, states
+
+
+def report_state_spread(states: list[dict], weak_idx: list[int]) -> None:
+    """Which snapshot field differs between episodes? With DR pinned, any spread is carried state."""
+    if not states:
+        return
+    keys = sorted({k for st in states for k in st})
+    print()
+    print("############ initial-state spread across episodes (with DR pinned this IS the residue) ############")
+    print(f"{'field':34s} {'max|v|':>10s} {'spread':>10s} {'weak eps differ?':>18s}")
+    for k in keys:
+        vals = [st.get(k) for st in states]
+        vals = [v for v in vals if v is not None]
+        if not vals:
+            continue
+        import numpy as _np
+        stack = _np.stack([v.reshape(-1) for v in vals])
+        spread = float(_np.abs(stack - stack[0]).max())
+        if spread <= 1e-9:
+            continue
+        weakdev = float(_np.abs(_np.stack([states[i][k].reshape(-1) for i in weak_idx]) -
+                               stack[0]).max()) if weak_idx else 0.0
+        print(f"{k:34s} {float(_np.abs(stack).max()):10.4f} {spread:10.4f} {weakdev:18.4f}")
 
 
 def report(rows: dict[str, list[dict]], cmd: float, seed: int, pins: str = "none",
-           fresh_env: bool = False) -> None:
+           fresh_env: bool = False, states: list[dict] | None = None) -> None:
     tags = list(rows)
     print("############ per-episode DR vs turn outcome (skill_demo.run_round driving) ############")
     print(f"cmd {cmd} rad/s in place, seed {seed}, {len(rows[tags[0]])} episodes per policy, "
@@ -335,6 +399,9 @@ def main() -> int:
     ap.add_argument("--rounds", type=int, default=24)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--cmd", type=float, default=0.3)
+    ap.add_argument("--dump-state", action="store_true",
+                    help="snapshot the initial state of every episode and print which fields differ "
+                         "between episodes (the residue, with DR pinned)")
     ap.add_argument("--reset-delay", action="store_true",
                     help="re-init the BAM actuator action-delay buffer at every episode start "
                          "(the suspected carried state)")
@@ -348,11 +415,12 @@ def main() -> int:
     args = ap.parse_args()
 
     rows = {}
+    states: list[dict] = []
     for ckpt in [c.strip() for c in args.ckpts.split(",") if c.strip()]:
         tag = os.path.basename(os.path.dirname(ckpt))
-        rows[tag] = run_policy(ckpt, args.rounds, args.seed, args.cmd, args.pin, args.fresh_env,
-                           args.reset_delay)
-    report(rows, args.cmd, args.seed, args.pin, args.fresh_env)
+        rows[tag], states = run_policy(ckpt, args.rounds, args.seed, args.cmd, args.pin,
+                                       args.fresh_env, args.reset_delay, args.dump_state)
+    report(rows, args.cmd, args.seed, args.pin, args.fresh_env, states)
     return 0
 
 
