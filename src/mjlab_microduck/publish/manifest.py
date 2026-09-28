@@ -150,6 +150,11 @@ def build_manifest(
             raise ManifestError(f"a posture-flag policy is scripted, not {kind!r}")
         if ramp_s is not None and ramp_s <= 0:
             raise ManifestError("ramp_s must be > 0 when given")
+    if ramp_s is not None and command_encoding != "posture_flag":
+        # Refuse rather than drop it: this argument was accepted and silently discarded once, so the
+        # sitstand manifest declared no glide while the official set's `alpha_sitstand` declares
+        # `ramp_s: 2.0`. An argument that does not reach the manifest is worse than a rejected one.
+        raise ManifestError("ramp_s describes the glide a posture flag starts; it needs posture_flag")
     if not name or "/" in name or name != name.strip():
         raise ManifestError(f"name must be a bare word a client can ask for, not {name!r}")
     if kind == "episodic":
@@ -230,6 +235,11 @@ def build_manifest(
         manifest["chain"] = bool(chain)
     else:
         manifest["duration_s"] = None
+        if ramp_s is not None:
+            # The official `alpha_sitstand` entry carries `ramp_s` (2.0 s) next to `unwind_s`; it is
+            # the glide the owner should expect after a flag flip, so it belongs in the manifest and
+            # not only in the flag that asked for it.
+            manifest["ramp_s"] = float(ramp_s)
         if unwind_s is not None:
             manifest["unwind_s"] = float(unwind_s)
     if slot is not None:
@@ -277,6 +287,9 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
     idle = (manifest.get("command") or {}).get("idle")
     if idle is not None and len(idle) != 3:
         raise ManifestError("command.idle is a 3-vector twist")
+    ramp = manifest.get("ramp_s")
+    if ramp is not None and ramp <= 0:
+        raise ManifestError("ramp_s must be > 0 when present: it is the glide after a flag flip")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -388,7 +401,8 @@ def install_commands(manifest: dict[str, Any], repo_id: str) -> str:
                 f"sudo robotctl policy add {name} {repo_id}\nrobotctl robot do {name}")
     if encoding == "posture_flag":
         return (f"# expects command.encoding=posture_flag (sit={manifest['command'].get('sit')}, "
-                f"stand={manifest['command'].get('stand')}) — the owner toggles the flag\n"
+                f"stand={manifest['command'].get('stand')}, ramp_s={manifest.get('ramp_s')}) "
+                f"— the owner toggles the flag\n"
                 f"sudo robotctl policy add {name} {repo_id}"
                 + (f" --hold {manifest['unwind_s']}" if manifest.get("unwind_s") else "")
                 + f"\nrobotctl robot do {name}")
@@ -415,6 +429,9 @@ def render_readme(manifest: dict[str, Any], repo_id: str) -> str:
     elif encoding == "posture_flag":
         timing = ("Holds the commanded posture until the flag is toggled back; the daemon drives "
                   "`command.sit` / `command.stand`.")
+        if manifest.get("ramp_s") is not None:
+            timing += (f" A flip is answered by a constant-rate glide over `ramp_s` "
+                       f"({manifest['ramp_s']} s), not a jump.")
     elif kind == "episodic":
         timing = f"Runs {manifest['duration_s']} s and returns itself to a standing pose."
         if manifest.get("chain"):

@@ -69,8 +69,12 @@ by `tests/test_hf_jobs_flag.py`.
   (8x8 VL53L5CX) are the sensors that daemon can ask for.
 - `src/mjlab_microduck/export.py` — the ONNX export (normalizer baked in); `scripts/export.py` wraps it.
 - `src/mjlab_microduck/publish/` — `uv run publish`: schema-2 manifest builder + ONNX shape/smoke
-  gate + Hub upload. Contract = `docs/policy-manifest.md` in the `microduck` repo; only
-  constant-command episodic/perpetual policies are publishable (phase/posture-flag are the set's).
+  gate + Hub upload. Contract = `docs/policy-manifest.md` in the `microduck` repo. Three command
+  encodings are publishable and the official set uses all of them: `constant`, `phase`
+  (`alpha_ground_pick`: `episodic` + `period_s`/`end_phase`) and `posture_flag` (`alpha_sitstand`:
+  `scripted` + `ramp_s`/`unwind_s`). **The one question this repo cannot answer is whether the daemon
+  accepts those two from a COMMUNITY repo** — the format validates here, so confirm on hardware.
+  Staging all four phase/posture skills: `bash logs/publish_stage.sh` (see `logs/publishability.md`).
 - `src/mjlab_microduck/train_cli.py`, `train_hook.py`, `hf_jobs.py` — the `train` entry
   point and the `--hf-jobs` interception (`tests/test_hf_jobs_flag.py`).
 - `scripts/` — export wrapper, infer, `play_latest`, sim2real comparison, BAM bench
@@ -366,6 +370,18 @@ ball); roller tasks leave head/body command slots zero-padded.
   `velocity walk`'s "48 %" turned out to be era, not the latency default (21/25 vs 22/25 under the two
   envelopes). Before training anything, print the command each failing episode carried and check that
   the criterion could have been satisfied at all.
+  **A third instance, and the one that turns into a shipping number: `spin`'s duration sweep**
+  (`logs/publish_duration_spin15.txt`). The row averages the |yaw rate| of the LAST THIRD of the window
+  and requires >= 0.30 rad/s, so at 15 rounds it reads 15/15 at 1.5-3.0 s and **0/15 at 3.5 s and
+  4.0 s** — while the rotation integrated over the window is 6.5-6.6 rad (one full turn) in *every*
+  window >= 2.5 s. The task's own envelope (`SPIN_ACCEL_END/HOLD_END/BRAKE_END` = 0.125/0.525/0.650 of
+  the 4 s cycle) commands rate 0 from 2.6 s on, i.e. the 0/15 rows are windows that contain the
+  commanded REST segment and the policy is being marked down for obeying "stop". A 3-round sweep of the
+  same thing had looked like per-episode variance (0/3 vs 3/3) and was written off as "uninformative" —
+  at n=3 a deterministic 0/15-vs-15/15 split is invisible. So: quote episode counts, and when the
+  readout is a rate, ask **which segment of the commanded profile the measurement window covers**; for
+  a published button (`duration_s`) the useful number is the rotation the window delivers, not the rate
+  at the instant it is cut (2.6 s = the brake end ships one full turn and hands back slack).
 - **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
   needs the actor only, and the actor carries its own obs normalizer (that is
   what the ONNX export bakes in). Building a runner instead drags in the task's

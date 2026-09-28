@@ -12,7 +12,7 @@
   "name": "roller_crouch",
   "kind": "episodic",
   "entry_pose": "standing",
-  "description": "Mjlab-RollerCrouch-Flat-MicroDuck",
+  "description": "Crouch on the rollers and return to the roller stand.",
   "command": {
     "encoding": "phase",
     "period_s": 5.0,
@@ -29,11 +29,9 @@
   "duration_s": 3.0,
   "chain": false,
   "training": {
-    "repo": "pollen-robotics/microduck_rl",
-    "commit": "cdbb6ecab",
-    "branch": "develop",
-    "dirty": true,
     "task_id": "Mjlab-RollerCrouch-Flat-MicroDuck",
-    "checkpoint": 1999
+    "checkpoint": "model_1999.pt",
+    "commit": "1905375",
+    "run": "2026-09-28_14-42-12_rollercrouch_lag12"
   }
 }

@@ -12,7 +12,7 @@
   "name": "sitstand",
   "kind": "scripted",
   "entry_pose": "standing",
-  "description": "Mjlab-SitStand-Flat-MicroDuck",
+  "description": "Sit down or stand up on command; holds the commanded posture.",
   "command": {
     "encoding": "posture_flag",
     "sit": 1.0,
@@ -27,14 +27,13 @@
     "body": "unused (zeros)"
   },
   "duration_s": null,
+  "ramp_s": 2.0,
   "unwind_s": 1.0,
   "slot": "sitstand",
   "training": {
-    "repo": "pollen-robotics/microduck_rl",
-    "commit": "cdbb6ecab",
-    "branch": "develop",
-    "dirty": true,
     "task_id": "Mjlab-SitStand-Flat-MicroDuck",
-    "checkpoint": 2498
+    "checkpoint": "model_2498.pt",
+    "commit": "1905375",
+    "run": "2026-09-24_08-58-42_sitstand_hold2"
   }
 }

@@ -63,6 +63,25 @@ OFFICIAL_SET = {
 }
 
 
+def _matches_official(built: dict, filename: str) -> None:
+    """Every claim the official entry makes must appear in ours, with the same value.
+
+    One-directional on purpose: the official entries are abbreviated (no `robot`, no `description`),
+    so ours carries more, but it must not carry LESS. This is the check that would have caught the
+    dropped `ramp_s`, and it catches the next dropped field for free.
+    """
+    official = next(p for p in OFFICIAL_SET["policies"] if p["file"] == filename)
+    for key, want in official.items():
+        if key == "file":
+            continue
+        if key == "command":
+            for ckey, cwant in want.items():
+                assert built["command"].get(ckey) == cwant, \
+                    f"{filename}: official command.{ckey}={cwant!r}, ours {built['command'].get(ckey)!r}"
+            continue
+        assert built.get(key) == want, f"{filename}: official {key}={want!r}, ours {built.get(key)!r}"
+
+
 def _tiny_policy(path: Path, obs_len: int = m.OBS_LEN, action_len: int = m.ACTION_LEN) -> Path:
     """A one-layer 'policy' with the daemon's shape, so the ONNX checks run without torch."""
     rng = np.random.default_rng(0)
@@ -184,6 +203,11 @@ def test_a_perpetual_manifest_says_how_to_come_back():
               end_phase=0.7), None),
         (dict(kind="perpetual", command_encoding="posture_flag"), "scripted"),
         (dict(kind="scripted", command_encoding="posture_flag", ramp_s=-1.0), "ramp_s"),
+        # `ramp_s` outside a posture flag is refused, not dropped (2026-09-28: it used to reach a
+        # manifest that said nothing about it).
+        (dict(kind="episodic", duration_s=1.0, ramp_s=2.0), "ramp_s"),
+        (dict(kind="episodic", duration_s=1.0, command_encoding="phase", period_s=4.0,
+              end_phase=0.7, ramp_s=2.0), "ramp_s"),
         (dict(kind="scripted", duration_s=1.0, command_encoding="telepathy"), "command_encoding"),
         (dict(kind="episodic", duration_s=1.0, action_scale=5.0), "action_scale"),
     ],
@@ -201,6 +225,7 @@ def test_a_phase_policy_matches_the_official_set_shape():
     built = m.build_manifest(name="ground_pick", kind="episodic", description="d", duration_s=2.8,
                              command_encoding="phase", period_s=4.0, end_phase=0.7)
     m.validate_manifest(built)
+    _matches_official(built, "alpha_ground_pick.onnx")
     assert built["command"]["encoding"] == "phase"
     assert built["command"]["period_s"] == 4.0 and built["command"]["end_phase"] == 0.7
     assert built["duration_s"] == 2.8
@@ -208,10 +233,16 @@ def test_a_phase_policy_matches_the_official_set_shape():
 
 
 def test_a_posture_flag_policy_matches_the_official_set_shape():
-    """The official sitstand is scripted + posture_flag + ramp_s/unwind_s."""
+    """The official sitstand is scripted + posture_flag + ramp_s/unwind_s.
+
+    Compared field for field against `OFFICIAL_SET` rather than by hand: this test used to assert the
+    encoding alone, and `ramp_s` was accepted by the builder and then DROPPED from the manifest — the
+    sitstand upload declared no glide while `alpha_sitstand` declares 2.0 s.
+    """
     built = m.build_manifest(name="sitstand", kind="scripted", description="d",
                              command_encoding="posture_flag", ramp_s=2.0, unwind_s=1.0)
     m.validate_manifest(built)
+    _matches_official(built, "alpha_sitstand.onnx")
     assert built["command"]["encoding"] == "posture_flag"
     assert built["command"]["sit"] == 1.0 and built["command"]["stand"] == 0.0
     assert built["command"]["twist"] == "[flag, side, 0]"

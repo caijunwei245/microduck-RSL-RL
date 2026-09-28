@@ -49,10 +49,12 @@ SKILLS = {
         note="passes at every duration >= 2.5 s; 3.0 s is the shortest that also ends standing "
              "(z_last 111 mm)"),
     "spin": dict(
-        kind="episodic", encoding="phase", period_s=4.0, duration_s=None, end_phase=None,
+        kind="episodic", encoding="phase", period_s=4.0, duration_s=2.6, end_phase=0.65,
         description="Spin in place on the rollers.",
-        note="duration from logs/publish_duration_spin.txt (the envelope is accel-hold-brake, so the "
-             "window must cover the hold, not just the accel)"),
+        note="2.6 s = the brake end of the task's own phase envelope (SPIN_BRAKE_END 0.650): one full "
+             "turn (6.6 rad measured at 15 rounds), handed back at the commanded zero rate. A longer "
+             "window delivers the SAME rotation and then sits in the envelope's commanded rest "
+             "segment - logs/publish_duration_spin15.txt"),
     "sitstand": dict(
         kind="scripted", encoding="posture_flag", ramp_s=2.0, unwind_s=1.0, sit=1.0, stand=0.0,
         slot="sitstand", description="Sit down or stand up on command; holds the commanded posture.",
@@ -118,10 +120,13 @@ def main() -> int:
         "",
         "## What is still missing for a real upload",
         "",
-        "* the ONNX export per skill (`uv run scripts/export.py <TASK> --checkpoint-file <ckpt>`) and",
-        "  the publish ONNX gate;",
-        "* a Hugging Face token (none is configured in this environment), and",
-        "* for spin, the duration from `logs/publish_duration_spin.txt`.",
+        "1. a Hugging Face token — none is configured in this environment, so nothing is uploaded;",
+        "2. confirmation that the daemon accepts these encodings from a COMMUNITY repo (above).",
+        "",
+        "The ONNX half is no longer missing: `bash logs/publish_stage.sh` runs the real `uv run publish`",
+        "path per skill — export from the checkpoint, shape gate (61 -> 14), smoke run, manifest build +",
+        "validate, README — and stops at `--dry-run` with `publish-<name>/` staged",
+        "(`logs/publish_stage.txt`). This file is the manifest-level dry run and needs no GPU.",
     ]
     (OUT.parent / "publish_dryrun.md").write_text("\n".join(md) + "\n")
     print("\n".join(md))

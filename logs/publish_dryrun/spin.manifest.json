@@ -12,11 +12,11 @@
   "name": "spin",
   "kind": "episodic",
   "entry_pose": "standing",
-  "description": "Mjlab-Spin-Flat-MicroDuck",
+  "description": "Spin in place on the rollers.",
   "command": {
     "encoding": "phase",
     "period_s": 4.0,
-    "end_phase": 1.0,
+    "end_phase": 0.65,
     "idle": [
       0.0,
       0.0,
@@ -26,14 +26,12 @@
     "head": "unused (zeros)",
     "body": "unused (zeros)"
   },
-  "duration_s": 4.0,
+  "duration_s": 2.6,
   "chain": false,
   "training": {
-    "repo": "pollen-robotics/microduck_rl",
-    "commit": "cdbb6ecab",
-    "branch": "develop",
-    "dirty": true,
     "task_id": "Mjlab-Spin-Flat-MicroDuck",
-    "checkpoint": 3999
+    "checkpoint": "model_3999.pt",
+    "commit": "1905375",
+    "run": "2026-09-23_20-26-02_spin_warmstand"
   }
 }

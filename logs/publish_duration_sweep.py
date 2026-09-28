@@ -35,6 +35,9 @@ def main() -> int:
     ap.add_argument("--rounds", type=int, default=3)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--ckpt", default=None)
+    ap.add_argument("--detail", action="store_true",
+                    help="print every round's readout, not just the medians (a truncated window can "
+                         "fail for reasons the median hides - see the spin row)")
     args = ap.parse_args()
 
     spec = None
@@ -59,8 +62,15 @@ def main() -> int:
         run_metric = ""
         if spec[3] == "turn" or spec[3] == "spin":
             run_metric = f"|yaw|={statistics.fmean(r['yaw_abs_mean'] for r in res):.3f} "
+        if spec[3] == "spin":
+            # The button question, not the demo question: how much rotation does this window deliver?
+            run_metric += (f"turned={statistics.median(r['yaw_abs_rad'] for r in res):.1f} rad "
+                           f"(net {statistics.median(r['yaw_net_rad'] for r in res):+.1f}) ")
         print(f"{dur:>10.1f} {steps:>6d} {ok:>3d}/{len(res):<3d}   {run_metric}"
               f"span median {statistics.median(spans):.0f} mm, z_last median {statistics.median(zlast):.0f} mm")
+        if args.detail:
+            for i, r in enumerate(res):
+                print(f"{'':>10s} round {i + 1}: ok={str(r['ok']):5s} {skill_demo.detail(spec[3], r)}")
     del env
     print("\nThe shortest duration that still passes is the one to put in the manifest; `end_phase` is")
     print("that duration divided by the task's own phase period (4.0 s ground_pick, 5.0 s crouch).")

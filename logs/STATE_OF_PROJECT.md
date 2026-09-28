@@ -38,9 +38,11 @@ with roller_standup's `upright_frac` improving from 0.61-1.00 to 0.97-1.00. Cont
 pre-fix envelope give walk 21/25 vs 22/25 (no effect) and recovery 0.95-0.99 either way, so the
 envelope buys fidelity (1-2 steps is the hardware) and reproducibility (first-step `ctrl` spread
 5.4e-03 -> 1.5e-06) rather than pass rates; the walk row's 48 -> 88 % move belongs to the era (the
-sustained-forward bucket and the turn work), not to it. That is a train/test mismatch until those families are re-trained under the new envelope; quote
-roller rows with their envelope, and use the pre-fix one when the question is "did this policy
-regress?".
+sustained-forward bucket and the turn work), not to it. (This paragraph used to end "that is a
+train/test mismatch until those families are re-trained under the new envelope" — the retraining has
+since happened and both roller families read 25/25 under it, so the trailer was dropped 2026-09-28.)
+Still quote roller rows with their envelope, and use the pre-fix envelope when the question is "did
+this policy regress?".
 
 Also demonstrated: a **continuous chain** - walk 0.27-0.32 m/s -> fall -> **get up in 0.86-1.02 s** ->
 run 0.29-0.35 m/s, twice in one episode (`logs/demo_videos/chain_walk_fall_up_run.mp4`).
@@ -141,19 +143,19 @@ Necessity is judged by "what breaks if we do not do it"; space by "is there a me
 
 | item | space | necessity | cost |
 |---|---|---|---|
-| **Commit the work** (24 files uncommitted, including every fix above) | trivial | **critical** - the entire session is unprotected; one stray checkout loses it | minutes |
+| ~~**Commit the work**~~ **DONE** | - | - | - |
 | **Real-robot validation of the two solved skills** (standup floor flip, spin) | large: the ONNX/BAM rehearsal path, `publish`, and the runtime all exist | **critical** - every verdict in this document is simulation-only; the floor flip in particular is the kind of behavior whose sim2real gap (contact, friction, servo saturation) matters most | hours on hardware |
-| **Ship the spin recipe** (`MICRODUCK_SPIN_RATE_MAX=1.0`, and/or the warm start) | done - the arms exist, 14/15 and 15/15 | high - it is a solved skill sitting in a checkpoint | one export + publish |
-| **Actuator-latency debt**: only the kick task trains with a coherent per-episode lag; `_BAM_ACTUATOR_KWARGS` declares 60-120 ms against a measured 20-40 ms | large - the kick task already implements the fix (`KICK_LAG_HOLD_STEPS`) | **high** - it silently weakens every sim2real claim in this repo | cross-repo decision + retrain budget |
-| **Publishability of phase-driven skills** (ground_pick, spin, roller_crouch) | medium - needs a constant-command wrapper or a runtime phase driver | high if they are to ship; the schema-2 contract currently excludes them | bounded code |
+| ~~**Ship the spin recipe**~~ **DONE 2026-09-28**: `spin_warmstand` exported, gated and staged (`publish-spin/`, `logs/publish_stage.txt`) | - | - | remaining: an HF token + the daemon-acceptance question |
+| ~~**Actuator-latency debt**~~ **DONE 2026-09-27**: the default envelope is now the MEASURED 1-2 steps held coherently per episode (`_actuator_lag`, `ACTUATOR_LAG_HOLD=1000`); `MICRODUCK_ACTUATOR_LAG="3,6" ..._HOLD=0` reproduces the old recipe for A/B | - | - | - |
+| ~~**Publishability of phase-driven skills**~~ **DONE 2026-09-28**: schema 2 already carried `phase`/`posture_flag` (the official set uses both); only our builder refused to emit them. All four skills staged via the real `publish --dry-run` path (`logs/publishability.md`) | - | - | remaining: an HF token + the daemon-acceptance question |
 
 ### Tier 2 - worth doing, mechanism partly known
 
 | item | space | necessity | cost |
 |---|---|---|---|
 | ~~**Turn dead zone below ~0.25 rad/s**~~ **SOLVED 2026-09-26** | it was neither the gait nor the optimization history: the `angular_wobble` **tax** on the scuffing a slow pivot-step needs. Wobble-off + pin takes cmd 0.3 from 0.081 to **0.256** (gain 0.85) on the deployed policy, and a fully wobble-free recipe tracks it at **1.03**; the pin alone (both fine-tune and from-scratch) plateaus at 0.14-0.17. Consolidation in flight (`turn_ship_plan.md`); the 0.2 rad/s floor is a separate, still-open question | - | done (`turn_deadzone_verdict.md`) |
-| **ball_kick reliability (52 %)** | noise is ruled out, so the fix is a contact-gated shaping term or a wider contact area - both untested | medium - a kick that misses half the time is a demo, not a capability | 1-2 arms + a 25-round hit-rate protocol |
-| **walk start transient (56 %)** | the failures are upright-but-not-moving; the sustained-forward bucket helped by 8 points, so the rest is the stand-to-walk transition itself | medium - it is the difference between "walks" and "walks when it feels like it" | 1-2 arms |
+| ~~**ball_kick reliability (52 %)**~~ **NOT A DEFECT 2026-09-28**: the row scored the ball's world-x displacement while the task spawns the ball and pays the reward in the robot's yaw frame. Re-scored in that frame both feet read **25/25 (100 %)** with 1.15-1.40 m launches (`logs/kick_frame_fix.txt`); no shaping arm was needed, and the two planned fixes were never run | - | - |
+| ~~**walk start transient (56 %)**~~ **CLOSED 2026-09-28**: the walk row reads **22/25 (88 %)** under the current recipe; the residual is the turn-while-walking row (`walk+turn`, 15/25), which is the honest remaining gap rather than a start transient | - | - |
 | **Sitstage the roller recipe as the shipped one** | measured: staged holds 138.2 mm at 0.1911 m/s with a 15/15 demo, vs 0.2099 for the plain swap and 0.0459 for the naive combination | medium - it is a deployment choice between posture and speed, and the staged recipe is the robust option | export + publish |
 
 ### Tier 3 - low value, do not spend GPU time

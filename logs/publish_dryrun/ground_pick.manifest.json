@@ -12,7 +12,7 @@
   "name": "ground_pick",
   "kind": "episodic",
   "entry_pose": "standing",
-  "description": "Mjlab-GroundPick-Flat-MicroDuck",
+  "description": "Crouch, touch the ground with the mouth tip, return to stand.",
   "command": {
     "encoding": "phase",
     "period_s": 4.0,
@@ -30,11 +30,9 @@
   "chain": false,
   "slot": "ground_pick",
   "training": {
-    "repo": "pollen-robotics/microduck_rl",
-    "commit": "cdbb6ecab",
-    "branch": "develop",
-    "dirty": true,
     "task_id": "Mjlab-GroundPick-Flat-MicroDuck",
-    "checkpoint": 999
+    "checkpoint": "model_999.pt",
+    "commit": "1905375",
+    "run": "2026-09-20_19-37-31_groundpick"
   }
 }

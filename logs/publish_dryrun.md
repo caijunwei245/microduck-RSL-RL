@@ -12,7 +12,7 @@ the validated, phase-commanded checkpoint is what ships.**
 |---|---|---|---|---|
 | ground_pick | `phase` | episodic | **valid** | duration/end_phase measured: 3.0 s of the 4.0 s phase cycle completes the manoeuvre (official set used 2.8 s / 0.7 for the same task) |
 | roller_crouch | `phase` | episodic | **valid** | passes at every duration >= 2.5 s; 3.0 s is the shortest that also ends standing (z_last 111 mm) |
-| spin | `phase` | episodic | **REFUSED: a phase command needs end_phase in [0, 1]** | duration from logs/publish_duration_spin.txt (the envelope is accel-hold-brake, so the window must cover the hold, not just the accel) |
+| spin | `phase` | episodic | **valid** | 2.6 s = the brake end of the task's own phase envelope (SPIN_BRAKE_END 0.650): one full turn (6.6 rad measured at 15 rounds), handed back at the commanded zero rate. A longer window delivers the SAME rotation and then sits in the envelope's commanded rest segment - logs/publish_duration_spin15.txt |
 | sitstand | `posture_flag` | scripted | **valid** | ramp_s == the cfg's POSTURE_RAMP_S; unwind_s 1.0 as in the official set |
 
 ## What each upload needs
@@ -33,10 +33,18 @@ sudo robotctl policy add roller_crouch <user>/microduck-roller_crouch
 robotctl robot do roller_crouch
 ```
 
+### spin
+
+```bash
+# expects command.encoding=phase (period_s=4.0, end_phase=0.65) — the daemon writes [cos(2*pi*phi), sin(2*pi*phi), 0]
+sudo robotctl policy add spin <user>/microduck-spin
+robotctl robot do spin
+```
+
 ### sitstand
 
 ```bash
-# expects command.encoding=posture_flag (sit=1.0, stand=0.0) — the owner toggles the flag
+# expects command.encoding=posture_flag (sit=1.0, stand=0.0, ramp_s=2.0) — the owner toggles the flag
 sudo robotctl policy add sitstand <user>/microduck-sitstand --hold 1.0
 robotctl robot do sitstand
 ```
@@ -52,7 +60,10 @@ item between these four checkpoints and a `robotctl policy add`.
 
 ## What is still missing for a real upload
 
-* the ONNX export per skill (`uv run scripts/export.py <TASK> --checkpoint-file <ckpt>`) and
-  the publish ONNX gate;
-* a Hugging Face token (none is configured in this environment), and
-* for spin, the duration from `logs/publish_duration_spin.txt`.
+1. a Hugging Face token — none is configured in this environment, so nothing is uploaded;
+2. confirmation that the daemon accepts these encodings from a COMMUNITY repo (above).
+
+The ONNX half is no longer missing: `bash logs/publish_stage.sh` runs the real `uv run publish`
+path per skill — export from the checkpoint, shape gate (61 -> 14), smoke run, manifest build +
+validate, README — and stops at `--dry-run` with `publish-<name>/` staged
+(`logs/publish_stage.txt`). This file is the manifest-level dry run and needs no GPU.

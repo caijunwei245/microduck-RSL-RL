@@ -250,8 +250,17 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
     tail = slice(max(1, len(zs) * 2 // 3), None)          # steady-state window
     v_ss = sum(vs[tail]) / max(1, len(vs[tail]))
     yaw_ss = sum(abs(y) for y in ys[tail]) / max(1, len(ys[tail]))
+    # Rotation integrated over the WHOLE round, signed and absolute. The tail rate answers "is it still
+    # spinning when we cut?"; for a BUTTON (a published `duration_s`) the question is "how much turn did
+    # this window deliver?", and the two disagree exactly where a task winds itself down - spin averages
+    # 0.02 rad/s over its last third of a 4.0 s window while having turned for the first two seconds.
+    _dt = float(getattr(env, "step_dt", 0.02))
+    yaw_net = sum(ys) * _dt
+    yaw_abs = sum(abs(y) for y in ys) * _dt
     res = dict(z0=zs[0], z_min=min(zs), z_max=max(zs), z_last=zs[-1], g_last=gs[-1],
                v_mean=v_ss, yaw_abs_mean=yaw_ss, upright_frac=upright_steps / max(1, len(zs)),
+               yaw_net_rad=yaw_net, yaw_abs_rad=yaw_abs,
+               yaw_peak=max((abs(y) for y in ys), default=0.0),
                descent=zs[0] - min(zs), held_high=longest_run([z >= 130.0 for z in zs]),
                hold=hold, steps=steps, fell=fell, ball=ball_max, ball_worldx=ball_worldx,
                sums=sums, probe=res_probe)
@@ -341,7 +350,9 @@ def detail(kind: str, r: dict) -> str:
                 f"abs0.3={'OK' if r.get('ok_abs03') else 'XX'} "
                 f"z={r['z_last']:.0f} g={r['g_last']:+.2f}{' FELL' if r.get('fell') else ''}")
     if kind == "spin":
-        return f"|yaw|={r['yaw_abs_mean']:.2f} rad/s g={r['g_last']:+.2f}"
+        return (f"|yaw|={r['yaw_abs_mean']:.2f} rad/s turned={r.get('yaw_abs_rad', 0.0):.1f} rad "
+                f"(net {r.get('yaw_net_rad', 0.0):+.1f}) peak={r.get('yaw_peak', 0.0):.1f} "
+                f"g={r['g_last']:+.2f}")
     if kind == "floor_flip":
         return f"hold={r['hold']:2d} z={r['z_last']:.0f} g={r['g_last']:+.2f}"
     if kind == "slope_descent":
