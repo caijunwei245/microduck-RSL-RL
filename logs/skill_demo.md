@@ -21,8 +21,8 @@ uv run python logs/demo_finish.py --rounds 5   # all_skills_5rounds.mp4 + round5
 | rollers (fast) | **0.535** | **0.517** | **0.529** | **0.538** | **0.518** m/s | **5/5** |
 | swizzle | **0.506** | **0.484** | **0.494** | **0.544** | **0.511** m/s | **5/5** |
 | roller_slope | **405** | **171** | **414** | **409** | **192** mm | **5/5** (upright 0.97-1.00) |
-| roller_standup | **held 175** | **276** | **300** | **208** | **275** | **5/5** (upright 0.61-1.00) |
-| roller_crouch | **70** | **71** | **69** | 33 | **69** mm span | 4/5 |
+| roller_standup | **held 290** | **291** | **300** | **290** | **291** | **5/5** (z_max 141-145, upright 0.97-1.00) |
+| roller_crouch | **74** | **75** | **72** | **73** | **71** mm span | **5/5** |
 | standup floor flip | **286** | **286** | **189** | **285** | **261** | **5/5** |
 | velstand floor flip | **972** | **961** | **968** | **973** | **542** hold | **5/5** |
 | spin | **1.46** | **1.43** | **1.47** | **1.44** | **1.46** rad/s | **5/5** |
@@ -50,8 +50,10 @@ What the five rounds add over two:
 * **roulade passes 5/5 while its roll magnitude spreads 1.66-7.04 rad** — the criterion is "ends
   upright", and it does every time; the roll count is not a quality score and should not be quoted as
   one.
-* **roller_standup passes 5/5 but `upright_frac` ranges 0.61-1.00**, i.e. some rounds spend a third of
-  the episode tilted. The pass/fail column hides that; the fraction is in the table for that reason.
+* **The two roller rows were re-recorded with the arms retrained under the measured latency
+  envelope** (`rollercrouch_lag12`, `rollerstandup_lag12`): both 5/5 now, roller_crouch's spans
+  71-75 mm (was 69-71 with one 33 mm miss) and roller_standup's `upright_frac` 0.97-1.00 (was
+  0.61-1.00). The pass/fail column hides the fraction, which is why it is in the table.
 
 | skill | round 1 | round 2 | checkpoint |
 |---|---|---|---|

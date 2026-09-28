@@ -10,7 +10,7 @@ one new constraint. Every claim below carries the measurement it rests on; stale
 | was | now | evidence |
 |---|---|---|
 | turn dead zone, "no working fix" | the `angular_wobble` tax; wobble-off + pin takes cmd 0.3 from 0.081 to 0.340 rad/s (gain 1.13), gate 21/25 (84 %) PASS | `turn_deadzone_verdict.md`, `turn_ship_verdict.md`, `gate_velocity_turn.txt` |
-| actuator-latency debt (declared 60-120 ms, dithered) | default is the measured 20-40 ms, held coherently; first-step `ctrl` spread 5.4e-03 -> 1.5e-06. **Net win, with one measured cost**: walk 48 -> 88 % and turn gain 0.68 -> 1.2 on the gate, floor recovery unchanged (0.95-0.99 either way), but roller_crouch 100 -> 76 % and roller_standup 100 -> 88 % | `actuator_latency.md`, `regate_2026-09-28.md` |
+| actuator-latency debt (declared 60-120 ms, dithered) | default is the measured 20-40 ms, held coherently; first-step `ctrl` spread 5.4e-03 -> 1.5e-06. **Strict win, no pass-rate cost**: the apparent roller cost (76 % / 88 %) was a train/test mismatch and two retrained arms are back at 100 % each; walk unchanged (88 vs 84 %), recovery unchanged (0.95-0.99) | `actuator_latency.md`, `regate_2026-09-28.md`, `roller_lag12_results.txt` |
 | floor flips | standup 0.984, velstand **0.812** (the 0.996 was the spawn mix) | `GOAL_SUMMARY.md` correction |
 | spin, roller_standup | 15/15 both | `spin_gate_finish.out`, `gate_roller_standup.txt` |
 | "reward-side can fix the turn" | closed by measurement: 2x/4x extra pay changed nothing | `turn_focus_results.txt` |
@@ -71,7 +71,7 @@ Three consequences that should steer the next work:
 | **ground_pick** | 4/5 in the rotation (one 31 mm span vs a 40 mm criterion); historically 25/25 | most likely the same per-episode noise as everything else | re-gate at 5 seeds before spending anything |
 | **in-place turn below 0.2 rad/s** | 0.008-0.032 rad/s achieved | the tax explains 0.3 but not 0.2; the runtime's held command is 0.5 | low necessity — leave it, or one diagnostic only if the runtime ever needs gentle heading correction |
 | **roller posture/speed** | staged 0.1911 m/s @ 138.2 mm (15/15) vs 0.2099 @ 138.9 plain | it is a deployment choice, not a training gap | ship the staged recipe; stop training this |
-| **re-train the two roller families under the measured envelope** | roller_crouch 100 -> 76 % and roller_standup 100 -> 88 % when the same checkpoints are evaluated under 1-2 held; they were trained under 3-6 dithered | pure train/test mismatch, or a real preference for the smoother (dithered) command stream — the arm tells which | 2 warm-start arms (~1-2 k iters) + 25-round gates |
+| ~~**re-train the two roller families under the measured envelope**~~ **DONE 2026-09-28** | the loss was a train/test mismatch: 2 warm-start arms under the new envelope are back at **25/25 (100 %)** each (crouch z_max 138.9 mm, standup 143.0 mm, `upright_frac` 0.97-1.00 vs 0.61-1.00 for the old checkpoint) | confirmed mismatch, not a preference for the dithered stream | done (`logs/roller_lag12_results.txt`) |
 
 ## 4. Tier 3 — do not spend GPU hours
 

@@ -119,16 +119,16 @@ Measured readouts of the five rounds, with the failures left in (`r1 / r2 / r3 /
 | rollers (fast) | 0.535 / 0.517 / 0.529 / 0.538 / 0.518 m/s on wheels — **5/5** |
 | swizzle | 0.506 / 0.484 / 0.494 / 0.544 / 0.511 m/s — **5/5** |
 | roller_slope | 405 / 171 / 414 / 409 / 192 mm descent (varies with spawn), upright 0.97–1.00 — **5/5** |
-| roller_standup | rises every round, but `upright_frac` spreads 0.61–1.00 — **5/5** |
-| roller_crouch | 70 / 71 / 69 / 69 mm spans, one 33 mm round ending tilted — **4/5** |
+| roller_standup | rises every round, z_max 141–145 mm, `upright_frac` 0.97–1.00 — **5/5** |
+| roller_crouch | 74 / 75 / 72 / 73 / 71 mm spans — **5/5** |
 | standup floor flip | holds the stand 189–286 of 300 steps from a pure prone pin — **5/5** |
 | velstand floor flip | holds 542–973 of 1000 steps from a prone pin (sustained 64-env rate 0.812) — **5/5** |
 | spin | 1.46 / 1.43 / 1.47 / 1.44 / 1.46 rad/s, upright — **5/5** |
 | roulade | roll magnitude spreads 1.66–7.04 rad but every round ends upright at 115–116 mm — **5/5** |
 
-**70 of 75 rounds passed (93 %)** after the ball_kick criterion fix (see below): twelve skills 5/5,
-`ground_pick` and `roller_crouch` at 4/5, and `sitstand` at 2/5 — the row with the lowest per-episode
-rate in the set. The two turn clips run on a different checkpoint from the rest:
+**71 of 75 rounds passed (95 %)** after the ball_kick criterion fix and the two roller arms retrained
+under the measured latency envelope: thirteen skills 5/5, `ground_pick` at 4/5, and `sitstand` at 2/5 —
+the row with the lowest per-episode rate in the set. The two turn clips run on a different checkpoint from the rest:
 the policy from the turn dead-zone experiment (`turn03_woboff@4998` — the deployed walking candidate,
 warm-started with the `angular_wobble` tax removed and a 0.3 rad/s in-place command pinned into 30 % of
 the envs), which tracks a commanded 0.5 rad/s at gain ~1.2 where the deployed candidate managed 0.68.

@@ -1,16 +1,26 @@
 === ACCEPTANCE GATE: roller_standup ===
-checkpoint: <newest glob match>
-date: 2026-09-28T11:11:54+08:00
+checkpoint: logs/rsl_rl/roller_standup/2026-09-28_14-42-12_rollerstandup_lag12/model_1999.pt
+date: 2026-09-28T15:25:27+08:00
 --- demonstration: 5 seeds x 5 rounds (explicit GATE_SEEDS) ---
-  seed 0: roller_standup 5/5 ALL PASS (roller_standup_stall)
-    roller_standup roller_standup_stall 1:OK held_high=300 z_max=145 upright=1.00 | 2:OK held_high=300 z_max=140 upright=1.00 | 3:OK held_high=286 z_max=138 upright=0.96 | 4:OK held_high=300 z_max=145 upright=1.00 | 5:OK held_high=287 z_max=138 upright=0.96
-  seed 1: roller_standup 5/5 ALL PASS (roller_standup_stall)
-    roller_standup roller_standup_stall 1:OK held_high=300 z_max=139 upright=1.00 | 2:OK held_high=300 z_max=140 upright=1.00 | 3:OK held_high=288 z_max=140 upright=0.96 | 4:OK held_high=288 z_max=138 upright=0.96 | 5:OK held_high=288 z_max=138 upright=0.96
-  seed 2: roller_standup 5/5 ALL PASS (roller_standup_stall)
-    roller_standup roller_standup_stall 1:OK held_high=300 z_max=140 upright=1.00 | 2:OK held_high=300 z_max=141 upright=1.00 | 3:OK held_high=300 z_max=140 upright=1.00 | 4:OK held_high=300 z_max=143 upright=1.00 | 5:OK held_high=300 z_max=144 upright=1.00
-  seed 3: roller_standup 5/5 ALL PASS (roller_standup_stall)
-    roller_standup roller_standup_stall 1:OK held_high=288 z_max=139 upright=0.96 | 2:OK held_high=288 z_max=139 upright=0.96 | 3:OK held_high=288 z_max=143 upright=0.96 | 4:OK held_high=288 z_max=143 upright=0.96 | 5:OK held_high=288 z_max=142 upright=0.96
-  seed 4: roller_standup 5/5 ALL PASS (roller_standup_stall)
-    roller_standup roller_standup_stall 1:OK held_high=286 z_max=143 upright=0.95 | 2:OK held_high=286 z_max=140 upright=0.96 | 3:OK held_high=199 z_max=142 upright=0.86 | 4:OK held_high=286 z_max=140 upright=0.95 | 5:OK held_high=300 z_max=140 upright=1.00
+  seed 0: roller_standup 5/5 ALL PASS (rollerstandup_lag12)
+    roller_standup rollerstandup_lag12 1:OK held_high=290 z_max=144 upright=0.97 | 2:OK held_high=291 z_max=144 upright=0.97 | 3:OK held_high=300 z_max=141 upright=1.00 | 4:OK held_high=290 z_max=145 upright=0.97 | 5:OK held_high=291 z_max=144 upright=0.97
+  seed 1: roller_standup 5/5 ALL PASS (rollerstandup_lag12)
+    roller_standup rollerstandup_lag12 1:OK held_high=290 z_max=143 upright=0.96 | 2:OK held_high=300 z_max=142 upright=1.00 | 3:OK held_high=290 z_max=143 upright=0.97 | 4:OK held_high=290 z_max=144 upright=0.97 | 5:OK held_high=290 z_max=142 upright=0.97
+  seed 2: roller_standup 5/5 ALL PASS (rollerstandup_lag12)
+    roller_standup rollerstandup_lag12 1:OK held_high=289 z_max=142 upright=0.96 | 2:OK held_high=289 z_max=143 upright=0.96 | 3:OK held_high=300 z_max=142 upright=1.00 | 4:OK held_high=300 z_max=142 upright=1.00 | 5:OK held_high=289 z_max=143 upright=0.96
+  seed 3: roller_standup 5/5 ALL PASS (rollerstandup_lag12)
+    roller_standup rollerstandup_lag12 1:OK held_high=289 z_max=143 upright=0.96 | 2:OK held_high=300 z_max=141 upright=1.00 | 3:OK held_high=289 z_max=143 upright=0.96 | 4:OK held_high=300 z_max=143 upright=1.00 | 5:OK held_high=300 z_max=140 upright=1.00
+  seed 4: roller_standup 5/5 ALL PASS (rollerstandup_lag12)
+    roller_standup rollerstandup_lag12 1:OK held_high=290 z_max=143 upright=0.96 | 2:OK held_high=290 z_max=144 upright=0.97 | 3:OK held_high=290 z_max=143 upright=0.97 | 4:OK held_high=290 z_max=143 upright=0.96 | 5:OK held_high=300 z_max=141 upright=1.00
   AGGREGATE: 25/25 rounds (100%)
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+  seed 0: median z_max = 143.8 (n=5)
+  seed 1: median z_max = 143 (n=5)
+  seed 2: median z_max = 142.4 (n=5)
+  seed 3: median z_max = 142.6 (n=5)
+  seed 4: median z_max = 143 (n=5)
+  CONTINUOUS: median z_max over 25 rounds = 143 (mean 142.7 +/-0.4428 95%, SD 1.13)
 === VERDICT: PASS  25/25 rounds (100%) ===

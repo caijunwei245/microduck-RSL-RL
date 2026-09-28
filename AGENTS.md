@@ -338,14 +338,26 @@ ball); roller tasks leave head/body command slots zero-padded.
   pre-2026-09-27 recipe for A/B work. **What the change is and is not worth, measured 2026-09-28**
   (`logs/regate_2026-09-28.md`): walk 22/25 under the new envelope vs 21/25 under the old (no
   effect — the walk row's move from 48 % belongs to the sustained-forward bucket and the turn work,
-  not to this), recovery 0.95-0.99 either way, and a REAL cost on the two skating rows
-  (roller_crouch 100 -> 76 %, roller_standup 100 -> 88 %) when their pre-change checkpoints are
-  evaluated under it. So the default buys fidelity and reproducibility, not pass rates, and a roller
-  comparison must name its envelope. No envelope makes the environment bit-reproducible.
+  not to this), recovery 0.95-0.99 either way, and an apparent cost on the two skating rows
+  (roller_crouch 100 -> 76 %, roller_standup 100 -> 88 %) that turned out to be a TRAIN/TEST MISMATCH:
+  both families retrained under the new envelope are back at **25/25 (100 %)** each, with
+  roller_standup's `upright_frac` improving 0.61-1.00 -> 0.97-1.00. So the default is a strict win —
+  fidelity and reproducibility — and a comparison across envelopes must still name which one it used. No envelope makes the environment bit-reproducible.
   What is NOT the cause, each with a control that could have failed: the policy (three arms paying
   2x/4x for the turn left it identical), the reward, the spawn pose, any per-episode DR draw, the
   firmware gains (`ENABLE_KP/KD_RANDOMIZATION = False`), and the delay buffer contents. This also explains the older "walk 0/5 to 3/5 across seeds" / "spawn
   sensitivity" observations: same phenomenon, sampled too thinly.
+- **An evaluation criterion must use the same frame the TASK defines, not the world.** Measured
+  2026-09-28 (`logs/kick_frame_fix.txt`): the ball_kick row scored the ball's **world-x** displacement,
+  but `reset_ball_in_front_of_foot` places the ball in the **robot's yaw frame** and
+  `ball_forward_velocity` projects onto that stored kick direction — while the robot's spawn yaw is
+  randomised. So a kick that sent the ball 1.18 m straight ahead at yaw ~90 deg moved ~0 in world x
+  and was scored a "clean miss". Corrected, the same checkpoint reads **25/25 (100 %)** on the gate
+  instead of 13/25 (52 %), every round launches the ball **1.15-1.40 m**, and the previously
+  unexplained "spawn noise makes no difference" result (ball noise 1.0x/0.5x/0.25x -> 52/48/48 %) is
+  explained: the failures were never in the physics. Check every derived criterion against the frame
+  and the axis the reward uses; a wrong axis looks exactly like a policy defect, and this one survived
+  weeks of analysis, a left-foot training run and two noise ablations.
 - **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
   needs the actor only, and the actor carries its own obs normalizer (that is
   what the ONNX export bakes in). Building a runner instead drags in the task's

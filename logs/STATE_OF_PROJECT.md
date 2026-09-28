@@ -24,19 +24,21 @@ The 5-round rotation that goes with it: `logs/skill_demo.md`.
 | rollers (fast) | PASS 15/15 (100 %) | 5/5 | 0.517-0.538 m/s on the passive wheels |
 | swizzle | PASS 15/15 (100 %) | 5/5 | 0.484-0.544 m/s |
 | roller_slope | PASS 15/15 (100 %) | 5/5 | descends the ramp upright every round |
-| roller_standup | **PASS 22/25 (88 %)** — 25/25 under the pre-fix envelope | 5/5 | rises onto the wheels; the row is envelopE-dependent, see below |
-| roller_crouch | **PARTIAL 19/25 (76 %)** — 25/25 under the pre-fix envelope | 4/5 | crouch-and-return span; same envelope dependence |
+| roller_standup | **PASS 25/25 (100 %)** — retrained arm under the measured envelope | **5/5** | rises onto the wheels, z_max 141-145 mm, `upright_frac` 0.97-1.00 (the old checkpoint managed 0.61-1.00) |
+| roller_crouch | **PASS 25/25 (100 %)** — retrained arm under the measured envelope | **5/5** | 71-75 mm crouch-and-return span; both roller families lost 12-24 points until retrained under the envelope they are evaluated with |
 | standup floor flip | PASS 14/15 | 5/5 | prone pin at 256 envs: **0.953-0.973 sustained**, 116 mm, g -1.0 |
 | velstand floor flip | PASS 15/15 | 5/5 | prone pin at 256 envs: **~0.97 sustained** (the recorded 0.812 is not reproducible today; the envelope is ruled out — see `regate_2026-09-28.md`) |
 | spin | **PASS 15/15 (100 %)** | 5/5 | 1.43-1.47 rad/s, upright every round (the old gate file said FAIL 0/15 — stale) |
 | roulade | PASS 14/15 (93 %) | 5/5 | rolls, ends upright at 115-116 mm |
 
-**The one trade-off found by the refresh**: controlled A/Bs under the pre-fix envelope give walk
-21/25 vs 22/25 (no effect) and recovery 0.95-0.99 either way, so the measured-latency default's ONLY
-pass-rate effect is a cost on the two skating rows (roller_crouch 100 -> 76 %, roller_standup
-100 -> 88 %) when their OLD checkpoints are evaluated under it; its benefits are fidelity and
-reproducibility (first-step `ctrl` spread 5.4e-03 -> 1.5e-06), and the walk row's 48 -> 88 % move
-belongs to the era (the sustained-forward bucket and the turn work), not to the envelope. That is a train/test mismatch until those families are re-trained under the new envelope; quote
+**The latency default is now a strict win**: the only apparent cost (roller_crouch 76 %,
+roller_standup 88 % under the new envelope with their OLD checkpoints) was a train/test mismatch —
+both families got a warm-start arm under the measured envelope and are back at **25/25 (100 %)** each,
+with roller_standup's `upright_frac` improving from 0.61-1.00 to 0.97-1.00. Controlled A/Bs under the
+pre-fix envelope give walk 21/25 vs 22/25 (no effect) and recovery 0.95-0.99 either way, so the
+envelope buys fidelity (1-2 steps is the hardware) and reproducibility (first-step `ctrl` spread
+5.4e-03 -> 1.5e-06) rather than pass rates; the walk row's 48 -> 88 % move belongs to the era (the
+sustained-forward bucket and the turn work), not to it. That is a train/test mismatch until those families are re-trained under the new envelope; quote
 roller rows with their envelope, and use the pre-fix one when the question is "did this policy
 regress?".
 

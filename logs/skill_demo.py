@@ -49,8 +49,13 @@ SKILLS = [
     ("rollers (fast)",     "Mjlab-Velocity-Flat-MicroDuck-Rollers","logs/rsl_rl/velocity_rollers/*rollers_noskate/model_*.pt",   "walk",         0.3,  0.0,  None,   None),
     ("swizzle",            "Mjlab-Velocity-Swizzle-MicroDuck",     "logs/rsl_rl/velocity_swizzle/*swizzle_rolling18/model_*.pt", "walk",         0.3,  0.0,  None,   None),
     ("roller_slope",       "Mjlab-RollerSlope-Flat-MicroDuck",     "logs/rsl_rl/roller_slope/*/model_*.pt",                      "slope_descent",0.0,  0.0,  None,   None),
-    ("roller_standup",     "Mjlab-RollerStandUp-Flat-MicroDuck",   "logs/rsl_rl/roller_standup/*roller_standup_stall/model_*.pt",     "roller_stand", 0.0,  0.0,  None,   None),
-    ("roller_crouch",      "Mjlab-RollerCrouch-Flat-MicroDuck",    "logs/rsl_rl/roller_crouch/*/model_*.pt",                     "crouch_cycle", 0.0,  0.0,  None,   None),
+    # 2026-09-28: globs moved to the arms retrained UNDER the measured latency envelope. Same recipes,
+    # same warm-start sources, only the envelope differs - and the pre-change checkpoints lose 12-24
+    # points when evaluated under it (roller_crouch 100 -> 76 %, roller_standup 100 -> 88 %), which is
+    # a train/test mismatch rather than a property of the recipe. The retrained arms are back at
+    # 25/25 each (logs/regate_2026-09-28.md).
+    ("roller_standup",     "Mjlab-RollerStandUp-Flat-MicroDuck",   "logs/rsl_rl/roller_standup/*rollerstandup_lag12/model_*.pt",      "roller_stand", 0.0,  0.0,  None,   None),
+    ("roller_crouch",      "Mjlab-RollerCrouch-Flat-MicroDuck",    "logs/rsl_rl/roller_crouch/*rollercrouch_lag12/model_*.pt",   "crouch_cycle", 0.0,  0.0,  None,   None),
     ("standup floor flip", "Mjlab-StandUp-Flat-MicroDuck",         "logs/rsl_rl/microduck_stand/*standup_tiltstall/model_*.pt",  "floor_flip",   0.0,  0.0, "prone", None),
     # velstand floor flip: RE-ENABLED 2026-09-25 after both blockers were diagnosed and fixed (the
     # runner dependency, and the pin tripping `fell_over` - see the drop above). Corrected rate: the

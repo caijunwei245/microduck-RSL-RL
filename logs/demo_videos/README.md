@@ -8,8 +8,9 @@ back. Each frame carries a burned-in label `<skill> (round N)`.
 * **`round5_montage.png`** — contact sheet, one frame per skill from round 5.
 * `all_skills_2rounds.mp4` / `round2_montage.png` were the earlier 2-round set; superseded and removed
   from the repository (the per-skill clips below are the 5-round ones).
-* **69 of 75 rounds passed (92 %)**: 11 skills 5/5, three at 4/5 (`ball_kick`, `ground_pick`,
-  `roller_crouch`) and `sitstand` at 2/5. Per-round numbers and the honest reading of each:
+* **71 of 75 rounds passed (95 %)**: 13 skills 5/5, `ground_pick` at 4/5 and `sitstand` at 2/5 —
+  after the ball_kick scoring fix (its "miss" was a world-frame bug) and the two roller arms retrained
+  under the measured latency envelope. Per-round numbers and the honest reading of each:
   `logs/skill_demo.md`.
 
 | video | duration | round 1 / round 2 | what to watch |
@@ -23,8 +24,8 @@ back. Each frame carries a burned-in label `<skill> (round N)`.
 | `rollers_(fast).mp4` | 1:40 | **5/5** | 0.517-0.538 m/s on the passive wheels |
 | `swizzle.mp4` | 1:40 | **5/5** | 0.484-0.544 m/s |
 | `roller_slope.mp4` | 1:10 | **5/5** | 171-414 mm descent (varies with spawn), upright 0.97-1.00 every round |
-| `roller_standup.mp4` | 0:30 | **5/5** | rises onto the wheels every round (z_max 141-147 mm), but `upright_frac` spreads **0.61-1.00** — the pass column hides that |
-| `roller_crouch.mp4` | 1:20 | **4/5** | 69-71 mm spans, then one 33 mm span ending tilted (g -0.38) |
+| `roller_standup.mp4` | 0:30 | **5/5** | rises onto the wheels every round (z_max 141-145 mm, `upright_frac` 0.97-1.00) with the arm retrained under the measured envelope |
+| `roller_crouch.mp4` | 1:20 | **5/5** | 71-75 mm crouch-and-return spans, retrained arm under the measured envelope |
 | `standup_floor_flip.mp4` | 0:30 | **5/5** | from a pure prone pin: holds the stand 189-286 of 300 steps at 116-117 mm |
 | `velstand_floor_flip.mp4` | 1:40 | **5/5** | from a pure prone pin: holds 542-973 of 1000 steps at 112-116 mm |
 | `spin.mp4` | 1:40 | **5/5** | 1.43-1.47 rad/s at g -1.00, **upright** every round |
