@@ -15,7 +15,7 @@ uv run python logs/demo_finish.py --rounds 5   # all_skills_5rounds.mp4 + round5
 | velocity walk | **0.267** | **0.261** | **0.265** | **0.257** | **0.262** m/s | **5/5** |
 | velocity turn | **0.601** | **0.613** | **0.601** | **0.584** | **0.598** rad/s | **5/5** (gain 1.17-1.23) |
 | walk+turn | **0.591** | **0.596** | **0.556** | **0.600** | **0.594** | **5/5** |
-| ball_kick right | **+0.61** | **+0.92** | **+1.03** | **+0.87** | **+0.00 (miss)** m | 4/5 |
+| ball_kick right | **+1.152** | **+1.263** | **+1.400** | **+1.317** | **+1.181** m | **5/5** (re-measured in the robot's yaw frame) |
 | sitstand | **67** | 4 | 18 | **62** | 15 mm span | **2/5** |
 | ground_pick | **38** | **39** | **39** | **44** | 31 mm span | 4/5 |
 | rollers (fast) | **0.535** | **0.517** | **0.529** | **0.538** | **0.518** m/s | **5/5** |
@@ -41,8 +41,12 @@ What the five rounds add over two:
 * **sitstand is the weak row** at 2/5, with three rounds that never descended (span 4-18 mm). Its
   measured per-episode rate has been 68-72 % for weeks and this sample is below that, which is what a
   25-round gate exists for.
-* **ball_kick's 4/5** (one clean miss, ball +0.00 m) and **ground_pick's 4/5** (one 31 mm span against
-  a 40 mm criterion) are the two known reliability tails, not new regressions.
+* **ball_kick is 5/5, not 4/5** — and the "clean miss" was an evaluation bug, not a policy defect:
+  the row scored the ball's **world-x** displacement while the task places the ball and pays the
+  reward in the **robot's yaw frame**, and the spawn yaw is randomised. The round that read
+  `ball +0.000 m` actually sent the ball **+1.181 m** straight ahead. Re-measured, every round
+  launches the ball **1.15-1.40 m** (gate: 25/25, median 1.30 m). `logs/kick_frame_fix.txt`.
+* **ground_pick's 4/5** (one 31 mm span against a 40 mm criterion) remains the one mid-set tail.
 * **roulade passes 5/5 while its roll magnitude spreads 1.66-7.04 rad** — the criterion is "ends
   upright", and it does every time; the roll count is not a quality score and should not be quoted as
   one.

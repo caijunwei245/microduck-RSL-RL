@@ -9,7 +9,11 @@
 set -u
 cd /home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl
 SKILL="$1"; CKPT="${2:-}"; TASK="${3:-}"
-SLUG=$(echo "$SKILL" | tr ' +()' '____')
+# SLUG names the output files; GATE_SLUG overrides it so two variants of the same row (e.g. the
+# left-footed kick, which uses the same "ball_kick right" row spec with MICRODUCK_KICK_FOOT=left) do
+# not silently overwrite each other's verdict file - measured 2026-09-28, when the left-foot run
+# clobbered gate_ball_kick_right.txt.
+SLUG="${GATE_SLUG:-$(echo "$SKILL" | tr ' +()' '____')}"
 OUT="logs/gate_${SLUG}.txt"
 GPU="${GATE_GPU:-0}"
 : > "$OUT"
@@ -42,7 +46,8 @@ echo "--- demonstration: $SEEDS seeds x 5 rounds ($WHY) ---" | tee -a "$OUT"
 TOT=0; PAS=0
 for SD in $(seq 0 $((SEEDS - 1))); do
   R=$(env CUDA_VISIBLE_DEVICES=$GPU WANDB_MODE=offline uv run python logs/skill_demo.py \
-      --rounds 5 --only "$SKILL" --seed $SD ${CKPT:+--ckpt "$CKPT"} 2>&1)
+      --rounds 5 --only "$SKILL" --seed $SD ${CKPT:+--ckpt "$CKPT"} \
+      --json-out "logs/gate_${SLUG}_seed${SD}.json" 2>&1)
   LINE=$(echo "$R" | grep -aE "(ALL PASS|PARTIAL|FAIL)" | tail -1)
   N=$(echo "$LINE" | grep -oE "[0-9]+/5" | head -1 | cut -d/ -f1)
   echo "  seed $SD: $(echo "$LINE" | sed 's/  */ /g')" | tee -a "$OUT"
@@ -50,6 +55,44 @@ for SD in $(seq 0 $((SEEDS - 1))); do
   TOT=$((TOT + 5)); PAS=$((PAS + ${N:-0}))
 done
 echo "  AGGREGATE: $PAS/$TOT rounds ($((PAS * 100 / TOT))%)" | tee -a "$OUT"
+
+# CONTINUOUS READOUTS next to the pass count (2026-09-28). A pass rate on a marginal row carries a
+# +/-14-19 point interval at these episode counts; the physical readouts it is derived from do not, so
+# report both. The metric per row kind comes from paired_eval.PRIMARY so gate and paired tool agree.
+uv run python - "$SKILL" "$SEEDS" "logs/gate_${SLUG}" <<'PYEOF' | tee -a "$OUT"
+import glob, json, statistics, sys
+sys.path.insert(0, "logs")
+from paired_eval import PRIMARY
+skill, seeds, prefix = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+rows = []
+for f in sorted(glob.glob(prefix + "_seed*.json")):
+    rows += json.load(open(f))
+if not rows:
+    print("  continuous readouts: none (no --json-out data)"); raise SystemExit(0)
+kind = rows[0]["kind"]
+metric = PRIMARY.get(kind)
+for r in rows:
+    vals = [rd["readouts"].get(metric) for rd in r["rounds"] if rd["readouts"].get(metric) is not None]
+    if vals:
+        print(f"  seed {r['seed']}: median {metric} = {statistics.median(vals):.4g} (n={len(vals)})")
+allv = [rd["readouts"][metric] for r in rows for rd in r["rounds"] if rd["readouts"].get(metric) is not None]
+if len(allv) > 1:
+    med = statistics.median(allv)
+    sd = statistics.stdev(allv)
+    hw = 1.96 * sd / len(allv) ** 0.5
+    print(f"  CONTINUOUS: median {metric} over {len(allv)} rounds = {med:.4g} "
+          f"(mean {statistics.fmean(allv):.4g} +/-{hw:.4g} 95%, SD {sd:.4g})")
+PYEOF
+
+# Optional paired comparison against a previous checkpoint, same seeds: the statistic that can see a
+# one-round-per-seed shift (see logs/optimization_space_2026-09-28.md). Set GATE_PAIRED_WITH=<ckpt>.
+if [ -n "${GATE_PAIRED_WITH:-}" ] && [ -n "$CKPT" ]; then
+  echo "--- paired against a previous checkpoint (same seeds) ---" | tee -a "$OUT"
+  env CUDA_VISIBLE_DEVICES=$GPU WANDB_MODE=offline uv run python logs/paired_eval.py \
+      --skill "$SKILL" --a "$GATE_PAIRED_WITH" --b "$CKPT" --seeds "$SEEDS" --rounds 5 \
+      --label-a before --label-b after 2>&1 | grep -aE "rounds/seed delta|delta :|seeds improved|UNPAIRED|before:|after:" \
+      | tee -a "$OUT"
+fi
 
 if [ -n "$TASK" ]; then
   echo "--- tilt-keyed family evaluation ---" | tee -a "$OUT"

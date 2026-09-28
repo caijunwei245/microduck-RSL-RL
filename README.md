@@ -113,7 +113,7 @@ Measured readouts of the five rounds, with the failures left in (`r1 / r2 / r3 /
 | velocity walk | 0.267 / 0.261 / 0.265 / 0.257 / 0.262 m/s at cmd 0.3, upright — **5/5** |
 | velocity turn | **0.601 / 0.613 / 0.601 / 0.584 / 0.598 rad/s for a commanded 0.5 (gain 1.17–1.23)** — the fixed turn policy, **5/5** |
 | walk+turn | 0.591 / 0.596 / 0.556 / 0.600 / 0.594 rad/s (gain 1.11–1.20) while walking — **5/5** |
-| ball_kick right | ball +0.61 / +0.92 / +1.03 / +0.87 m, then one clean miss — **4/5** |
+| ball_kick right | ball +1.15 / +1.26 / +1.40 / +1.32 / +1.18 m — **5/5** (measured along the robot's forward axis; the earlier "miss" was a world-frame scoring bug) |
 | sitstand | 67 / 62 mm spans and three rounds that never descended — **2/5**, the weak row (68–72 % per episode) |
 | ground_pick | 38 / 39 / 39 / 44 mm spans, then one 31 mm span against a 40 mm criterion — **4/5** |
 | rollers (fast) | 0.535 / 0.517 / 0.529 / 0.538 / 0.518 m/s on wheels — **5/5** |
@@ -126,9 +126,9 @@ Measured readouts of the five rounds, with the failures left in (`r1 / r2 / r3 /
 | spin | 1.46 / 1.43 / 1.47 / 1.44 / 1.46 rad/s, upright — **5/5** |
 | roulade | roll magnitude spreads 1.66–7.04 rad but every round ends upright at 115–116 mm — **5/5** |
 
-**69 of 75 rounds passed (92 %)** in the 5-round rotation: eleven skills 5/5, `ball_kick`,
-`ground_pick` and `roller_crouch` at 4/5, and `sitstand` at 2/5 — the row with the lowest
-per-episode rate in the set. The two turn clips run on a different checkpoint from the rest:
+**70 of 75 rounds passed (93 %)** after the ball_kick criterion fix (see below): twelve skills 5/5,
+`ground_pick` and `roller_crouch` at 4/5, and `sitstand` at 2/5 — the row with the lowest per-episode
+rate in the set. The two turn clips run on a different checkpoint from the rest:
 the policy from the turn dead-zone experiment (`turn03_woboff@4998` — the deployed walking candidate,
 warm-started with the `angular_wobble` tax removed and a 0.3 rad/s in-place command pinned into 30 % of
 the envs), which tracks a commanded 0.5 rad/s at gain ~1.2 where the deployed candidate managed 0.68.

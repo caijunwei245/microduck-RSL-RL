@@ -1,0 +1,28 @@
+############ ball_kick: the "52 % miss rate" was a scoring frame bug ############
+date: 2026-09-28
+probe: logs/kick_contact_probe.py   detail: logs/regate_2026-09-28.md
+
+WHAT WAS WRONG
+  `reset_ball_in_front_of_foot` places the ball in the ROBOT'S yaw frame and `ball_forward_velocity`
+  projects the ball's velocity onto that stored kick direction - but the robot's spawn yaw is
+  randomised, and logs/skill_demo.py scored the ball's WORLD-x displacement:
+      ball_max = max(ball_max, ball.data.root_link_pos_w[0, 0] - ball_x0)      # world x
+  A kick that sends the ball 1.18 m straight ahead at yaw ~90 deg moves ~0 in world x, so it was
+  scored a "clean miss". That single round is what made the 5-round rotation read 4/5.
+
+WHAT THE PROBE SHOWED FIRST (why this was found)
+  Written to separate "the foot never reaches the ball" (SHORT) from "it arrives too gently" (SOFT),
+  it found neither: every round strikes the ball at control step 5-8 and sends it off at 0.4-0.5 m/s.
+  The ball is never missed - only its departure DIRECTION varies with the robot's yaw.
+
+MEASUREMENT AFTER THE FIX (skill_demo projects onto the robot's initial forward axis)
+  right foot, 5 seeds x 5 rounds: 25/25 (100 %)   median ball 1.301 m  (mean 1.284 +/-0.063 95%)
+  left  foot, 5 seeds x 5 rounds: 25/25 (100 %)   median ball 1.362 m  (mean 1.353 +/-0.040 95%)
+  (previously reported: right 13/25 (52 %), left 9/15 (60 %))
+  5-round rotation, re-recorded under the fixed criterion: 1.152 / 1.263 / 1.400 / 1.317 / 1.181 m.
+
+WHY THE OLD NUMBERS LOOKED LIKE PHYSICS
+  The earlier ablation reduced the ball's spawn noise to 0.5x and 0.25x and saw nothing
+  (52/48/48 %) - of course it did: the failures were in the scoring, not in the contact. That result
+  was the clue that the failure mode was not physical, and it was filed as "noise is ruled out".
+  The contact-gate training arm planned for this row is therefore DROPPED: there is nothing to fix.

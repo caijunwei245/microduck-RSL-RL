@@ -137,8 +137,23 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
         ball = env.scene["ball"]
     except Exception:  # noqa: BLE001
         ball = None
-    ball_x0 = float(ball.data.root_link_pos_w[0, 0]) if ball is not None else None
+    # The ball row measures displacement along the ROBOT'S OWN forward axis, not world x.
+    # `reset_ball_in_front_of_foot` places the ball in the robot's yaw frame and the reward
+    # (`ball_forward_velocity`) projects onto that stored kick direction, but the robot's spawn yaw is
+    # randomised - so a kick that sends the ball 0.6 m forward at yaw 90 deg moves ~0 in world x and
+    # used to be scored as a miss. Found 2026-09-28 while probing why the kick "misses"
+    # (logs/kick_contact_probe.py): every round strikes the ball at step 5-8 and sends it off at
+    # ~0.45 m/s; half of them simply did not travel along world +x.
+    yaw0 = 0.0
+    ball_p0 = None
+    if ball is not None:
+        _q = robot.data.root_link_quat_w[0]
+        _w, _x, _y, _z = (float(v) for v in _q)
+        yaw0 = math.atan2(2.0 * (_w * _z + _x * _y), 1.0 - 2.0 * (_y * _y + _z * _z))
+        _bp = ball.data.root_link_pos_w[0]
+        ball_p0 = (float(_bp[0]), float(_bp[1]))
     ball_max = 0.0
+    ball_worldx = 0.0
 
     zs, gs, vs, ys = [], [], [], []
     cmd_trace = []
@@ -188,7 +203,10 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
             if isinstance(_es, dict) and _es:
                 sums = {k: float(v[0]) for k, v in _es.items()}
             if ball is not None:
-                ball_max = max(ball_max, float(ball.data.root_link_pos_w[0, 0]) - ball_x0)
+                _bp = ball.data.root_link_pos_w[0]
+                _dx, _dy = float(_bp[0]) - ball_p0[0], float(_bp[1]) - ball_p0[1]
+                ball_max = max(ball_max, _dx * math.cos(yaw0) + _dy * math.sin(yaw0))
+                ball_worldx = max(ball_worldx, _dx)
             out = env.step(policy(as_actor(obs)))
             obs, _r, term_b, trunc_b, _i = out
             steps += 1
@@ -224,7 +242,8 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
     res = dict(z0=zs[0], z_min=min(zs), z_max=max(zs), z_last=zs[-1], g_last=gs[-1],
                v_mean=v_ss, yaw_abs_mean=yaw_ss, upright_frac=upright_steps / max(1, len(zs)),
                descent=zs[0] - min(zs), held_high=longest_run([z >= 130.0 for z in zs]),
-               hold=hold, steps=steps, fell=fell, ball=ball_max, sums=sums, probe=res_probe)
+               hold=hold, steps=steps, fell=fell, ball=ball_max, ball_worldx=ball_worldx,
+               sums=sums, probe=res_probe)
     if cmd_trace:
         res["cmd0_min"] = min(c[0] for c in cmd_trace)
         res["cmd0_max"] = max(c[0] for c in cmd_trace)
@@ -433,6 +452,11 @@ def main() -> int:
                     help="record every Nth control step (2 => 25 fps from a 50 Hz policy)")
     ap.add_argument("--video-scale", type=int, default=1)
     ap.add_argument("--cam-distance", type=float, default=1.3)
+    ap.add_argument("--json-out", default=None,
+                    help="write one JSON record per row (rounds, pass flags and every scalar readout "
+                         "of each round) so a caller can report CONTINUOUS metrics next to pass "
+                         "counts - the pass rate of a marginal row carries a +/-14-19 point interval "
+                         "at n=25, the readouts behind it do not (logs/optimization_space_2026-09-28.md)")
     ap.add_argument("--log-cmd", action="store_true",
                     help="record the twist command each step and report its range in the detail "
                          "line - answers 'did the phase ever command the sit?' for sitstand")
@@ -458,6 +482,7 @@ def main() -> int:
     print(f"{'skill':22s} {'task env':34s} rounds")
     print("-" * 110)
     summary = []
+    records_out = []
     for spec in SKILLS:
         name, task, pattern, kind = spec[0], spec[1], spec[2], spec[3]
         if args.only and args.only.lower() not in name.lower():
@@ -476,6 +501,7 @@ def main() -> int:
             pin_floor=bool(spec[6]))
 
         marks, lines = [], []
+        records = []
         frames = [] if args.video else None
         for r_i in range(args.rounds):
             if args.fresh_env and r_i > 0:
@@ -492,6 +518,14 @@ def main() -> int:
                             label=f"{name}  round {r_i + 1}/{args.rounds}")
             marks.append("OK " if res["ok"] else "XX ")
             lines.append(f"{r_i + 1}:{marks[-1]}{detail(kind, res)}")
+            records.append({
+                "round": r_i + 1, "ok": bool(res["ok"]), "steps": int(res["steps"]),
+                "fell": bool(res.get("fell", False)),
+                # every scalar the round produced (z/g/v/yaw/ball/hold/descent/... ) - no arrays,
+                # no reward-sum dict, so the record stays small and JSON-safe
+                "readouts": {k: float(v) for k, v in res.items()
+                             if isinstance(v, (int, float)) and not isinstance(v, bool)},
+            })
         if args.video and frames:
             import imageio.v2 as _iio
             _os_main.makedirs(args.video_dir, exist_ok=True)
@@ -500,6 +534,12 @@ def main() -> int:
             _iio.mimsave(vpath, frames, fps=args.video_fps, macro_block_size=None)
             print(f"{'':22s} video -> {vpath} ({len(frames)} frames)")
         n_ok = sum(1 for m in marks if m.strip() == "OK")
+        if args.json_out:
+            import json as _json
+            records_out.append({"skill": name, "task": task, "kind": kind, "checkpoint": ckpt,
+                                "seed": args.seed, "rounds": records})
+            with open(args.json_out, "w") as _fh:
+                _json.dump(records_out, _fh, indent=1)
         summary.append((name, ckpt.split("/")[-2][20:], n_ok, args.rounds))
         print(f"{name:22s} {ckpt.split('/')[-2][20:]:34s} " + " | ".join(lines))
         del env

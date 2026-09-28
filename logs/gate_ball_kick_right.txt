@@ -1,16 +1,26 @@
 === ACCEPTANCE GATE: ball_kick right ===
 checkpoint: <newest glob match>
-date: 2026-09-28T10:53:26+08:00
---- demonstration: 5 seeds x 5 rounds (marginal row (measured to flip on simulator noise; 3 seeds resolves only ~+/-13%)) ---
-  seed 0: ball_kick right 4/5 PARTIAL (kick_r4)
-    ball_kick right kick_r4 1:OK ball+0.608 m | 2:OK ball+1.000 m | 3:OK ball+1.029 m | 4:OK ball+0.869 m | 5:XX ball+0.000 m
-  seed 1: ball_kick right 2/5 PARTIAL (kick_r4)
-    ball_kick right kick_r4 1:XX ball+0.007 m | 2:XX ball+0.000 m | 3:OK ball+0.437 m | 4:XX ball+0.000 m | 5:OK ball+0.146 m
-  seed 2: ball_kick right 3/5 PARTIAL (kick_r4)
-    ball_kick right kick_r4 1:OK ball+0.104 m | 2:XX ball+0.000 m | 3:XX ball+0.000 m | 4:OK ball+0.644 m | 5:OK ball+1.209 m
-  seed 3: ball_kick right 3/5 PARTIAL (kick_r4)
-    ball_kick right kick_r4 1:OK ball+0.097 m | 2:OK ball+1.096 m | 3:XX ball+0.000 m | 4:OK ball+0.052 m | 5:XX ball+0.000 m
-  seed 4: ball_kick right 1/5 PARTIAL (kick_r4)
-    ball_kick right kick_r4 1:XX ball+0.001 m | 2:XX ball+0.000 m | 3:OK ball+1.430 m | 4:XX ball+0.000 m | 5:XX ball+0.000 m
-  AGGREGATE: 13/25 rounds (52%)
-=== VERDICT: PARTIAL  13/25 rounds (52%) ===
+date: 2026-09-28T15:01:15+08:00
+--- demonstration: 5 seeds x 5 rounds (explicit GATE_SEEDS) ---
+  seed 0: ball_kick right 5/5 ALL PASS (kick_r4)
+    ball_kick right kick_r4 1:OK ball+1.152 m | 2:OK ball+1.263 m | 3:OK ball+1.400 m | 4:OK ball+1.317 m | 5:OK ball+1.181 m
+  seed 1: ball_kick right 5/5 ALL PASS (kick_r4)
+    ball_kick right kick_r4 1:OK ball+1.317 m | 2:OK ball+1.340 m | 3:OK ball+1.181 m | 4:OK ball+1.465 m | 5:OK ball+1.198 m
+  seed 2: ball_kick right 5/5 ALL PASS (kick_r4)
+    ball_kick right kick_r4 1:OK ball+1.189 m | 2:OK ball+0.679 m | 3:OK ball+1.384 m | 4:OK ball+1.301 m | 5:OK ball+1.281 m
+  seed 3: ball_kick right 5/5 ALL PASS (kick_r4)
+    ball_kick right kick_r4 1:OK ball+1.254 m | 2:OK ball+1.372 m | 3:OK ball+1.413 m | 4:OK ball+1.323 m | 5:OK ball+1.263 m
+  seed 4: ball_kick right 5/5 ALL PASS (kick_r4)
+    ball_kick right kick_r4 1:OK ball+1.509 m | 2:OK ball+1.468 m | 3:OK ball+1.416 m | 4:OK ball+1.196 m | 5:OK ball+1.251 m
+  AGGREGATE: 25/25 rounds (100%)
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+  seed 0: median ball = 1.263 (n=5)
+  seed 1: median ball = 1.317 (n=5)
+  seed 2: median ball = 1.281 (n=5)
+  seed 3: median ball = 1.323 (n=5)
+  seed 4: median ball = 1.416 (n=5)
+  CONTINUOUS: median ball over 25 rounds = 1.301 (mean 1.284 +/-0.06307 95%, SD 0.1609)
+=== VERDICT: PASS  25/25 rounds (100%) ===

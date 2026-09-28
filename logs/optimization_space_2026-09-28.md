@@ -66,7 +66,7 @@ Three consequences that should steer the next work:
 | gap | the number | what is known | the cheapest decisive step |
 |---|---|---|---|
 | **sitstand** | 2/5 in the 5-round rotation; 18/25 (72 %) on its gate | failures are "never descended" (span 4-18 mm); it is a commanded two-state with a phase the policy must discover; the hold bucket bought +4 points | 25-round gate first (the 2/5 sample is below its own 72 %), then one arm that lengthens the *hold* on the descent side |
-| **ball_kick** | 4/5 in the rotation; 13/25 (52 %) over 5 seeds | spawn noise ruled out (1.0x/0.5x/0.25x -> 52/48/48 %); the misses are in the kick itself; contact-gated shaping and a wider contact area are both untested | one arm with the contact gate; measure ball distance (deterministic) not hit rate |
+| ~~**ball_kick**~~ **ARTIFACT, 2026-09-28** | it was 13/25 (52 %) because the row scored the ball's **world-x** displacement while the task places the ball and pays the reward in the **robot's yaw frame**; corrected it is **25/25 (100 %)**, 1.15-1.40 m per round | the "spawn noise makes no difference" ablation (52/48/48 %) was a symptom of the same bug, not a finding | no arm needed — `logs/kick_frame_fix.txt`, `logs/kick_contact_probe.py` |
 | **walk start transient** | 56 % of rounds start walking | failures are upright at 0.05-0.12 m/s; the sustained-forward bucket bought +8 points, so the rest is the stand-to-walk transition | one arm that spawns *partway into* the first step (reverse curriculum), which is the pattern that fixed the floor flips |
 | **ground_pick** | 4/5 in the rotation (one 31 mm span vs a 40 mm criterion); historically 25/25 | most likely the same per-episode noise as everything else | re-gate at 5 seeds before spending anything |
 | **in-place turn below 0.2 rad/s** | 0.008-0.032 rad/s achieved | the tax explains 0.3 but not 0.2; the runtime's held command is 0.5 | low necessity — leave it, or one diagnostic only if the runtime ever needs gentle heading correction |
@@ -114,7 +114,7 @@ Three consequences that should steer the next work:
 | # | item | why first | cost | detectable? |
 |---|---|---|---|---|
 | 1 | Paired-evaluation runner + re-gate the 5 rows that have none (walk, standup flip, velstand flip, swizzle, roller_slope) | it makes every later verdict cheaper and stops stale numbers being quoted | hours of eval, no training | n/a (tooling) |
-| 2 | Ball-kick contact gate (1 arm) + measured by ball distance | the only gap with a large, deterministic readout | 1 arm, ~45 min | yes: ball distance is continuous |
+| 2 | ~~Ball-kick contact gate (1 arm)~~ **dropped** | the "gap" was a measurement frame bug — there is nothing to fix | 0 | — |
 | 3 | Walk stand-to-walk reverse curriculum (1 arm) | 44 % of the walk failures live here and the pattern is proven elsewhere | 1 arm | 25-round gate + physical speed readout |
 | 4 | Route-A test on sitstand and roller_crouch (no training) | decides whether 2 of the 4 unpublished skills can ship as-is | eval only | binary |
 | 5 | Sitstand descent-hold arm | weakest measured row | 1 arm + 25 seeds | marginal — needs the paired runner from #1 |

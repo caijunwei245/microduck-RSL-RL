@@ -17,7 +17,7 @@ back. Each frame carries a burned-in label `<skill> (round N)`.
 | `velocity_walk.mp4` | 1:40 | **5/5** | 0.257-0.267 m/s at cmd 0.3, upright every round |
 | `velocity_turn.mp4` | 1:40 | **5/5** | **0.584-0.613 rad/s for a commanded 0.5 (gain 1.17-1.23, every round)** — the fixed turn policy: wobble tax removed, low command pinned, measured latency |
 | `walk_turn.mp4` | 1:40 | **5/5** | 0.556-0.600 rad/s (gain 1.11-1.20) while walking |
-| `ball_kick_right.mp4` | 0:25 | **4/5** | ball +0.61 / +0.92 / +1.03 / +0.87 m, then one clean miss (+0.00) — the actor never sees the ball |
+| `ball_kick_right.mp4` | 0:25 | **5/5** | ball +1.15 / +1.26 / +1.40 / +1.32 / +1.18 m along the robot's own forward axis — the actor never sees the ball (the old "clean miss" was a world-frame scoring bug) |
 | `sitstand.mp4` | 1:00 | **2/5** | 67 / 62 mm spans; three rounds never descended (span 4-18 mm) — the weak row, 68-72 % per episode |
 | `ground_pick.mp4` | 1:40 | **4/5** | 38 / 39 / 39 / 44 mm spans, then one 31 mm span against a 40 mm criterion |
 | `rollers_(fast).mp4` | 1:40 | **5/5** | 0.517-0.538 m/s on the passive wheels |
