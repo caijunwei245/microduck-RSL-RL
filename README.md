@@ -102,34 +102,33 @@ one clip per skill plus a single reel:
 
 | artifact | what it is |
 |---|---|
-| [`logs/demo_videos/all_skills_2rounds.mp4`](logs/demo_videos/all_skills_2rounds.mp4) | all 15 rows back to back, 7 min 32 s, every frame labelled with the skill and the round |
-| [`logs/demo_videos/round2_montage.png`](logs/demo_videos/round2_montage.png) | contact sheet, round 2 of each skill |
-| `logs/demo_videos/<skill>.mp4` | one clip per row (e.g. `velocity_walk.mp4`, `spin.mp4`, `velstand_floor_flip.mp4`) |
+| [`logs/demo_videos/all_skills_5rounds.mp4`](logs/demo_videos/all_skills_5rounds.mp4) | all 15 skills, **5 rounds each**, back to back — 18 min 41 s, every frame labelled with the skill and the round |
+| [`logs/demo_videos/round5_montage.png`](logs/demo_videos/round5_montage.png) | contact sheet, round 5 of each skill |
+| `logs/demo_videos/<skill>.mp4` | one clip per skill, its five rounds back to back (e.g. `velocity_walk.mp4`, `spin.mp4`, `velstand_floor_flip.mp4`) |
 
-Measured readouts at the time of recording, with the failures left in:
+Measured readouts of the five rounds, with the failures left in (`r1 / r2 / r3 / r4 / r5`):
 
 | skill | readout (round 1 / round 2) |
 |---|---|
-| velocity walk | 0.267 / 0.261 m/s at cmd 0.3, upright |
-| velocity turn | **0.601 / 0.613 rad/s for a commanded 0.5 (gain 1.20 / 1.23)** — the fixed turn policy |
-| walk+turn | 0.591 / 0.599 rad/s (gain 1.18 / 1.20) while walking |
-| ball_kick right | ball +0.61 / +0.92 m |
-| sitstand | 67 mm span, then a round that never descended — this row measures 68–72 % per episode |
-| ground_pick | 35 / 47 mm span (mouth to ground and back) |
-| rollers (fast) | 0.533 / 0.518 m/s on wheels |
-| swizzle | 0.504 / 0.479 m/s |
-| roller_slope | 247 / 241 mm descent |
-| roller_standup | holds 145 / 140 mm trunk for the whole hold window |
-| roller_crouch | 73 / 71 mm span |
-| standup floor flip | holds the stand 236 / 281 steps from a pure prone pin |
-| velstand floor flip | holds 948 / 964 steps from a prone pin (sustained floor-flip rate 0.812 over 64 envs) |
-| spin | 1.46 / 1.43 rad/s, upright |
-| roulade | rolls 6.94 / 7.03 rad, ends upright at 118 / 116 mm |
+| velocity walk | 0.267 / 0.261 / 0.265 / 0.257 / 0.262 m/s at cmd 0.3, upright — **5/5** |
+| velocity turn | **0.601 / 0.613 / 0.601 / 0.584 / 0.598 rad/s for a commanded 0.5 (gain 1.17–1.23)** — the fixed turn policy, **5/5** |
+| walk+turn | 0.591 / 0.596 / 0.556 / 0.600 / 0.594 rad/s (gain 1.11–1.20) while walking — **5/5** |
+| ball_kick right | ball +0.61 / +0.92 / +1.03 / +0.87 m, then one clean miss — **4/5** |
+| sitstand | 67 / 62 mm spans and three rounds that never descended — **2/5**, the weak row (68–72 % per episode) |
+| ground_pick | 38 / 39 / 39 / 44 mm spans, then one 31 mm span against a 40 mm criterion — **4/5** |
+| rollers (fast) | 0.535 / 0.517 / 0.529 / 0.538 / 0.518 m/s on wheels — **5/5** |
+| swizzle | 0.506 / 0.484 / 0.494 / 0.544 / 0.511 m/s — **5/5** |
+| roller_slope | 405 / 171 / 414 / 409 / 192 mm descent (varies with spawn), upright 0.97–1.00 — **5/5** |
+| roller_standup | rises every round, but `upright_frac` spreads 0.61–1.00 — **5/5** |
+| roller_crouch | 70 / 71 / 69 / 69 mm spans, one 33 mm round ending tilted — **4/5** |
+| standup floor flip | holds the stand 189–286 of 300 steps from a pure prone pin — **5/5** |
+| velstand floor flip | holds 542–973 of 1000 steps from a prone pin (sustained 64-env rate 0.812) — **5/5** |
+| spin | 1.46 / 1.43 / 1.47 / 1.44 / 1.46 rad/s, upright — **5/5** |
+| roulade | roll magnitude spreads 1.66–7.04 rad but every round ends upright at 115–116 mm — **5/5** |
 
-**14 of 15 rows passed both rounds** in the latest rotation (recorded under the default latency
-envelope — 1–2 steps held coherently, the latency measured on the hardware); the exception is
-`sitstand`'s second round, a row that measures 68–72 % per episode. The two turn clips run on a
-different checkpoint from the rest:
+**69 of 75 rounds passed (92 %)** in the 5-round rotation: eleven skills 5/5, `ball_kick`,
+`ground_pick` and `roller_crouch` at 4/5, and `sitstand` at 2/5 — the row with the lowest
+per-episode rate in the set. The two turn clips run on a different checkpoint from the rest:
 the policy from the turn dead-zone experiment (`turn03_woboff@4998` — the deployed walking candidate,
 warm-started with the `angular_wobble` tax removed and a 0.3 rad/s in-place command pinned into 30 % of
 the envs), which tracks a commanded 0.5 rad/s at gain ~1.2 where the deployed candidate managed 0.68.

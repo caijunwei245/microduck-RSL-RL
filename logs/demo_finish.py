@@ -3,8 +3,8 @@
 `logs/skill_demo.py --video` writes one mp4 per skill (`logs/demo_videos/<skill>.mp4`) with every
 frame labelled `skill (round N)`. This script rebuilds the two human-facing artifacts:
 
-    logs/demo_videos/all_skills_2rounds.mp4   every round of every skill, back to back
-    logs/demo_videos/round2_montage.png       one round-2 frame per skill, tiled
+    logs/demo_videos/all_skills_<N>rounds.mp4  every round of every skill, back to back
+    logs/demo_videos/round<N>_montage.png      one frame per skill, from the LAST round
 
 Both are *presentation*, not measurement: the verdicts live in the printed table and in
 `logs/acceptance_gate.sh`. Concatenation uses the ffmpeg concat demuxer (all clips come from one
@@ -92,7 +92,7 @@ def concat(video_dir: str, order: list[str], out_path: str) -> int:
 
 
 def montage(video_dir: str, order: list[str], out_path: str, rounds: int, cols: int = 4) -> int:
-    """One frame per skill, taken from the LAST round (that is what `round2_montage` means)."""
+    """One frame per skill, from the LAST round (what `round<N>_montage` means)."""
     try:
         import imageio.v2 as iio
         import numpy as np
@@ -152,10 +152,14 @@ def main() -> int:
     if shutil.which("ffmpeg") is None:
         print("ffmpeg not found", file=sys.stderr)
         return 2
-    rc = concat(args.video_dir, ORDER, os.path.join(args.video_dir, "all_skills_2rounds.mp4"))
+    # Names follow the round count: --rounds 5 writes all_skills_5rounds.mp4 / round5_montage.png,
+    # so a 2-round and a 5-round set can coexist instead of overwriting each other.
+    rc = concat(args.video_dir, ORDER,
+                os.path.join(args.video_dir, f"all_skills_{args.rounds}rounds.mp4"))
     if rc or args.only_concat:
         return rc
-    return montage(args.video_dir, ORDER, os.path.join(args.video_dir, "round2_montage.png"),
+    return montage(args.video_dir, ORDER,
+                   os.path.join(args.video_dir, f"round{args.rounds}_montage.png"),
                    args.rounds, args.cols)
 
 

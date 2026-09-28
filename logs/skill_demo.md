@@ -1,12 +1,53 @@
-# Skill rotation: all skills, 2 rounds each (2026-09-28 — 14/15 under the measured latency)
+# Skill rotation: all skills, 5 rounds each (2026-09-28)
+
+## 5-round run — 69 of 75 rounds passed (92 %)
 
 ```bash
 # the current artifacts: turn rows on the wobble-free turn policy, measured under the default
 # latency envelope (1-2 steps held coherently, see logs/actuator_latency.md)
 MICRODUCK_TURN_CKPT=logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt \
-  uv run python logs/skill_demo.py --rounds 2 --video
-uv run python logs/demo_finish.py --rounds 2      # reel + contact sheet (ffmpeg concat demuxer)
+  uv run python logs/skill_demo.py --rounds 5 --video
+uv run python logs/demo_finish.py --rounds 5   # all_skills_5rounds.mp4 + round5_montage.png
 ```
+
+| skill | round 1 | round 2 | round 3 | round 4 | round 5 | verdict |
+|---|---|---|---|---|---|---|
+| velocity walk | **0.267** | **0.261** | **0.265** | **0.257** | **0.262** m/s | **5/5** |
+| velocity turn | **0.601** | **0.613** | **0.601** | **0.584** | **0.598** rad/s | **5/5** (gain 1.17-1.23) |
+| walk+turn | **0.591** | **0.596** | **0.556** | **0.600** | **0.594** | **5/5** |
+| ball_kick right | **+0.61** | **+0.92** | **+1.03** | **+0.87** | **+0.00 (miss)** m | 4/5 |
+| sitstand | **67** | 4 | 18 | **62** | 15 mm span | **2/5** |
+| ground_pick | **38** | **39** | **39** | **44** | 31 mm span | 4/5 |
+| rollers (fast) | **0.535** | **0.517** | **0.529** | **0.538** | **0.518** m/s | **5/5** |
+| swizzle | **0.506** | **0.484** | **0.494** | **0.544** | **0.511** m/s | **5/5** |
+| roller_slope | **405** | **171** | **414** | **409** | **192** mm | **5/5** (upright 0.97-1.00) |
+| roller_standup | **held 175** | **276** | **300** | **208** | **275** | **5/5** (upright 0.61-1.00) |
+| roller_crouch | **70** | **71** | **69** | 33 | **69** mm span | 4/5 |
+| standup floor flip | **286** | **286** | **189** | **285** | **261** | **5/5** |
+| velstand floor flip | **972** | **961** | **968** | **973** | **542** hold | **5/5** |
+| spin | **1.46** | **1.43** | **1.47** | **1.44** | **1.46** rad/s | **5/5** |
+| roulade | **6.94** | **7.04** | **3.35** | **4.90** | **1.66** roll | **5/5** (all end 115-116 mm) |
+
+Videos: `logs/demo_videos/*.mp4` (one clip per skill, 5 rounds back to back), concatenated into
+`all_skills_5rounds.mp4` (18 min 41 s), contact sheet `round5_montage.png` (round 5 of each skill).
+
+What the five rounds add over two:
+
+* **The turn rows are the story**: 5/5 and 5/5, at gain 1.17-1.23 on every single round, under the
+  measured latency envelope. In the 2-round runs of 2026-09-26 the same rows failed strict tracking
+  (0.318-0.338 rad/s, gain 0.64-0.68) before the wobble-tax fix, and the 2026-09-27 runs still lost
+  the occasional round to the dithered-latency artifact. Ten consecutive successful turn rounds is the
+  strongest evidence yet that both fixes did what they claimed.
+* **sitstand is the weak row** at 2/5, with three rounds that never descended (span 4-18 mm). Its
+  measured per-episode rate has been 68-72 % for weeks and this sample is below that, which is what a
+  25-round gate exists for.
+* **ball_kick's 4/5** (one clean miss, ball +0.00 m) and **ground_pick's 4/5** (one 31 mm span against
+  a 40 mm criterion) are the two known reliability tails, not new regressions.
+* **roulade passes 5/5 while its roll magnitude spreads 1.66-7.04 rad** — the criterion is "ends
+  upright", and it does every time; the roll count is not a quality score and should not be quoted as
+  one.
+* **roller_standup passes 5/5 but `upright_frac` ranges 0.61-1.00**, i.e. some rounds spend a third of
+  the episode tilted. The pass/fail column hides that; the fraction is in the table for that reason.
 
 | skill | round 1 | round 2 | checkpoint |
 |---|---|---|---|
@@ -35,7 +76,7 @@ swizzle 0.402-0.419 → **0.479-0.504**, spin 1.40 → **1.43-1.46 rad/s**, roul
 rounds but its `upright_frac` reads 0.55 / 0.92, i.e. it spends part of round 1 tilted — quote the
 fraction, not just the pass.
 
-## Previous run (2026-09-26) — 15/15 under the historical 3-6 dithered envelope
+## Previous runs: 2 rounds each (2026-09-26 and 2026-09-28)
 
 Kept because the two runs differ in exactly the places the latency change predicts, and because that
 envelope is still reachable (`MICRODUCK_ACTUATOR_LAG="3,6" MICRODUCK_ACTUATOR_LAG_HOLD=0`).

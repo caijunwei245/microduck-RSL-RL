@@ -1,0 +1,2905 @@
+/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/.venv/lib/python3.12/site-packages/mjlab/entity/entity.py:149: UserWarning: Actuator config matched 14 joint(s) but the same expressions also match 7 site(s): imu, left_foot, head_camera, tof, head_imu, mouth_tip, right_foot. Add a separate config with transmission_type=TransmissionType.SITE if those should be actuated too.
+  self._add_actuators()
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+skill                  task env                           rounds
+--------------------------------------------------------------------------------------------------------------
+Warp 1.12.0 initialized:
+   CUDA Toolkit 12.9, Driver 13.0
+   Devices:
+     "cpu"      : "CPU"
+     "cuda:0"   : "NVIDIA GeForce RTX 4090" (22 GiB, sm_89, mempool enabled)
+   Kernel cache:
+     /home/iisr/.cache/warp/1.12.0
+Warp DeprecationWarning: The symbol `warp.context.runtime` will soon be removed from the public API. It can still be accessed from `warp._src.context.runtime` but might be changed or removed without notice.
+Module mujoco_warp._src.smooth 95a0b8b load on device 'cuda:0' took 1.81 ms  (cached)
+Module mujoco_warp._src.collision_driver 88f7770 load on device 'cuda:0' took 0.21 ms  (cached)
+Module _nxn_broadphase__locals__kernel_e73b1315 e73b131 load on device 'cuda:0' took 0.37 ms  (cached)
+Module ccd_kernel_builder__locals__ccd_kernel_079dfa94 079dfa9 load on device 'cuda:0' took 1.29 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_b282a07a b282a07 load on device 'cuda:0' took 0.53 ms  (cached)
+Module mujoco_warp._src.constraint 27c5750 load on device 'cuda:0' took 1.39 ms  (cached)
+Module _efc_contact_init__locals__kernel_fda71e14 fda71e1 load on device 'cuda:0' took 0.26 ms  (cached)
+Module _efc_contact_jac_dense__locals__kernel_7974b597 cc0fc30 load on device 'cuda:0' took 0.29 ms  (cached)
+Module _efc_contact_update__locals__kernel_90315d53 90315d5 load on device 'cuda:0' took 0.28 ms  (cached)
+Module mujoco_warp._src.sensor 7fc0378 load on device 'cuda:0' took 1.70 ms  (cached)
+Module mujoco_warp._src.forward f60f76d load on device 'cuda:0' took 0.79 ms  (cached)
+Module mujoco_warp._src.passive 1a5e55c load on device 'cuda:0' took 0.68 ms  (cached)
+Module mujoco_warp._src.forward 8ebfcb1 load on device 'cuda:0' took 0.92 ms  (cached)
+Module mujoco_warp._src.support dd3f924 load on device 'cuda:0' took 0.23 ms  (cached)
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_b16bf393 b7e5d5f load on device 'cuda:0' took 20.74 ms  (cached)
+Module mujoco_warp._src.solver b116efb load on device 'cuda:0' took 1.28 ms  (cached)
+Module solve_init_jaref__locals__kernel_5208712d 5208712 load on device 'cuda:0' took 0.22 ms  (cached)
+Module mul_m_dense__locals___mul_m_dense_b66df345 b66df34 load on device 'cuda:0' took 0.21 ms  (cached)
+Module update_constraint_efc__locals__kernel_32935e9d 32935e9 load on device 'cuda:0' took 0.25 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_baf8e129 baf8e12 load on device 'cuda:0' took 0.23 ms  (cached)
+Module update_gradient_JTDAJ_dense_tiled__locals__kernel_9404d42c b63011f load on device 'cuda:0' took 0.38 ms  (cached)
+Module update_gradient_cholesky__locals__kernel_5ee47d83 324a2ff load on device 'cuda:0' took 20.72 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_7bf09094 7bf0909 load on device 'cuda:0' took 0.27 ms  (cached)
+Module linesearch_prepare_gauss__locals__kernel_97347d38 97347d3 load on device 'cuda:0' took 0.26 ms  (cached)
+Module update_constraint_efc__locals__kernel_3c1a9816 3c1a981 load on device 'cuda:0' took 0.31 ms  (cached)
+Module _contact_sort__locals__contact_sort_304c86df 6c97b35 load on device 'cuda:0' took 0.25 ms  (cached)
+Module mujoco_warp._src.derivative d0e2fd7 load on device 'cuda:0' took 0.52 ms  (cached)
+Module reset_data__locals__reset_xfrc_applied_e7898c5c e7898c5 load on device 'cuda:0' took 0.24 ms  (cached)
+Module reset_data__locals__reset_qM_10d3c793 10d3c79 load on device 'cuda:0' took 0.19 ms  (cached)
+Module reset_data__locals__reset_mocap_ff71f630 ff71f63 load on device 'cuda:0' took 0.18 ms  (cached)
+Module reset_data__locals__reset_contact_df686d47 df686d4 load on device 'cuda:0' took 0.19 ms  (cached)
+Module reset_data__locals__reset_nworld_6e0d904e 6e0d904 load on device 'cuda:0' took 0.21 ms  (cached)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+Module mujoco_warp._src.render_util 94fd13e load on device 'cuda:0' took 0.36 ms  (cached)
+Module mujoco_warp._src.bvh 08f985a load on device 'cuda:0' took 0.53 ms  (cached)
+Module mujoco_warp._src.ray c8f2bb3 load on device 'cuda:0' took 0.65 ms  (cached)
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_com               |
+|   4   | randomize_head_com          |
+|   5   | randomize_joint_friction    |
+|   6   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | body_mass           |
+|   10  | body_inertia        |
+|   11  | body_iquat          |
+|   12  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 3 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-----------+----------------------------+
+| Index | Name      |            Type            |
++-------+-----------+----------------------------+
+|   0   | twist     | VelocityCommandCommandOnly |
+|   1   | head_pose |     UniformPoseCommand     |
+|   2   | body_pose |     UniformPoseCommand     |
++-------+-----------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (76,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_height                        |    (2,)    |
+|    8     | foot_air_time                      |    (2,)    |
+|    9     | foot_contact                       |    (2,)    |
+|    10    | foot_contact_forces                |    (6,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/.venv/lib/python3.12/site-packages/mjlab/entity/entity.py:149: UserWarning: Actuator config matched 14 joint(s) but the same expressions also match 7 site(s): imu, left_foot, head_camera, tof, head_imu, mouth_tip, right_foot. Add a separate config with transmission_type=TransmissionType.SITE if those should be actuated too.
+  self._add_actuators()
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 18 active terms.
++-----------------------------------------+
+|           Active Reward Terms           |
++-------+------------------------+--------+
+| Index | Name                   | Weight |
++-------+------------------------+--------+
+|   0   | track_linear_velocity  |    5.0 |
+|   1   | track_angular_velocity |    3.0 |
+|   2   | upright                |    2.0 |
+|   3   | pose                   |    1.0 |
+|   4   | body_ang_vel           |  -0.05 |
+|   5   | angular_momentum       |  -0.02 |
+|   6   | dof_pos_limits         |   -1.0 |
+|   7   | action_rate_l2         |   -0.1 |
+|   8   | air_time               |    3.0 |
+|   9   | foot_clearance         |   -2.0 |
+|   10  | foot_swing_height      |  -0.25 |
+|   11  | foot_slip              |   -0.1 |
+|   12  | self_collisions        |   -1.0 |
+|   13  | turn_focus             |    0.0 |
+|   14  | angular_wobble         |   -1.5 |
+|   15  | head_pose_tracking     |    2.0 |
+|   16  | body_pose_tracking     |    0.0 |
+|   17  | head_pose_bias         |    0.0 |
++-------+------------------------+--------+
+
+[INFO] <CurriculumManager> contains 7 active terms.
++-------------------------------+
+|    Active Curriculum Terms    |
++-------+-----------------------+
+| Index | Name                  |
++-------+-----------------------+
+|   0   | action_rate_weight    |
+|   1   | standing_envs         |
+|   2   | head_pose_range       |
+|   3   | body_pose_range       |
+|   4   | com_range             |
+|   5   | head_com_range        |
+|   6   | head_pose_bias_weight |
++-------+-----------------------+
+
+[INFO] <MetricsManager> contains 6 active terms.
++------------------------------+
+|     Active Metrics Terms     |
++-------+----------------------+
+| Index | Name                 |
++-------+----------------------+
+|   0   | mean_action_acc      |
+|   1   | max_action_delta     |
+|   2   | mean_abs_yaw_rate    |
+|   3   | mean_abs_yaw_command |
+|   4   | max_joint_vel        |
+|   5   | dc_turn_gain         |
++-------+----------------------+
+
+[INFO] <NullRecorderManager> (inactive)
+Module mujoco_warp._src.io 4b387a0 load on device 'cuda:0' took 1.12 ms  (cached)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_a02b7349 3d3b894 load on device 'cuda:0' took 15.25 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_8c82e9f1 95f6085 load on device 'cuda:0' took 14.75 ms  (cached)
+                       video -> logs/demo_videos/velocity_walk.mp4 (2500 frames)
+velocity walk          dc_long_0919_0125                  1:OK v=+0.267 m/s z=116 g=-1.00 | 2:OK v=+0.261 m/s z=115 g=-1.00 | 3:OK v=+0.265 m/s z=119 g=-1.00 | 4:OK v=+0.257 m/s z=114 g=-1.00 | 5:OK v=+0.262 m/s z=118 g=-1.00
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_com               |
+|   4   | randomize_head_com          |
+|   5   | randomize_joint_friction    |
+|   6   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | body_mass           |
+|   10  | body_inertia        |
+|   11  | body_iquat          |
+|   12  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 3 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-----------+----------------------------+
+| Index | Name      |            Type            |
++-------+-----------+----------------------------+
+|   0   | twist     | VelocityCommandCommandOnly |
+|   1   | head_pose |     UniformPoseCommand     |
+|   2   | body_pose |     UniformPoseCommand     |
++-------+-----------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (76,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_height                        |    (2,)    |
+|    8     | foot_air_time                      |    (2,)    |
+|    9     | foot_contact                       |    (2,)    |
+|    10    | foot_contact_forces                |    (6,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 18 active terms.
++-----------------------------------------+
+|           Active Reward Terms           |
++-------+------------------------+--------+
+| Index | Name                   | Weight |
++-------+------------------------+--------+
+|   0   | track_linear_velocity  |    5.0 |
+|   1   | track_angular_velocity |    3.0 |
+|   2   | upright                |    2.0 |
+|   3   | pose                   |    1.0 |
+|   4   | body_ang_vel           |  -0.05 |
+|   5   | angular_momentum       |  -0.02 |
+|   6   | dof_pos_limits         |   -1.0 |
+|   7   | action_rate_l2         |   -0.1 |
+|   8   | air_time               |    3.0 |
+|   9   | foot_clearance         |   -2.0 |
+|   10  | foot_swing_height      |  -0.25 |
+|   11  | foot_slip              |   -0.1 |
+|   12  | self_collisions        |   -1.0 |
+|   13  | turn_focus             |    0.0 |
+|   14  | angular_wobble         |   -1.5 |
+|   15  | head_pose_tracking     |    2.0 |
+|   16  | body_pose_tracking     |    0.0 |
+|   17  | head_pose_bias         |    0.0 |
++-------+------------------------+--------+
+
+[INFO] <CurriculumManager> contains 7 active terms.
++-------------------------------+
+|    Active Curriculum Terms    |
++-------+-----------------------+
+| Index | Name                  |
++-------+-----------------------+
+|   0   | action_rate_weight    |
+|   1   | standing_envs         |
+|   2   | head_pose_range       |
+|   3   | body_pose_range       |
+|   4   | com_range             |
+|   5   | head_com_range        |
+|   6   | head_pose_bias_weight |
++-------+-----------------------+
+
+[INFO] <MetricsManager> contains 6 active terms.
++------------------------------+
+|     Active Metrics Terms     |
++-------+----------------------+
+| Index | Name                 |
++-------+----------------------+
+|   0   | mean_action_acc      |
+|   1   | max_action_delta     |
+|   2   | mean_abs_yaw_rate    |
+|   3   | mean_abs_yaw_command |
+|   4   | max_joint_vel        |
+|   5   | dc_turn_gain         |
++-------+----------------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/velocity_turn.mp4 (2500 frames)
+velocity turn          turn03_woboff                      1:OK |yaw|=0.601 gain=1.20 abs0.3=OK z=115 g=-1.00 | 2:OK |yaw|=0.613 gain=1.23 abs0.3=OK z=116 g=-1.00 | 3:OK |yaw|=0.601 gain=1.20 abs0.3=OK z=117 g=-1.00 | 4:OK |yaw|=0.584 gain=1.17 abs0.3=OK z=115 g=-1.00 | 5:OK |yaw|=0.598 gain=1.20 abs0.3=OK z=116 g=-1.00
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_com               |
+|   4   | randomize_head_com          |
+|   5   | randomize_joint_friction    |
+|   6   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | body_mass           |
+|   10  | body_inertia        |
+|   11  | body_iquat          |
+|   12  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 3 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-----------+----------------------------+
+| Index | Name      |            Type            |
++-------+-----------+----------------------------+
+|   0   | twist     | VelocityCommandCommandOnly |
+|   1   | head_pose |     UniformPoseCommand     |
+|   2   | body_pose |     UniformPoseCommand     |
++-------+-----------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (76,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_height                        |    (2,)    |
+|    8     | foot_air_time                      |    (2,)    |
+|    9     | foot_contact                       |    (2,)    |
+|    10    | foot_contact_forces                |    (6,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 18 active terms.
++-----------------------------------------+
+|           Active Reward Terms           |
++-------+------------------------+--------+
+| Index | Name                   | Weight |
++-------+------------------------+--------+
+|   0   | track_linear_velocity  |    5.0 |
+|   1   | track_angular_velocity |    3.0 |
+|   2   | upright                |    2.0 |
+|   3   | pose                   |    1.0 |
+|   4   | body_ang_vel           |  -0.05 |
+|   5   | angular_momentum       |  -0.02 |
+|   6   | dof_pos_limits         |   -1.0 |
+|   7   | action_rate_l2         |   -0.1 |
+|   8   | air_time               |    3.0 |
+|   9   | foot_clearance         |   -2.0 |
+|   10  | foot_swing_height      |  -0.25 |
+|   11  | foot_slip              |   -0.1 |
+|   12  | self_collisions        |   -1.0 |
+|   13  | turn_focus             |    0.0 |
+|   14  | angular_wobble         |   -1.5 |
+|   15  | head_pose_tracking     |    2.0 |
+|   16  | body_pose_tracking     |    0.0 |
+|   17  | head_pose_bias         |    0.0 |
++-------+------------------------+--------+
+
+[INFO] <CurriculumManager> contains 7 active terms.
++-------------------------------+
+|    Active Curriculum Terms    |
++-------+-----------------------+
+| Index | Name                  |
++-------+-----------------------+
+|   0   | action_rate_weight    |
+|   1   | standing_envs         |
+|   2   | head_pose_range       |
+|   3   | body_pose_range       |
+|   4   | com_range             |
+|   5   | head_com_range        |
+|   6   | head_pose_bias_weight |
++-------+-----------------------+
+
+[INFO] <MetricsManager> contains 6 active terms.
++------------------------------+
+|     Active Metrics Terms     |
++-------+----------------------+
+| Index | Name                 |
++-------+----------------------+
+|   0   | mean_action_acc      |
+|   1   | max_action_delta     |
+|   2   | mean_abs_yaw_rate    |
+|   3   | mean_abs_yaw_command |
+|   4   | max_joint_vel        |
+|   5   | dc_turn_gain         |
++-------+----------------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/walk_turn.mp4 (2500 frames)
+walk+turn              turn03_woboff                      1:OK |yaw|=0.591 gain=1.18 abs0.3=OK z=119 g=-0.99 | 2:OK |yaw|=0.596 gain=1.19 abs0.3=OK z=120 g=-1.00 | 3:OK |yaw|=0.556 gain=1.11 abs0.3=OK z=121 g=-1.00 | 4:OK |yaw|=0.600 gain=1.20 abs0.3=OK z=120 g=-1.00 | 5:OK |yaw|=0.594 gain=1.19 abs0.3=OK z=120 g=-1.00
+Module ccd_kernel_builder__locals__ccd_kernel_c1d0c893 c1d0c89 load on device 'cuda:0' took 1.32 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_19c2b5da 19c2b5d load on device 'cuda:0' took 0.70 ms  (cached)
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_37ca3f47 b319ac8 load on device 'cuda:0' took 20.86 ms  (cached)
+Module solve_init_jaref__locals__kernel_af106063 af10606 load on device 'cuda:0' took 0.35 ms  (cached)
+Module mul_m_dense__locals___mul_m_dense_19197cab 19197ca load on device 'cuda:0' took 0.27 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_f02e74ab f02e74a load on device 'cuda:0' took 0.27 ms  (cached)
+Module update_gradient_JTDAJ_dense_tiled__locals__kernel_73f22f8d 0469885 load on device 'cuda:0' took 0.63 ms  (cached)
+Module update_gradient_cholesky__locals__kernel_a458a9b8 e47f115 load on device 'cuda:0' took 21.30 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_d54ab32b d54ab32 load on device 'cuda:0' took 0.33 ms  (cached)
+Module linesearch_prepare_gauss__locals__kernel_32809bfd 32809bf load on device 'cuda:0' took 0.26 ms  (cached)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | set_ground_state            |
+|   4   | settled_stand               |
+|   5   | reset_ball                  |
+|   6   | randomize_com               |
+|   7   | randomize_head_com          |
+|   8   | randomize_armature          |
+|   9   | randomize_joint_friction    |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | dof_armature        |
+|   10  | body_mass           |
+|   11  | body_inertia        |
+|   12  | body_iquat          |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++--------------------------------------------+
+|            Active Command Terms            |
++-------+-------+----------------------------+
+| Index | Name  |            Type            |
++-------+-------+----------------------------+
+|   0   | twist | VelocityCommandCommandOnly |
++-------+-------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (80,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | head_command                       |    (4,)    |
+|    11    | body_command                       |    (6,)    |
+|    12    | ball_position                      |    (3,)    |
+|    13    | ball_velocity                      |    (3,)    |
++----------+------------------------------------+------------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 12 active terms.
++----------------------------------------+
+|          Active Reward Terms           |
++-------+-----------------------+--------+
+| Index | Name                  | Weight |
++-------+-----------------------+--------+
+|   0   | upright               |    2.0 |
+|   1   | body_ang_vel          |  -0.05 |
+|   2   | angular_momentum      |  -0.02 |
+|   3   | dof_pos_limits        |   -1.0 |
+|   4   | action_rate_l2        |   -0.1 |
+|   5   | ball_forward_velocity |   12.0 |
+|   6   | ball_speed_overshoot  |   -4.0 |
+|   7   | support_foot_grounded |    2.0 |
+|   8   | pose_stand_legs       |    2.0 |
+|   9   | pose_stand_neck       |    1.0 |
+|   10  | height_stand          |    1.0 |
+|   11  | self_collisions       |   -1.0 |
++-------+-----------------------+--------+
+
+[INFO] <CurriculumManager> contains 4 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | com_range          |
+|   2   | head_com_range     |
+|   3   | push_magnitude     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_68698e2e e5a5250 load on device 'cuda:0' took 13.79 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_8f106300 2c9154f load on device 'cuda:0' took 13.58 ms  (cached)
+                       video -> logs/demo_videos/ball_kick_right.mp4 (625 frames)
+ball_kick right        kick_r4                            1:OK ball+0.608 m | 2:OK ball+0.916 m | 3:OK ball+1.029 m | 4:OK ball+0.869 m | 5:XX ball+0.000 m
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | set_ground_state            |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_armature          |
+|   7   | randomize_joint_friction    |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | dof_armature        |
+|   10  | body_mass           |
+|   11  | body_inertia        |
+|   12  | body_iquat          |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 2 active terms.
++----------------------------------------+
+|          Active Command Terms          |
++-------+-----------+--------------------+
+| Index | Name      |        Type        |
++-------+-----------+--------------------+
+|   0   | twist     |  SitStandCommand   |
+|   1   | head_pose | UniformPoseCommand |
++-------+-----------+--------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (74,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | head_command                       |    (4,)    |
+|    11    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 3 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | out_of_terrain_bounds |   True   |
+|   2   | nan_state             |  False   |
++-------+-----------------------+----------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <RewardManager> contains 20 active terms.
++---------------------------------------+
+|          Active Reward Terms          |
++-------+----------------------+--------+
+| Index | Name                 | Weight |
++-------+----------------------+--------+
+|   0   | body_ang_vel         |  -0.05 |
+|   1   | angular_momentum     |  -0.02 |
+|   2   | dof_pos_limits       |   -1.0 |
+|   3   | action_rate_l2       |   -0.1 |
+|   4   | posture_pose_legs    |    4.0 |
+|   5   | head_pose_tracking   |   0.75 |
+|   6   | posture_pose_l1      |    1.0 |
+|   7   | posture_height       |    1.0 |
+|   8   | posture_height_sharp |    1.0 |
+|   9   | posture_height_l1    |    6.0 |
+|   10  | rise_bootstrap       |   0.75 |
+|   11  | descent_speed        |   10.0 |
+|   12  | rise_speed           |    0.0 |
+|   13  | gentle_motion        |   0.05 |
+|   14  | upright_linear       |    2.5 |
+|   15  | upright_while_tall   |    1.5 |
+|   16  | posture_stillness    |    2.0 |
+|   17  | posture_composite    |    3.0 |
+|   18  | joint_torque_rate_l2 |    0.0 |
+|   19  | self_collisions      |   -1.0 |
++-------+----------------------+--------+
+
+[INFO] <CurriculumManager> contains 8 active terms.
++------------------------------+
+|   Active Curriculum Terms    |
++-------+----------------------+
+| Index | Name                 |
++-------+----------------------+
+|   0   | head_pose_range      |
+|   1   | com_range            |
+|   2   | head_com_range       |
+|   3   | push_magnitude       |
+|   4   | action_rate_weight   |
+|   5   | descent_speed_weight |
+|   6   | rise_speed_weight    |
+|   7   | torque_rate_weight   |
++-------+----------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/sitstand.mp4 (1500 frames)
+sitstand               sitstand_hold2                     1:OK z 53->53 span=67 g=-1.00 | 2:XX z 113->117 span=4 g=-1.00 | 3:XX z 53->53 span=18 g=-1.00 | 4:OK z 53->53 span=62 g=-1.00 | 5:XX z 53->53 span=15 g=-1.00
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | sample_mouth_payload        |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | body_mass           |
+|   10  | body_inertia        |
+|   11  | body_iquat          |
+|   12  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++----------------------------------------+
+|          Active Command Terms          |
++-------+-------+------------------------+
+| Index | Name  |          Type          |
++-------+-------+------------------------+
+|   0   | twist | GroundPickPhaseCommand |
++-------+-------+------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (74,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | head_command                       |    (4,)    |
+|    11    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 19 active terms.
++------------------------------------------------+
+|              Active Reward Terms               |
++-------+-------------------------------+--------+
+| Index | Name                          | Weight |
++-------+-------------------------------+--------+
+|   0   | upright                       |    0.2 |
+|   1   | body_ang_vel                  |  -0.05 |
+|   2   | angular_momentum              |  -0.02 |
+|   3   | dof_pos_limits                |   -1.0 |
+|   4   | action_rate_l2                |   -2.0 |
+|   5   | soft_landing                  | -1e-05 |
+|   6   | mouth_ground_proximity        |    3.0 |
+|   7   | mouth_perpendicular_to_ground |    2.0 |
+|   8   | ground_pick_return_pose_legs  |    6.0 |
+|   9   | ground_pick_return_pose_neck  |    6.0 |
+|   10  | return_upright                |    4.0 |
+|   11  | neck_vel_descent              |   -0.1 |
+|   12  | mouth_payload_force           |    0.0 |
+|   13  | feet_grounded                 |    3.0 |
+|   14  | feet_flat                     |   -2.0 |
+|   15  | neck_action_rate_l2           |   -1.0 |
+|   16  | joint_torques_l2              | -0.005 |
+|   17  | self_collisions               |   -1.0 |
+|   18  | head_impact_penalty           |   -2.0 |
++-------+-------------------------------+--------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <CurriculumManager> contains 3 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | com_range          |
+|   2   | head_com_range     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/ground_pick.mp4 (2500 frames)
+ground_pick            groundpick                         1:OK z 89->103 span=38 g=-0.98 | 2:OK z 89->117 span=39 g=-1.00 | 3:OK z 85->91 span=39 g=-0.97 | 4:OK z 82->91 span=44 g=-0.95 | 5:XX z 90->108 span=31 g=-1.00
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_da8974fa 0272f2d load on device 'cuda:0' took 22.79 ms  (cached)
+Module solve_init_jaref__locals__kernel_cf8d890e cf8d890 load on device 'cuda:0' took 0.37 ms  (cached)
+Module mul_m_dense__locals___mul_m_dense_63eb81d7 63eb81d load on device 'cuda:0' took 0.26 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_e88c7347 e88c734 load on device 'cuda:0' took 0.27 ms  (cached)
+Module update_gradient_JTDAJ_dense_tiled__locals__kernel_9981265a 0667084 load on device 'cuda:0' took 0.52 ms  (cached)
+Module update_gradient_cholesky__locals__kernel_11b66683 2637917 load on device 'cuda:0' took 21.84 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_c90cc86b c90cc86 load on device 'cuda:0' took 0.43 ms  (cached)
+Module linesearch_prepare_gauss__locals__kernel_cc28fc48 cc28fc4 load on device 'cuda:0' took 0.26 ms  (cached)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_wheel_friction    |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | encoder_bias                  |
+|   1   | base_com                      |
+|   2   | expand_bam_friction_fields    |
+|   3   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | body_ipos           |
+|   1   | body_subtreemass    |
+|   2   | dof_invweight0      |
+|   3   | body_invweight0     |
+|   4   | tendon_length0      |
+|   5   | tendon_invweight0   |
+|   6   | dof_frictionloss    |
+|   7   | dof_damping         |
+|   8   | body_mass           |
+|   9   | body_inertia        |
+|   10  | body_iquat          |
+|   11  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-------+--------------------------------+
+| Index | Name  |              Type              |
++-------+-------+--------------------------------+
+|   0   | twist | RelativeHeadingVelocityCommand |
++-------+-------+--------------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (78,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | wheel_vel                          |    (4,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 21 active terms.
++--------------------------------------+
+|         Active Reward Terms          |
++-------+---------------------+--------+
+| Index | Name                | Weight |
++-------+---------------------+--------+
+|   0   | upright             |    2.0 |
+|   1   | pose                |    2.0 |
+|   2   | body_ang_vel        |  -0.05 |
+|   3   | angular_momentum    |  -0.02 |
+|   4   | action_rate_l2      |   -1.0 |
+|   5   | com_height_target   |    2.0 |
+|   6   | self_collisions     |   -1.0 |
+|   7   | feet_flat           |   -2.0 |
+|   8   | neck_action_rate_l2 |   -0.5 |
+|   9   | neck_joint_pos_l2   |   -0.5 |
+|   10  | joint_torques_l2    | -0.001 |
+|   11  | action_over_limit   |   -0.5 |
+|   12  | hip_roll_neutral    |   -2.0 |
+|   13  | wheel_speed         |   10.0 |
+|   14  | braking             |    1.0 |
+|   15  | skating_air_time    |    1.5 |
+|   16  | glide               |    4.0 |
+|   17  | single_support      |    3.0 |
+|   18  | gait_symmetry       |   -1.0 |
+|   19  | forward_lean        |    1.5 |
+|   20  | heading_hold        |    1.0 |
++-------+---------------------+--------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <CurriculumManager> contains 4 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | wheel_friction     |
+|   2   | com_range          |
+|   3   | head_com_range     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_c69276de a2c0277 load on device 'cuda:0' took 14.57 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_c0aa4f5e 2eeec5b load on device 'cuda:0' took 14.84 ms  (cached)
+                       video -> logs/demo_videos/rollers_(fast).mp4 (2500 frames)
+rollers (fast)         rollers_noskate                    1:OK v=+0.535 m/s z=118 g=-0.97 | 2:OK v=+0.517 m/s z=113 g=-0.98 | 3:OK v=+0.529 m/s z=112 g=-0.96 | 4:OK v=+0.538 m/s z=113 g=-0.97 | 5:OK v=+0.518 m/s z=117 g=-0.97
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_wheel_friction    |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | encoder_bias                  |
+|   1   | base_com                      |
+|   2   | expand_bam_friction_fields    |
+|   3   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | body_ipos           |
+|   1   | body_subtreemass    |
+|   2   | dof_invweight0      |
+|   3   | body_invweight0     |
+|   4   | tendon_length0      |
+|   5   | tendon_invweight0   |
+|   6   | dof_frictionloss    |
+|   7   | dof_damping         |
+|   8   | body_mass           |
+|   9   | body_inertia        |
+|   10  | body_iquat          |
+|   11  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 2 active terms.
++----------------------------------------------------+
+|                Active Command Terms                |
++-------+-----------+--------------------------------+
+| Index | Name      |              Type              |
++-------+-----------+--------------------------------+
+|   0   | twist     | RelativeHeadingVelocityCommand |
+|   1   | head_pose |       UniformPoseCommand       |
++-------+-----------+--------------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (78,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | wheel_vel                          |    (4,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 18 active terms.
++--------------------------------------+
+|         Active Reward Terms          |
++-------+---------------------+--------+
+| Index | Name                | Weight |
++-------+---------------------+--------+
+|   0   | upright             |    2.0 |
+|   1   | pose                |    2.0 |
+|   2   | body_ang_vel        |  -0.05 |
+|   3   | angular_momentum    |  -0.02 |
+|   4   | action_rate_l2      |   -1.0 |
+|   5   | com_height_target   |    2.0 |
+|   6   | self_collisions     |   -1.0 |
+|   7   | feet_flat           |   -2.0 |
+|   8   | neck_action_rate_l2 |   -0.5 |
+|   9   | joint_torques_l2    | -0.001 |
+|   10  | action_over_limit   |   -0.5 |
+|   11  | wheel_speed         |   10.0 |
+|   12  | forward_lean        |    1.5 |
+|   13  | heading_hold        |    1.0 |
+|   14  | leg_symmetry        |    2.0 |
+|   15  | grounded            |    1.0 |
+|   16  | heading_tracking    |    0.0 |
+|   17  | head_pose_tracking  |    0.0 |
++-------+---------------------+--------+
+
+[INFO] <CurriculumManager> contains 8 active terms.
++-----------------------------------+
+|      Active Curriculum Terms      |
++-------+---------------------------+
+| Index | Name                      |
++-------+---------------------------+
+|   0   | action_rate_weight        |
+|   1   | wheel_friction            |
+|   2   | com_range                 |
+|   3   | head_com_range            |
+|   4   | heading_hold_weight       |
+|   5   | heading_tracking_weight   |
+|   6   | head_pose_tracking_weight |
+|   7   | head_pose_range           |
++-------+---------------------------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/swizzle.mp4 (2500 frames)
+swizzle                swizzle_rolling18                  1:OK v=+0.506 m/s z=119 g=-0.98 | 2:OK v=+0.484 m/s z=121 g=-0.97 | 3:OK v=+0.494 m/s z=116 g=-0.99 | 4:OK v=+0.544 m/s z=123 g=-0.97 | 5:OK v=+0.511 m/s z=119 g=-0.98
+Curriculum terrain generation took 0.0005 seconds.
+Module ccd_kernel_builder__locals__ccd_kernel_bd5ecce0 bd5ecce load on device 'cuda:0' took 1.74 ms  (cached)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_wheel_friction    |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
+|   8   | reset_rolling_entry         |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | encoder_bias                  |
+|   1   | base_com                      |
+|   2   | expand_bam_friction_fields    |
+|   3   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | body_ipos           |
+|   1   | body_subtreemass    |
+|   2   | dof_invweight0      |
+|   3   | body_invweight0     |
+|   4   | tendon_length0      |
+|   5   | tendon_invweight0   |
+|   6   | dof_frictionloss    |
+|   7   | dof_damping         |
+|   8   | body_mass           |
+|   9   | body_inertia        |
+|   10  | body_iquat          |
+|   11  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-------+--------------------------------+
+| Index | Name  |              Type              |
++-------+-------+--------------------------------+
+|   0   | twist | RelativeHeadingVelocityCommand |
++-------+-------+--------------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (78,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | wheel_vel                          |    (4,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++-----------------------------------+
+|      Active Termination Terms     |
++-------+----------------+----------+
+| Index | Name           | Time Out |
++-------+----------------+----------+
+|   0   | time_out       |   True   |
+|   1   | fell_over      |  False   |
+|   2   | nan_state      |  False   |
+|   3   | fell_into_void |  False   |
++-------+----------------+----------+
+
+[INFO] <RewardManager> contains 9 active terms.
++--------------------------------------+
+|         Active Reward Terms          |
++-------+---------------------+--------+
+| Index | Name                | Weight |
++-------+---------------------+--------+
+|   0   | action_rate_l2      |   -1.0 |
+|   1   | upright             |    3.0 |
+|   2   | alive               |    1.0 |
+|   3   | wheel_glide         |    2.0 |
+|   4   | heading_hold        |    1.5 |
+|   5   | feet_flat           |   -2.0 |
+|   6   | neck_action_rate_l2 |   -0.5 |
+|   7   | neck_joint_pos_l2   |  -0.75 |
+|   8   | joint_torques_l2    | -0.001 |
++-------+---------------------+--------+
+
+[INFO] <CurriculumManager> contains 1 active terms.
++-------------------------+
+| Active Curriculum Terms |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | terrain_levels  |
++-------+-----------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/roller_slope.mp4 (1760 frames)
+roller_slope           roller_slope                       1:OK desc=405 mm upright=1.00 | 2:OK desc=171 mm upright=0.98 | 3:OK desc=414 mm upright=1.00 | 4:OK desc=409 mm upright=1.00 | 5:OK desc=192 mm upright=0.97
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_wheel_friction    |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
+|   8   | set_ground_state            |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | encoder_bias                  |
+|   1   | base_com                      |
+|   2   | expand_bam_friction_fields    |
+|   3   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | body_ipos           |
+|   1   | body_subtreemass    |
+|   2   | dof_invweight0      |
+|   3   | body_invweight0     |
+|   4   | tendon_length0      |
+|   5   | tendon_invweight0   |
+|   6   | dof_frictionloss    |
+|   7   | dof_damping         |
+|   8   | body_mass           |
+|   9   | body_inertia        |
+|   10  | body_iquat          |
+|   11  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++--------------------------------------------+
+|            Active Command Terms            |
++-------+-------+----------------------------+
+| Index | Name  |            Type            |
++-------+-------+----------------------------+
+|   0   | twist | VelocityCommandCommandOnly |
++-------+-------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (78,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | wheel_vel                          |    (4,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | out_of_terrain_bounds |   True   |
+|   2   | nan_state             |  False   |
+|   3   | recovery_stall        |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 19 active terms.
++---------------------------------------+
+|          Active Reward Terms          |
++-------+----------------------+--------+
+| Index | Name                 | Weight |
++-------+----------------------+--------+
+|   0   | body_ang_vel         |  -0.05 |
+|   1   | angular_momentum     |  -0.02 |
+|   2   | action_rate_l2       |   -0.6 |
+|   3   | self_collisions      |   -1.0 |
+|   4   | neck_action_rate_l2  |   -0.5 |
+|   5   | neck_joint_pos_l2    |   -0.5 |
+|   6   | joint_torques_l2     | -0.001 |
+|   7   | action_over_limit    |   -0.5 |
+|   8   | pose_stand_legs      |    8.0 |
+|   9   | pose_stand_l1        |    5.0 |
+|   10  | height_stand         |    4.0 |
+|   11  | height_stand_sharp   |    4.0 |
+|   12  | height_stand_l1      |   30.0 |
+|   13  | com_upward_velocity  |    3.0 |
+|   14  | gentle_rise          |   0.02 |
+|   15  | upright_linear       |    6.0 |
+|   16  | upright_sharp        |    6.0 |
+|   17  | standing_composite   |   15.0 |
+|   18  | joint_torque_rate_l2 |   -0.2 |
++-------+----------------------+--------+
+
+[INFO] <CurriculumManager> contains 6 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | wheel_friction     |
+|   2   | com_range          |
+|   3   | head_com_range     |
+|   4   | ground_state_mix   |
+|   5   | push_magnitude     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/roller_standup.mp4 (750 frames)
+roller_standup         roller_standup_stall               1:OK held_high=175 z_max=143 upright=0.61 | 2:OK held_high=276 z_max=147 upright=0.92 | 3:OK held_high=300 z_max=141 upright=1.00 | 4:OK held_high=208 z_max=143 upright=0.76 | 5:OK held_high=275 z_max=147 upright=0.93
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_wheel_friction    |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++--------+------------------------------+
+| Index  | Name                         |
++--------+------------------------------+
+|   0    | encoder_bias                 |
+|   1    | base_com                     |
+|   2    | randomize_mass_inertia       |
++--------+------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | body_ipos           |
+|   1   | body_subtreemass    |
+|   2   | dof_invweight0      |
+|   3   | body_invweight0     |
+|   4   | tendon_length0      |
+|   5   | tendon_invweight0   |
+|   6   | dof_frictionloss    |
+|   7   | body_mass           |
+|   8   | body_inertia        |
+|   9   | body_iquat          |
+|   10  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++----------------------------------------+
+|          Active Command Terms          |
++-------+-------+------------------------+
+| Index | Name  |          Type          |
++-------+-------+------------------------+
+|   0   | twist | GroundPickPhaseCommand |
++-------+-------+------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (78,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | wheel_vel                          |    (4,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 12 active terms.
++---------------------------------------+
+|          Active Reward Terms          |
++-------+----------------------+--------+
+| Index | Name                 | Weight |
++-------+----------------------+--------+
+|   0   | upright              |    2.0 |
+|   1   | body_ang_vel         |  -0.05 |
+|   2   | angular_momentum     |  -0.02 |
+|   3   | action_rate_l2       |   -1.0 |
+|   4   | crouch_glide_pose    |    6.0 |
+|   5   | crouch_glide_pose_l1 |    2.0 |
+|   6   | forward_speed        |    1.0 |
+|   7   | crouch_forward_lean  |    1.0 |
+|   8   | feet_flat            |   -2.0 |
+|   9   | self_collisions      |   -1.0 |
+|   10  | neck_action_rate_l2  |   -0.5 |
+|   11  | joint_torques_l2     | -0.001 |
++-------+----------------------+--------+
+
+[INFO] <CurriculumManager> contains 3 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | com_range          |
+|   2   | head_com_range     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/roller_crouch.mp4 (2015 frames)
+roller_crouch          crouch_delta2                      1:OK z 69->111 span=70 g=-1.00 | 2:OK z 69->111 span=71 g=-1.00 | 3:OK z 69->110 span=69 g=-1.00 | 4:XX z 105->105 span=33 g=-0.38 | 5:OK z 69->110 span=69 g=-1.00
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | set_ground_state            |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_armature          |
+|   7   | randomize_joint_friction    |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | dof_armature        |
+|   10  | body_mass           |
+|   11  | body_inertia        |
+|   12  | body_iquat          |
++-------+---------------------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <CommandManager> contains 3 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-----------+----------------------------+
+| Index | Name      |            Type            |
++-------+-----------+----------------------------+
+|   0   | twist     | VelocityCommandCommandOnly |
+|   1   | head_pose |     UniformPoseCommand     |
+|   2   | body_pose |     UniformPoseCommand     |
++-------+-----------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (74,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | head_command                       |    (4,)    |
+|    11    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | out_of_terrain_bounds |   True   |
+|   2   | recovery_stall        |  False   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 21 active terms.
++-----------------------------------------+
+|           Active Reward Terms           |
++-------+------------------------+--------+
+| Index | Name                   | Weight |
++-------+------------------------+--------+
+|   0   | body_ang_vel           |  -0.05 |
+|   1   | angular_momentum       |  -0.02 |
+|   2   | dof_pos_limits         |   -1.0 |
+|   3   | action_rate_l2         |   -0.1 |
+|   4   | pose_stand_legs        |    0.5 |
+|   5   | head_pose_tracking     |   0.75 |
+|   6   | head_pose_bias         |    0.0 |
+|   7   | pose_stand_l1          |   1.25 |
+|   8   | standup_progress_delta |    4.0 |
+|   9   | height_stand           |    1.0 |
+|   10  | height_stand_sharp     |    1.0 |
+|   11  | height_stand_l1        |    7.5 |
+|   12  | com_upward_velocity    |   0.75 |
+|   13  | gentle_rise            |  0.005 |
+|   14  | arrival_damping        |    0.0 |
+|   15  | upright_linear         |    1.5 |
+|   16  | upright_sharp          |    1.5 |
+|   17  | standing_composite     |   3.75 |
+|   18  | body_pose_tracking     |    0.0 |
+|   19  | joint_torque_rate_l2   |    0.0 |
+|   20  | self_collisions        |   -1.0 |
++-------+------------------------+--------+
+
+[INFO] <CurriculumManager> contains 14 active terms.
++-----------------------------------+
+|      Active Curriculum Terms      |
++-------+---------------------------+
+| Index | Name                      |
++-------+---------------------------+
+|   0   | ground_state_mix          |
+|   1   | head_pose_range           |
+|   2   | com_range                 |
+|   3   | head_com_range            |
+|   4   | push_magnitude            |
+|   5   | action_rate_weight        |
+|   6   | arrival_damping_weight    |
+|   7   | head_pose_bias_weight     |
+|   8   | torque_rate_weight        |
+|   9   | body_pose_tracking_weight |
+|   10  | body_pose_range           |
+|   11  | height_stand_sharp_weight |
+|   12  | upright_sharp_weight      |
+|   13  | standing_composite_weight |
++-------+---------------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/standup_floor_flip.mp4 (750 frames)
+standup floor flip     standup_tiltstall                  1:OK hold=286 z=116 g=-1.00 | 2:OK hold=286 z=117 g=-1.00 | 3:OK hold=189 z=116 g=-1.00 | 4:OK hold=285 z=117 g=-1.00 | 5:OK hold=261 z=117 g=-1.00
+  velstand floor flip: dropped termination 'fell_over' (fires on the pin)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_com               |
+|   4   | randomize_head_com          |
+|   5   | randomize_joint_friction    |
+|   6   | randomize_armature          |
+|   7   | random_prone_init           |
++-------+-----------------------------+
++-----------------------------------------------+
+|     Active Event Terms in Mode: 'interval'    |
++-------+-------------+-------------------------+
+| Index | Name        | Interval time range (s) |
++-------+-------------+-------------------------+
+|   0   | push_robot  |        (3.0, 6.0)       |
+|   1   | topple_push |        (4.0, 8.0)       |
++-------+-------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | body_mass           |
+|   10  | body_inertia        |
+|   11  | body_iquat          |
+|   12  | dof_armature        |
++-------+---------------------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <CommandManager> contains 3 active terms.
++------------------------------------------------+
+|              Active Command Terms              |
++-------+-----------+----------------------------+
+| Index | Name      |            Type            |
++-------+-----------+----------------------------+
+|   0   | twist     | VelocityCommandCommandOnly |
+|   1   | head_pose |     UniformPoseCommand     |
+|   2   | body_pose |     UniformPoseCommand     |
++-------+-----------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (76,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_height                        |    (2,)    |
+|    8     | foot_air_time                      |    (2,)    |
+|    9     | foot_contact                       |    (2,)    |
+|    10    | foot_contact_forces                |    (6,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 5 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | out_of_terrain_bounds |   True   |
+|   2   | nan_state             |  False   |
+|   3   | recovery_stall        |  False   |
+|   4   | fallen_too_long       |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 30 active terms.
++-------------------------------------------+
+|            Active Reward Terms            |
++-------+------------------------+----------+
+| Index | Name                   |   Weight |
++-------+------------------------+----------+
+|   0   | track_linear_velocity  |      5.0 |
+|   1   | track_angular_velocity |      3.0 |
+|   2   | upright                |      2.0 |
+|   3   | pose                   |      1.0 |
+|   4   | body_ang_vel           |    -0.05 |
+|   5   | angular_momentum       |    -0.02 |
+|   6   | dof_pos_limits         |     -1.0 |
+|   7   | action_rate_l2         |     -1.0 |
+|   8   | air_time               |      3.0 |
+|   9   | foot_clearance         |     -2.0 |
+|   10  | foot_swing_height      |    -0.25 |
+|   11  | foot_slip              |     -0.1 |
+|   12  | self_collisions        |     -1.0 |
+|   13  | turn_focus             |      0.0 |
+|   14  | angular_wobble         |     -1.5 |
+|   15  | head_pose_tracking     |      2.0 |
+|   16  | body_pose_tracking     |      0.0 |
+|   17  | head_pose_bias         |      1.5 |
+|   18  | upright_progress       |      5.0 |
+|   19  | height_progress        |     30.0 |
+|   20  | com_upward_velocity    |      0.0 |
+|   21  | joint_torque_rate_l2   |   -0.002 |
+|   22  | servo_impact           |   -0.005 |
+|   23  | head_impact            |  -0.0025 |
+|   24  | trunk_impact           |  -0.0025 |
+|   25  | servo_acc_spike        | -0.00025 |
+|   26  | servo_stall            |  -0.0125 |
+|   27  | gentle_rise            |  0.00125 |
+|   28  | fallen_tax             |      0.0 |
+|   29  | recovery_success       |      0.0 |
++-------+------------------------+----------+
+
+[INFO] <CurriculumManager> contains 19 active terms.
++---------------------------------+
+|     Active Curriculum Terms     |
++-------+-------------------------+
+| Index | Name                    |
++-------+-------------------------+
+|   0   | action_rate_weight      |
+|   1   | standing_envs           |
+|   2   | head_pose_range         |
+|   3   | body_pose_range         |
+|   4   | com_range               |
+|   5   | head_com_range          |
+|   6   | head_pose_bias_weight   |
+|   7   | fell_over_disable       |
+|   8   | prone_init_prob         |
+|   9   | fallen_tax_weight       |
+|   10  | recovery_success_weight |
+|   11  | topple_push_range       |
+|   12  | servo_impact_weight     |
+|   13  | head_impact_weight      |
+|   14  | trunk_impact_weight     |
+|   15  | servo_acc_spike_weight  |
+|   16  | servo_stall_weight      |
+|   17  | gentle_rise_weight      |
+|   18  | com_upward_weight       |
++-------+-------------------------+
+
+[INFO] <MetricsManager> contains 6 active terms.
++------------------------------+
+|     Active Metrics Terms     |
++-------+----------------------+
+| Index | Name                 |
++-------+----------------------+
+|   0   | mean_action_acc      |
+|   1   | max_action_delta     |
+|   2   | mean_abs_yaw_rate    |
+|   3   | mean_abs_yaw_command |
+|   4   | max_joint_vel        |
+|   5   | dc_turn_gain         |
++-------+----------------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/velstand_floor_flip.mp4 (2500 frames)
+velstand floor flip    velstand_fromstandup               1:OK hold=972 z=115 g=-1.00 | 2:OK hold=961 z=112 g=-1.00 | 3:OK hold=968 z=116 g=-1.00 | 4:OK hold=973 z=115 g=-1.00 | 5:OK hold=542 z=115 g=-1.00
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_wheel_friction    |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++--------+------------------------------+
+| Index  | Name                         |
++--------+------------------------------+
+|   0    | encoder_bias                 |
+|   1    | base_com                     |
+|   2    | randomize_mass_inertia       |
++--------+------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | body_ipos           |
+|   1   | body_subtreemass    |
+|   2   | dof_invweight0      |
+|   3   | body_invweight0     |
+|   4   | tendon_length0      |
+|   5   | tendon_invweight0   |
+|   6   | dof_frictionloss    |
+|   7   | body_mass           |
+|   8   | body_inertia        |
+|   9   | body_iquat          |
+|   10  | dof_armature        |
++-------+---------------------+
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
+
+[INFO] <CommandManager> contains 1 active terms.
++----------------------------------------+
+|          Active Command Terms          |
++-------+-------+------------------------+
+| Index | Name  |          Type          |
++-------+-------+------------------------+
+|   0   | twist | GroundPickPhaseCommand |
++-------+-------+------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (78,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | wheel_vel                          |    (4,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 14 active terms.
++------------------------------------------+
+|           Active Reward Terms            |
++-------+-------------------------+--------+
+| Index | Name                    | Weight |
++-------+-------------------------+--------+
+|   0   | upright                 |    2.0 |
+|   1   | body_ang_vel            |  -0.05 |
+|   2   | action_rate_l2          |   -1.0 |
+|   3   | spin_rate_track         |    6.0 |
+|   4   | spin_rate_l1            |    0.5 |
+|   5   | spin_stay_in_place      |   -3.0 |
+|   6   | spin_wheel_differential |    1.0 |
+|   7   | leg_antisymmetry        |    1.0 |
+|   8   | spin_grounded           |    0.5 |
+|   9   | feet_flat               |   -2.0 |
+|   10  | self_collisions         |   -1.0 |
+|   11  | neck_action_rate_l2     |   -0.5 |
+|   12  | neck_joint_pos_l2       |   -0.2 |
+|   13  | joint_torques_l2        | -0.001 |
++-------+-------------------------+--------+
+
+[INFO] <CurriculumManager> contains 4 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | leg_antisym_weight |
+|   2   | com_range          |
+|   3   | head_com_range     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/spin.mp4 (2500 frames)
+spin                   spin_warmstand                     1:OK |yaw|=1.46 rad/s g=-1.00 | 2:OK |yaw|=1.43 rad/s g=-1.00 | 3:OK |yaw|=1.47 rad/s g=-1.00 | 4:OK |yaw|=1.44 rad/s g=-1.00 | 5:OK |yaw|=1.46 rad/s g=-1.00
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 2 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | set_roulade_state           |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_armature          |
+|   7   | randomize_joint_friction    |
++-------+-----------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | dof_armature        |
+|   10  | body_mass           |
+|   11  | body_inertia        |
+|   12  | body_iquat          |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++--------------------------------------------+
+|            Active Command Terms            |
++-------+-------+----------------------------+
+| Index | Name  |            Type            |
++-------+-------+----------------------------+
+|   0   | twist | VelocityCommandCommandOnly |
++-------+-------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (74,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | head_command                       |    (4,)    |
+|    11    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 3 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | out_of_terrain_bounds |   True   |
+|   2   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 20 active terms.
++---------------------------------------------+
+|             Active Reward Terms             |
++-------+----------------------------+--------+
+| Index | Name                       | Weight |
++-------+----------------------------+--------+
+|   0   | body_ang_vel               | -0.002 |
+|   1   | angular_momentum           | -0.001 |
+|   2   | dof_pos_limits             |   -1.0 |
+|   3   | action_rate_l2             |   -0.1 |
+|   4   | roulade_progress           |    8.0 |
+|   5   | roulade_overspeed          |   -0.1 |
+|   6   | roulade_head_pivot         |    0.5 |
+|   7   | roulade_landing_composite  |    4.0 |
+|   8   | roulade_upright_after_roll |    1.5 |
+|   9   | roulade_height_after_roll  |    1.0 |
+|   10  | roulade_landing_sharp      |    2.0 |
+|   11  | roulade_stand_tax          |    5.0 |
+|   12  | roulade_rise_velocity      |   0.75 |
+|   13  | roulade_sagittal           |   -0.1 |
+|   14  | roulade_lateral_vel        |   -0.5 |
+|   15  | roulade_flatness           |   -0.5 |
+|   16  | joint_torque_rate_l2       |    0.0 |
+|   17  | arrival_damping            |    0.0 |
+|   18  | gentle_landing             |  0.002 |
+|   19  | self_collisions            |   -0.1 |
++-------+----------------------------+--------+
+
+[INFO] <CurriculumManager> contains 7 active terms.
++--------------------------------+
+|    Active Curriculum Terms     |
++-------+------------------------+
+| Index | Name                   |
++-------+------------------------+
+|   0   | roulade_spawn_mix      |
+|   1   | com_range              |
+|   2   | head_com_range         |
+|   3   | action_rate_weight     |
+|   4   | arrival_damping_weight |
+|   5   | torque_rate_weight     |
+|   6   | gentle_landing_weight  |
++-------+------------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+                       video -> logs/demo_videos/roulade.mp4 (625 frames)
+roulade                roulade_finish                     1:OK z 46->115 g=-1.00 roll=6.94 | 2:OK z 46->116 g=-1.00 roll=7.04 | 3:OK z 46->115 g=-1.00 roll=3.35 | 4:OK z 46->115 g=-1.00 roll=4.90 | 5:OK z 46->115 g=-1.00 roll=1.66
+--------------------------------------------------------------------------------------------------------------
+velocity walk            5/5  ALL PASS   (dc_long_0919_0125)
+velocity turn            5/5  ALL PASS   (turn03_woboff)
+walk+turn                5/5  ALL PASS   (turn03_woboff)
+ball_kick right          4/5  PARTIAL   (kick_r4)
+sitstand                 2/5  PARTIAL   (sitstand_hold2)
+ground_pick              4/5  PARTIAL   (groundpick)
+rollers (fast)           5/5  ALL PASS   (rollers_noskate)
+swizzle                  5/5  ALL PASS   (swizzle_rolling18)
+roller_slope             5/5  ALL PASS   (roller_slope)
+roller_standup           5/5  ALL PASS   (roller_standup_stall)
+roller_crouch            4/5  PARTIAL   (crouch_delta2)
+standup floor flip       5/5  ALL PASS   (standup_tiltstall)
+velstand floor flip      5/5  ALL PASS   (velstand_fromstandup)
+spin                     5/5  ALL PASS   (spin_warmstand)
+roulade                  5/5  ALL PASS   (roulade_finish)

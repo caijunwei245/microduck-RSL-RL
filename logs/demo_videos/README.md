@@ -1,29 +1,34 @@
-# Simulation demonstrations (2026-09-28) — all skills, 2 rounds each, under the measured latency
+# Simulation demonstrations (2026-09-28) — all skills, **5 rounds each**
 
-Recorded offscreen from the training environments (`logs/skill_demo.py --rounds 2 --video`), 640x480,
-25 fps (every 2nd control step of the 50 Hz policy), one file per skill with both rounds back to back.
-Each frame carries a burned-in label `<skill> (round N)`.
+Recorded offscreen from the training environments (`logs/skill_demo.py --rounds 5 --video`), 640x480,
+25 fps (every 2nd control step of the 50 Hz policy), one file per skill with all five rounds back to
+back. Each frame carries a burned-in label `<skill> (round N)`.
 
-* **`all_skills_2rounds.mp4`** — all 15 clips concatenated in table order, 7 min 36 s, 16 MB.
-* **`round2_montage.png`** — contact sheet, one frame per skill from round 2.
+* **`all_skills_5rounds.mp4`** — all 15 clips concatenated in table order, **18 min 41 s, 39 MB**.
+* **`round5_montage.png`** — contact sheet, one frame per skill from round 5.
+* `all_skills_2rounds.mp4` / `round2_montage.png` were the earlier 2-round set; superseded and removed
+  from the repository (the per-skill clips below are the 5-round ones).
+* **69 of 75 rounds passed (92 %)**: 11 skills 5/5, three at 4/5 (`ball_kick`, `ground_pick`,
+  `roller_crouch`) and `sitstand` at 2/5. Per-round numbers and the honest reading of each:
+  `logs/skill_demo.md`.
 
 | video | duration | round 1 / round 2 | what to watch |
 |---|---|---|---|
-| `velocity_walk.mp4` | 0:40 | **OK / OK** | 0.267 / 0.261 m/s at cmd 0.3, upright at 116 mm |
-| `velocity_turn.mp4` | 0:40 | **OK / OK** | **0.601 / 0.613 rad/s for a commanded 0.5 (gain 1.20 / 1.23)** — the fixed turn policy: wobble tax removed, low command pinned |
-| `walk_turn.mp4` | 0:40 | **OK / OK** | 0.591 / 0.599 rad/s (gain 1.18 / 1.20) while walking |
-| `ball_kick_right.mp4` | 0:10 | **OK / OK** | ball sent +0.61 / +0.92 m; the actor never sees the ball |
-| `sitstand.mp4` | 0:24 | **OK / XX** | 67 mm span, then a round that never descended (span 4 mm) — this row measures 68-72 % per episode |
-| `ground_pick.mp4` | 0:24 | **OK / OK** | 38 / 39 mm span, returns upright both rounds |
-| `rollers_(fast).mp4` | 0:40 | **OK / OK** | 0.533 / 0.518 m/s on the passive wheels |
-| `swizzle.mp4` | 0:40 | **OK / OK** | 0.504 / 0.479 m/s |
-| `roller_slope.mp4` | 0:40 | **OK / OK** | 352 / 347 mm descent, upright 0.99-1.00 (this readout varies widely with spawn: 160-352 mm across reels) |
-| `roller_standup.mp4` | 0:12 | **OK / OK** | rises onto the wheels, z_max 147 / 151 mm, but `upright_frac` 0.55 / 0.92 — round 1 is tilted for part of it |
-| `roller_crouch.mp4` | 0:40 | **OK / OK** | 73 / 71 mm crouch-and-return span |
-| `standup_floor_flip.mp4` | 0:12 | **OK / OK** | from a pure prone pin: holds the stand 286 / 286 of 300 steps at 116 / 117 mm |
-| `velstand_floor_flip.mp4` | 0:40 | **OK / OK** | from a pure prone pin: holds 972 / 965 steps at 115 / 111 mm (sustained 64-env rate 0.812) |
-| `spin.mp4` | 0:40 | **OK / OK** | 1.46 / 1.43 rad/s at g -1.00, **upright** — the 0/5 "spins while down" result is fixed |
-| `roulade.mp4` | 0:10 | **OK / OK** | rolls 6.94 / 7.03 rad and finishes standing at 118 / 116 mm |
+| `velocity_walk.mp4` | 1:40 | **5/5** | 0.257-0.267 m/s at cmd 0.3, upright every round |
+| `velocity_turn.mp4` | 1:40 | **5/5** | **0.584-0.613 rad/s for a commanded 0.5 (gain 1.17-1.23, every round)** — the fixed turn policy: wobble tax removed, low command pinned, measured latency |
+| `walk_turn.mp4` | 1:40 | **5/5** | 0.556-0.600 rad/s (gain 1.11-1.20) while walking |
+| `ball_kick_right.mp4` | 0:25 | **4/5** | ball +0.61 / +0.92 / +1.03 / +0.87 m, then one clean miss (+0.00) — the actor never sees the ball |
+| `sitstand.mp4` | 1:00 | **2/5** | 67 / 62 mm spans; three rounds never descended (span 4-18 mm) — the weak row, 68-72 % per episode |
+| `ground_pick.mp4` | 1:40 | **4/5** | 38 / 39 / 39 / 44 mm spans, then one 31 mm span against a 40 mm criterion |
+| `rollers_(fast).mp4` | 1:40 | **5/5** | 0.517-0.538 m/s on the passive wheels |
+| `swizzle.mp4` | 1:40 | **5/5** | 0.484-0.544 m/s |
+| `roller_slope.mp4` | 1:10 | **5/5** | 171-414 mm descent (varies with spawn), upright 0.97-1.00 every round |
+| `roller_standup.mp4` | 0:30 | **5/5** | rises onto the wheels every round (z_max 141-147 mm), but `upright_frac` spreads **0.61-1.00** — the pass column hides that |
+| `roller_crouch.mp4` | 1:20 | **4/5** | 69-71 mm spans, then one 33 mm span ending tilted (g -0.38) |
+| `standup_floor_flip.mp4` | 0:30 | **5/5** | from a pure prone pin: holds the stand 189-286 of 300 steps at 116-117 mm |
+| `velstand_floor_flip.mp4` | 1:40 | **5/5** | from a pure prone pin: holds 542-973 of 1000 steps at 112-116 mm |
+| `spin.mp4` | 1:40 | **5/5** | 1.43-1.47 rad/s at g -1.00, **upright** every round |
+| `roulade.mp4` | 0:25 | **5/5** | roll magnitude spreads 1.66-7.04 rad but every round finishes standing at 115-116 mm |
 
 The two turn clips run on a **different checkpoint** from the rest: `turn03_woboff@4998`, the
 wobble-free, command-pinned policy from the turn dead-zone experiment (`logs/turn_deadzone_verdict.md`,
