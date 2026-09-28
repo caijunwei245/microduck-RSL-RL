@@ -1,0 +1,51 @@
+############ publish --dry-run end to end (ONNX shape gate + smoke + manifest), no upload ############
+date: 2026-09-28T19:39:27+08:00
+path: --task + --checkpoint-file (the documented one; it exports internally and carries provenance)
+
+--- ground_pick (phase)
+)
+Written /tmp/microduck-publish-ffc2dvwp/policy.onnx
+[publish] policy.onnx: 61 -> 14, ok
+[publish] smoke run: finite, non-constant output
+[publish] dry run: wrote /home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/publish-ground_pick/ (policy.onnx, manifest.json, README.md)
+--- roller_crouch (phase)
+│ 'ground_pick', 'sitstand').                                                  │
+│ ──────────────────────────────────────────────────────────────────────────── │
+│ For full helptext, run /home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/ │
+│ microduck_rl/.venv/bin/publish --help                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+--- sitstand (posture_flag)
+    result = run_export(
+             ^^^^^^^^^^^
+  File "/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/src/mjlab_microduck/export.py", line 157, in run_export
+    raise FileNotFoundError(f"Checkpoint file not found: {resume_path}")
+FileNotFoundError: Checkpoint file not found: logs/rsl_rl/microduck_sitstand/2026-09-24_08-43-05_sitstand_hold2/model_2498.pt
+
+=== staged repos ===
+total 792
+drwxrwxr-x  2 iisr iisr   4096 Sep 28 19:39 .
+drwx------ 14 iisr iisr   4096 Sep 28 19:39 ..
+-rw-rw-r--  1 iisr iisr   1068 Sep 28 19:39 README.md
+-rw-rw-r--  1 iisr iisr    836 Sep 28 19:39 manifest.json
+-rw-rw-r--  1 iisr iisr 793748 Sep 28 19:39 policy.onnx
+--- roller_crouch (no --slot: the daemon's slot list has no roller_crouch)
+Written /tmp/microduck-publish-pvkoz3ce/policy.onnx
+[publish] policy.onnx: 61 -> 14, ok
+[publish] smoke run: finite, non-constant output
+[publish] dry run: wrote /home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/publish-roller_crouch/ (policy.onnx, manifest.json, README.md)
+
+--- sitstand (scripted + posture_flag)
+Written /tmp/microduck-publish-f6yobzqx/policy.onnx
+[publish] policy.onnx: 61 -> 14, ok
+[publish] smoke run: finite, non-constant output
+[publish] dry run: wrote /home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/publish-sitstand/ (policy.onnx, manifest.json, README.md)
+
+--- spin (episodic + phase, period 4.0 s, one full envelope)
+             ^^^^^^^^^^^
+  File "/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/src/mjlab_microduck/export.py", line 157, in run_export
+    raise FileNotFoundError(f"Checkpoint file not found: {resume_path}")
+FileNotFoundError: Checkpoint file not found: logs/rsl_rl/spin/2026-09-25_00-00-00_spin_warmstand/model_3999.pt
+Written /tmp/microduck-publish-2sk2pl07/policy.onnx
+[publish] policy.onnx: 61 -> 14, ok
+[publish] smoke run: finite, non-constant output
+[publish] dry run: wrote /home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/publish-spin/ (policy.onnx, manifest.json, README.md)

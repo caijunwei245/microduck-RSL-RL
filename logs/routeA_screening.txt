@@ -1,0 +1,23 @@
+############ Route-A screening: what does hiding the phase from the actor cost TODAY? ############
+date: 2026-09-28T19:32:08+08:00
+MICRODUCK_INTERNAL_PHASE=1 zeroes the actor's twist slot at eval time, so an actor TRAINED with
+the phase runs open loop with no adaptation - an UPPER BOUND on Route A's cost for each family.
+Baselines (phase visible, today's gates): roller_crouch 25/25, ground_pick 14/15, sitstand 24/25.
+
+--- roller_crouch (3 seeds x 5 rounds, phase hidden)
+    seed 0: roller_crouch rollercrouch_lag12 1:OK z 87->96 span=52 g=-1.00 | 2:OK z 87->88 span=53 g=-1.00 | 3:OK z 87->94 span=51 g=-1.00 | 4:OK z 86->92 span=51 g=-1.00 | 5:OK z 86->95 span=50 g=-1.00
+    seed 1: roller_crouch rollercrouch_lag12 1:OK z 86->93 span=56 g=-1.00 | 2:OK z 87->89 span=54 g=-1.00 | 3:OK z 87->87 span=50 g=-1.00 | 4:OK z 87->88 span=56 g=-1.00 | 5:OK z 87->88 span=52 g=-1.00
+    seed 2: roller_crouch rollercrouch_lag12 1:OK z 87->92 span=54 g=-1.00 | 2:OK z 86->92 span=53 g=-1.00 | 3:OK z 87->95 span=57 g=-1.00 | 4:OK z 86->91 span=51 g=-1.00 | 5:OK z 86->93 span=55 g=-1.00
+--- ground_pick (3 seeds x 5 rounds, phase hidden)
+    seed 0: ground_pick groundpick 1:XX z 114->115 span=13 g=-1.00 | 2:XX z 114->115 span=14 g=-1.00 | 3:XX z 115->115 span=9 g=-1.00 | 4:XX z 115->115 span=11 g=-1.00 | 5:XX z 114->114 span=6 g=-1.00
+    seed 1: ground_pick groundpick 1:XX z 114->114 span=8 g=-1.00 | 2:XX z 113->113 span=8 g=-1.00 | 3:XX z 113->113 span=15 g=-0.99 | 4:XX z 113->113 span=10 g=-1.00 | 5:XX z 114->114 span=13 g=-1.00
+    seed 2: ground_pick groundpick 1:XX z 113->113 span=13 g=-1.00 | 2:XX z 113->113 span=10 g=-1.00 | 3:XX z 113->113 span=10 g=-1.00 | 4:XX z 113->113 span=9 g=-1.00 | 5:XX z 113->113 span=17 g=-1.00
+--- sitstand (3 seeds x 5 rounds, phase hidden)
+    seed 0: sitstand sitstand_hold2 1:XX z 115->117 span=5 cmd[+0,+1] switch | 2:OK z 113->117 span=4 cmd[+0,+0] held stand | 3:XX z 62->117 span=57 cmd[+1,+1] held sit | 4:XX z 113->117 span=4 cmd[+1,+1] held sit | 5:XX z 65->117 span=54 cmd[+1,+1] held sit
+    seed 1: sitstand sitstand_hold2 1:OK z 116->116 span=1 cmd[+0,+0] held stand | 2:OK z 63->116 span=54 cmd[+0,+1] switch | 3:XX z 112->116 span=6 cmd[+0,+1] switch | 4:XX z 115->116 span=2 cmd[+1,+1] held sit | 5:XX z 116->116 span=1 cmd[+0,+1] switch
+    seed 2: sitstand sitstand_hold2 1:OK z 65->116 span=51 cmd[+0,+1] switch | 2:XX z 111->116 span=8 cmd[+0,+1] switch | 3:XX z 111->116 span=6 cmd[+0,+1] switch | 4:OK z 62->116 span=54 cmd[+0,+0] held stand | 5:OK z 116->116 span=3 cmd[+0,+0] held stand
+
+row               rounds ok   rate   primary readout (median)
+roller_crouch      15/15      100%   z_max=140  span median=53 mm
+ground_pick         0/15        0%   z_max=124  span median=10 mm
+sitstand            6/15       40%   z_last=116  span median=6 mm

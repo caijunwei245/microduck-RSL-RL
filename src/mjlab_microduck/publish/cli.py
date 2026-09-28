@@ -35,7 +35,10 @@ class PublishConfig:
     # -- where it goes
     repo: str
     """Hub repo id, `<user-or-org>/microduck-<name>`. Created (private) if it does not exist."""
-    kind: Literal["episodic", "perpetual"]
+    # `scripted` (2026-09-28) is the daemon's shape for a policy whose command IT drives rather than
+    # the owner holding a fixed twist - the official sitstand is `scripted`. It requires one of the
+    # non-constant `command_encoding` values, which build_manifest enforces.
+    kind: Literal["episodic", "perpetual", "scripted"]
     """episodic: runs `duration_s` and comes back on its own. perpetual: holds until told."""
 
     # -- where the weights come from: exactly one of (--task + checkpoint) or --onnx
@@ -71,6 +74,23 @@ class PublishConfig:
     """The pose the policy expects to start from."""
     twist_help: str | None = None
     """Prose for `command.twist` when the slots mean something (flamingo: '[flag, side, 0]')."""
+
+    # -- how the daemon drives the command (2026-09-28). `constant` is every policy published so far;
+    # `phase` and `posture_flag` are the encodings the contract already carries (see the official set
+    # in tests/test_publish_manifest.py) and are what the phase-driven and posture skills need, so the
+    # validated checkpoint ships unchanged instead of being retrained with an internal clock.
+    command_encoding: Literal["constant", "phase", "posture_flag"] = "constant"
+    """`phase`: the daemon sweeps [cos(2*pi*phi), sin(2*pi*phi), 0]; `posture_flag`: a binary flag it holds."""
+    period_s: float | None = None
+    """phase only: seconds for one full phase cycle (the task's own phase period)."""
+    end_phase: float | None = None
+    """phase only: the phase at which the skill has finished its manoeuvre, in [0, 1]."""
+    ramp_s: float | None = None
+    """posture_flag only: seconds the daemon takes to slew between the two postures."""
+    sit: float = 1.0
+    """posture_flag only: the twist value that means SIT."""
+    stand: float = 0.0
+    """posture_flag only: the twist value that means STAND."""
 
     # -- how
     private: bool = True
@@ -168,6 +188,12 @@ def run(cfg: PublishConfig) -> int:
             slot=cfg.slot,
             command_help=command_help,
             training=training,
+            command_encoding=cfg.command_encoding,
+            period_s=cfg.period_s,
+            end_phase=cfg.end_phase,
+            ramp_s=cfg.ramp_s,
+            sit=cfg.sit,
+            stand=cfg.stand,
         )
         m.validate_manifest(manifest)
 

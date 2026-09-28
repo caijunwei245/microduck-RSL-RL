@@ -174,13 +174,48 @@ def test_a_perpetual_manifest_says_how_to_come_back():
         (dict(kind="perpetual", slot="jetpack"), "slot"),
         (dict(kind="perpetual", unwind_s=1.0, duration_s=3.0), "duration_s"),
         (dict(kind="perpetual", unwind_s=1.0, chain=True), "chain"),
+        # `scripted` alone says nothing about how the command is driven; it needs an encoding
+        # (2026-09-28: the builder gained phase/posture_flag, so this case is now about the MISSING
+        # encoding rather than about scripted being unsupported).
         (dict(kind="scripted", duration_s=1.0), "kind"),
+        (dict(kind="episodic", duration_s=1.0, command_encoding="phase"), "period_s"),
+        (dict(kind="episodic", duration_s=1.0, command_encoding="phase", period_s=4.0), "end_phase"),
+        (dict(kind="episodic", duration_s=1.0, command_encoding="phase", period_s=4.0,
+              end_phase=0.7), None),
+        (dict(kind="perpetual", command_encoding="posture_flag"), "scripted"),
+        (dict(kind="scripted", command_encoding="posture_flag", ramp_s=-1.0), "ramp_s"),
+        (dict(kind="scripted", duration_s=1.0, command_encoding="telepathy"), "command_encoding"),
         (dict(kind="episodic", duration_s=1.0, action_scale=5.0), "action_scale"),
     ],
 )
 def test_the_builder_refuses_what_the_kind_cannot_mean(kwargs, why):
+    if why is None:                      # the one valid combination in the table
+        m.validate_manifest(m.build_manifest(name="x", description="d", **kwargs))
+        return
     with pytest.raises(m.ManifestError, match=why):
         m.build_manifest(name="x", description="d", **kwargs)
+
+
+def test_a_phase_policy_matches_the_official_set_shape():
+    """The official ground_pick (uploaded 2026-09-02) is exactly this: episodic + phase."""
+    built = m.build_manifest(name="ground_pick", kind="episodic", description="d", duration_s=2.8,
+                             command_encoding="phase", period_s=4.0, end_phase=0.7)
+    m.validate_manifest(built)
+    assert built["command"]["encoding"] == "phase"
+    assert built["command"]["period_s"] == 4.0 and built["command"]["end_phase"] == 0.7
+    assert built["duration_s"] == 2.8
+    assert "encoding=phase" in m.install_commands(built, "u/microduck-ground-pick")
+
+
+def test_a_posture_flag_policy_matches_the_official_set_shape():
+    """The official sitstand is scripted + posture_flag + ramp_s/unwind_s."""
+    built = m.build_manifest(name="sitstand", kind="scripted", description="d",
+                             command_encoding="posture_flag", ramp_s=2.0, unwind_s=1.0)
+    m.validate_manifest(built)
+    assert built["command"]["encoding"] == "posture_flag"
+    assert built["command"]["sit"] == 1.0 and built["command"]["stand"] == 0.0
+    assert built["command"]["twist"] == "[flag, side, 0]"
+    assert "--hold" in m.install_commands(built, "u/microduck-sitstand")
 
 
 def test_a_name_is_a_bare_word():

@@ -1,0 +1,5 @@
+=== ONNX exports for the four skills (local checkpoints, no wandb) ===
+  ground_pick: OK (793748 B) from model_999.pt
+  roller_crouch: OK (793759 B) from model_1999.pt
+  spin: OK (793746 B) from model_3999.pt
+  sitstand: OK (793770 B) from model_2498.pt

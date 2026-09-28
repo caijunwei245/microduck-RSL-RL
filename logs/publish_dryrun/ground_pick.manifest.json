@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "obs_len": 61,
+  "action_len": 14,
+  "robot": {
+    "model": "microduck",
+    "hw_rev": 1,
+    "servos": "xl330",
+    "control_hz": 50
+  },
+  "name": "ground_pick",
+  "kind": "episodic",
+  "entry_pose": "standing",
+  "description": "Mjlab-GroundPick-Flat-MicroDuck",
+  "command": {
+    "encoding": "phase",
+    "period_s": 4.0,
+    "end_phase": 0.75,
+    "idle": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "twist": "[cos(2*pi*phi), sin(2*pi*phi), 0]",
+    "head": "unused (zeros)",
+    "body": "unused (zeros)"
+  },
+  "duration_s": 3.0,
+  "chain": false,
+  "slot": "ground_pick",
+  "training": {
+    "repo": "pollen-robotics/microduck_rl",
+    "commit": "cdbb6ecab",
+    "branch": "develop",
+    "dirty": true,
+    "task_id": "Mjlab-GroundPick-Flat-MicroDuck",
+    "checkpoint": 999
+  }
+}

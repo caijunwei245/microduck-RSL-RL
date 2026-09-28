@@ -101,15 +101,55 @@ def build_manifest(
     command_help: dict[str, Any] | None = None,
     training: dict[str, Any] | None = None,
     eval: dict[str, Any] | None = None,
+    command_encoding: str = "constant",
+    period_s: float | None = None,
+    end_phase: float | None = None,
+    sit: float = 1.0,
+    stand: float = 0.0,
+    ramp_s: float | None = None,
 ) -> dict[str, Any]:
     """A single-policy manifest the daemon loads without surprises.
 
-    Only the constant-command family is publishable from here — a skill's network is fed a fixed
-    twist. Phase and posture-flag encodings are the official set's own arms and are not something
-    a community policy can be.
+    Three command encodings are supported, matching what the daemon drives (see `validate_manifest`
+    and the official set in `tests/test_publish_manifest.py`):
+
+    * ``constant`` (default) — a fixed twist.
+    * ``phase`` — the daemon writes ``[cos(2*pi*phi), sin(2*pi*phi), 0]`` and sweeps ``phi`` over
+      ``period_s`` seconds up to ``end_phase``. This is the encoding every phase-driven task in this
+      repo already uses (ground_pick, roller_crouch, spin), which is why the actor's command slot has
+      that shape; declaring it means the VALIDATED policy ships unchanged, with no internal clock and
+      no retraining.
+    * ``posture_flag`` — a binary flag in the twist slot that the owner toggles (sitstand).
+
+    **Provenance of the claim, stated because it is the one thing this repo cannot test**: the format
+    is accepted by `validate_manifest` and is used by the official set as uploaded 2026-09-02
+    (`alpha_sitstand.onnx` = ``scripted`` + ``posture_flag`` + ``ramp_s``/``unwind_s``;
+    `alpha_ground_pick.onnx` = ``episodic`` + ``phase`` + ``period_s``/``end_phase``). Whether the
+    daemon ACCEPTS a community-published policy declaring them (as opposed to the official set) is a
+    decision in the `microduck` repo, so `install_commands` prints a comment saying which driver the
+    policy expects. Build and validate these manifests, then confirm on hardware.
     """
-    if kind not in KINDS:
-        raise ManifestError(f"kind must be one of {KINDS}, not {kind!r}")
+    if command_encoding not in ("constant", "phase", "posture_flag"):
+        raise ManifestError(
+            f"command_encoding must be constant, phase or posture_flag, not {command_encoding!r}"
+        )
+    if command_encoding == "constant":
+        if kind not in KINDS:
+            raise ManifestError(f"kind must be one of {KINDS}, not {kind!r}")
+    elif command_encoding == "phase":
+        if kind not in ("episodic", "scripted"):
+            raise ManifestError(f"a phase-driven skill is episodic or scripted, not {kind!r}")
+        if period_s is None or period_s <= 0:
+            raise ManifestError("a phase command needs period_s > 0")
+        if end_phase is None or not 0.0 <= end_phase <= 1.0:
+            raise ManifestError("a phase command needs end_phase in [0, 1]")
+        if duration_s is None or duration_s <= 0:
+            raise ManifestError("a phase-driven skill still ends itself: give duration_s > 0")
+    else:  # posture_flag
+        if kind != "scripted":
+            raise ManifestError(f"a posture-flag policy is scripted, not {kind!r}")
+        if ramp_s is not None and ramp_s <= 0:
+            raise ManifestError("ramp_s must be > 0 when given")
     if not name or "/" in name or name != name.strip():
         raise ManifestError(f"name must be a bare word a client can ask for, not {name!r}")
     if kind == "episodic":
@@ -142,13 +182,34 @@ def build_manifest(
     if len(idle) != 3:
         raise ManifestError("idle is a 3-vector twist")
 
-    command: dict[str, Any] = {
-        "encoding": "constant",
-        "idle": [float(v) for v in idle],
-        "twist": "unused (zeros)",
-        "head": "unused (zeros)",
-        "body": "unused (zeros)",
-    }
+    if command_encoding == "constant":
+        command: dict[str, Any] = {
+            "encoding": "constant",
+            "idle": [float(v) for v in idle],
+            "twist": "unused (zeros)",
+            "head": "unused (zeros)",
+            "body": "unused (zeros)",
+        }
+    elif command_encoding == "phase":
+        command = {
+            "encoding": "phase",
+            "period_s": float(period_s),          # type: ignore[arg-type]
+            "end_phase": float(end_phase),        # type: ignore[arg-type]
+            "idle": [float(v) for v in idle],
+            "twist": "[cos(2*pi*phi), sin(2*pi*phi), 0]",
+            "head": "unused (zeros)",
+            "body": "unused (zeros)",
+        }
+    else:
+        command = {
+            "encoding": "posture_flag",
+            "sit": float(sit),
+            "stand": float(stand),
+            "idle": [float(v) for v in idle],
+            "twist": "[flag, side, 0]",
+            "head": "unused (zeros)",
+            "body": "unused (zeros)",
+        }
     if command_help:
         command.update(command_help)
 
@@ -316,6 +377,21 @@ def install_commands(manifest: dict[str, Any], repo_id: str) -> str:
     runs as a skill with `--hold`. Perpetual without: a gait, loaded into a slot.
     """
     name = manifest["name"]
+    encoding = (manifest.get("command") or {}).get("encoding", "constant")
+    if encoding == "phase":
+        # The daemon drives the phase itself; the policy ships unchanged. The comment is the part a
+        # human needs: it says which driver the policy expects, which is also the thing to confirm on
+        # hardware before trusting the upload (phase/posture_flag may be official-set only).
+        return (f"# expects command.encoding=phase (period_s={manifest['command'].get('period_s')}, "
+                f"end_phase={manifest['command'].get('end_phase')}) — the daemon writes "
+                f"[cos(2*pi*phi), sin(2*pi*phi), 0]\n"
+                f"sudo robotctl policy add {name} {repo_id}\nrobotctl robot do {name}")
+    if encoding == "posture_flag":
+        return (f"# expects command.encoding=posture_flag (sit={manifest['command'].get('sit')}, "
+                f"stand={manifest['command'].get('stand')}) — the owner toggles the flag\n"
+                f"sudo robotctl policy add {name} {repo_id}"
+                + (f" --hold {manifest['unwind_s']}" if manifest.get("unwind_s") else "")
+                + f"\nrobotctl robot do {name}")
     if manifest["kind"] == "episodic":
         return f"sudo robotctl policy add {name} {repo_id}\nrobotctl robot do {name}"
     if manifest.get("unwind_s") is not None:
@@ -331,7 +407,15 @@ def render_readme(manifest: dict[str, Any], repo_id: str) -> str:
     description = manifest.get("description", "")
     training = manifest.get("training", {})
     run = install_commands(manifest, repo_id)
-    if kind == "episodic":
+    encoding = (manifest.get("command") or {}).get("encoding", "constant")
+    if encoding == "phase":
+        timing = (f"Runs {manifest['duration_s']} s while the daemon sweeps the phase over "
+                  f"{manifest['command'].get('period_s')} s (to {manifest['command'].get('end_phase')}); "
+                  f"the policy is the validated phase-commanded one, unchanged.")
+    elif encoding == "posture_flag":
+        timing = ("Holds the commanded posture until the flag is toggled back; the daemon drives "
+                  "`command.sit` / `command.stand`.")
+    elif kind == "episodic":
         timing = f"Runs {manifest['duration_s']} s and returns itself to a standing pose."
         if manifest.get("chain"):
             timing += " Holding the button chains another run."

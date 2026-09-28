@@ -1,0 +1,26 @@
+############ publish duration sweep: one deployable cycle ############
+date: 2026-09-28T19:35:17+08:00
+
+--- ground_pick (phase period 4.0 s, training episode 20 s)
+Module _tile_cholesky_solve__locals__cholesky_solve_8c82e9f1 95f6085 load on device 'cuda:0' took 15.40 ms  (cached)
+duration_s  steps  passed   readouts
+       2.0    100   1/3     span median 35 mm, z_last median 93 mm
+       2.5    125   1/3     span median 37 mm, z_last median 92 mm
+       3.0    150   2/3     span median 39 mm, z_last median 117 mm
+       4.0    200   2/3     span median 40 mm, z_last median 92 mm
+       5.0    250   1/3     span median 37 mm, z_last median 92 mm
+
+The shortest duration that still passes is the one to put in the manifest; `end_phase` is
+that duration divided by the task's own phase period (4.0 s ground_pick, 5.0 s crouch).
+
+--- roller_crouch (phase period 5.0 s, training episode 20 s)
+Module _tile_cholesky_solve__locals__cholesky_solve_c0aa4f5e 2eeec5b load on device 'cuda:0' took 15.18 ms  (cached)
+duration_s  steps  passed   readouts
+       2.5    125   3/3     span median 73 mm, z_last median 74 mm
+       3.0    150   3/3     span median 77 mm, z_last median 111 mm
+       4.0    200   3/3     span median 72 mm, z_last median 111 mm
+       5.0    250   3/3     span median 76 mm, z_last median 110 mm
+       7.5    375   3/3     span median 74 mm, z_last median 69 mm
+
+The shortest duration that still passes is the one to put in the manifest; `end_phase` is
+that duration divided by the task's own phase period (4.0 s ground_pick, 5.0 s crouch).
