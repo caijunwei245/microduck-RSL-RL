@@ -1,11 +1,44 @@
-# Skill rotation: all skills, 2 rounds each (2026-09-26 — 15 rows, all passing)
+# Skill rotation: all skills, 2 rounds each (2026-09-28 — 14/15 under the measured latency)
 
 ```bash
-# the current artifacts: turn rows on the wobble-free turn policy
+# the current artifacts: turn rows on the wobble-free turn policy, measured under the default
+# latency envelope (1-2 steps held coherently, see logs/actuator_latency.md)
 MICRODUCK_TURN_CKPT=logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt \
   uv run python logs/skill_demo.py --rounds 2 --video
 uv run python logs/demo_finish.py --rounds 2      # reel + contact sheet (ffmpeg concat demuxer)
 ```
+
+| skill | round 1 | round 2 | checkpoint |
+|---|---|---|---|
+| velocity walk | **0.267 m/s** | **0.261 m/s** | `dc_long_0919_0125` |
+| velocity turn | **0.601 rad/s (gain 1.20)** | **0.613 (1.23)** | `turn03_woboff` @4998 |
+| walk+turn | **0.591 (1.18)** | **0.599 (1.20)** | same |
+| ball_kick right | **+0.61 m** | **+0.92 m** | `kick_r4` |
+| sitstand | **67 mm span** | **span 4 — never descended (FAIL)** | `sitstand_hold2` |
+| ground_pick | **38 mm span** | **39 mm span** | `groundpick` |
+| rollers (fast) | **0.533 m/s** | **0.518 m/s** | `rollers_noskate` |
+| swizzle | **0.504 m/s** | **0.479 m/s** | `swizzle_rolling18` |
+| roller_slope | **352 mm descent** | **347 mm** | `roller_slope` |
+| roller_standup | **z 147 mm, held 159, upright 0.55** | **z 151, held 276, upright 0.92** | `roller_standup_stall` |
+| roller_crouch | **70 mm span** | **71 mm span** | `crouch_delta2` |
+| standup floor flip | **hold 286, z 116** | **hold 286, z 117** | `standup_tiltstall` |
+| velstand floor flip | **hold 972, z 115** | **hold 965, z 111** | `velstand_fromstandup` |
+| spin | **1.46 rad/s at g −1.00** | **1.43 rad/s** | `spin_warmstand` |
+| roulade | **roll 6.94, ends 118 mm** | **roll 7.03, ends 116 mm** | `roulade_finish` |
+
+**14 of 15 rows passed both rounds**; the exception is `sitstand` round 2, which never descended
+(span 4 mm) — that row's per-episode rate has measured 68-72 % for weeks, so one episode in two is
+inside its normal band, not a regression. The rows the latency change should help most moved the right
+way in this sample: walk 0.252-0.254 → **0.261-0.267 m/s**, rollers 0.454-0.465 → **0.518-0.533**,
+swizzle 0.402-0.419 → **0.479-0.504**, spin 1.40 → **1.43-1.46 rad/s**, roulade's roll 6.44/3.13 →
+**6.94/7.03** (more consistent). `roller_standup` is the one row worth watching: it passes on both
+rounds but its `upright_frac` reads 0.55 / 0.92, i.e. it spends part of round 1 tilted — quote the
+fraction, not just the pass.
+
+## Previous run (2026-09-26) — 15/15 under the historical 3-6 dithered envelope
+
+Kept because the two runs differ in exactly the places the latency change predicts, and because that
+envelope is still reachable (`MICRODUCK_ACTUATOR_LAG="3,6" MICRODUCK_ACTUATOR_LAG_HOLD=0`).
 
 **All 15 rows, two consecutive episodes each**, every frame labelled with the skill and the round.
 Videos: `logs/demo_videos/*.mp4`, concatenated into `all_skills_2rounds.mp4` (15 clips, 7 min 32 s,
