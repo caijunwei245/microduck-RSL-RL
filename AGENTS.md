@@ -323,13 +323,15 @@ ball); roller tasks leave head/body command slots zero-padded.
   run — all the same number at n=6 — because the stand-still basin is only 0.32 % behind on return
   (240.401 vs 241.184), and the gate's 3 seeds x 5 rounds resolves roughly ±13 %. Quote episode
   counts next to rates and compare distributions, never single episodes. (2) The actuator delay
-  DITHER (`delay_update_period=0`, the `MICRODUCK_ACTUATOR_LAG` default) adds a second, discrete
-  difference on top — first-step `ctrl` differs by 5.4e-03, by 2.6e-03 with one fixed lag, by
-  1.1e-06 with `"0,0"` — so pinning the lag for A/B work reduces variance, but cannot make the
-  environment reproducible. What is NOT the cause, each with a control that could have failed: the
-  policy (three arms paying 2x/4x for the turn left it identical), the reward, the spawn pose, any
-  per-episode DR draw, the firmware gains (`ENABLE_KP/KD_RANDOMIZATION = False`), and the delay
-  buffer contents. This also explains the older "walk 0/5 to 3/5 across seeds" / "spawn
+  DITHER added a second, discrete difference on top of that floor — first-step `ctrl` differing by
+  5.4e-03 rad — which is why the default envelope is now the MEASURED one, **`1,2` steps held for a
+  whole episode** (`delay_update_period=1000`) rather than the declared `3,6` re-drawn every step: the
+  same trace reads 1.5e-06 with the new default, i.e. the discrete part is gone and only the
+  floating-point floor remains. `MICRODUCK_ACTUATOR_LAG="3,6"` + `..._HOLD=0` reproduces the
+  pre-2026-09-27 recipe for A/B work. No envelope makes the environment bit-reproducible.
+  What is NOT the cause, each with a control that could have failed: the policy (three arms paying
+  2x/4x for the turn left it identical), the reward, the spawn pose, any per-episode DR draw, the
+  firmware gains (`ENABLE_KP/KD_RANDOMIZATION = False`), and the delay buffer contents. This also explains the older "walk 0/5 to 3/5 across seeds" / "spawn
   sensitivity" observations: same phenomenon, sampled too thinly.
 - **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
   needs the actor only, and the actor carries its own obs normalizer (that is

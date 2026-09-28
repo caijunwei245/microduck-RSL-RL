@@ -1,0 +1,25 @@
+############ latency default 1-2 steps, held coherently: validation ############
+date: 2026-09-28T08:45:14+08:00
+
+=== the turn tail over 12 episodes (cmd 0.3, seed 0, new default latency) ===
+  1  0.344 / z117 / g-1.00
+  2  0.347 / z115 / g-1.00
+  3  0.338 / z118 / g-1.00
+  4  0.316 / z116 / g-1.00
+  5  0.342 / z116 / g-1.00
+  6  0.278 / z116 / g-1.00
+  7  0.322 / z118 / g-1.00
+  8  0.333 / z117 / g-1.00
+  9  0.340 / z117 / g-1.00
+ 10  0.343 / z116 / g-1.00
+ 11  0.331 / z117 / g-0.99
+ 12  0.290 / z118 / g-1.00
+    0/12 episodes below 0.15 rad/s; median 0.336; min upright_frac 1.00; any fell False
+
+=== deployed rows under the new latency (3 rounds each) ===
+  velocity walk          dc_long_0919_0125                  1:OK v=+0.267 m/s z=116 g=-1.00 | 2:OK v=+0.261 m/s z=115 g=-1.00 | 3:OK v=+0.265 m/s z=119 g=-1.00
+  velocity walk            3/3  ALL PASS   (dc_long_0919_0125)
+  velocity turn          turn03_woboff                      1:OK |yaw|=0.611 gain=1.22 abs0.3=OK z=115 g=-1.00 | 2:OK |yaw|=0.617 gain=1.23 abs0.3=OK z=116 g=-1.00 | 3:OK |yaw|=0.605 gain=1.21 abs0.3=OK z=118 g=-1.00
+  velocity turn            3/3  ALL PASS   (turn03_woboff)
+  walk+turn              turn03_woboff                      1:OK |yaw|=0.597 gain=1.19 abs0.3=OK z=119 g=-0.99 | 2:OK |yaw|=0.572 gain=1.14 abs0.3=OK z=119 g=-0.99 | 3:OK |yaw|=0.562 gain=1.12 abs0.3=OK z=120 g=-1.00
+  walk+turn                3/3  ALL PASS   (turn03_woboff)

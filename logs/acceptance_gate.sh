@@ -18,10 +18,27 @@ echo "checkpoint: ${CKPT:-<newest glob match>}" | tee -a "$OUT"
 echo "date: $(date -Is)" | tee -a "$OUT"
 
 # SEEDS: one 5-round run is NOT a verdict - measured over 5 seeds x 5 rounds, ball_kick scores
-# anywhere from 1/5 to 4/5 and velocity walk 0/5 to 3/5 (logs/seed_sweep_results.txt), so the gate
-# aggregates 3 seeds (15 rounds) by default. Override with GATE_SEEDS.
-SEEDS="${GATE_SEEDS:-3}"
-echo "--- demonstration: $SEEDS seeds x 5 rounds ---" | tee -a "$OUT"
+# anywhere from 1/5 to 4/5 and velocity walk 0/5 to 3/5 (logs/seed_sweep_results.txt).
+#
+# MARGINAL ROWS GET 5 SEEDS (25 rounds). Added 2026-09-27 after the simulator was measured to be
+# chaotic and not bit-reproducible across resets: identical state plus identical actions diverge from
+# step 1, and a task whose two behaviours are ~0.3 % apart in return flips whole episodes on that
+# noise alone (logs/turn_tail_findings.md). At 3 seeds (15 rounds) the resolution is roughly +/-13 %,
+# which is the same order as the effect being judged on exactly these rows:
+#     velocity walk      0/5 .. 3/5 across seeds
+#     velocity turn      2/6, 1/6, 0/6 across runs (all the same number at n=6)
+#     walk+turn          same marginal region
+#     ball_kick          1/5 .. 4/5 across seeds
+# Everything else keeps 3 seeds. Either is overridden by an explicit GATE_SEEDS.
+MARGINAL_RE='velocity walk|velocity turn|walk\+turn|ball_kick'
+if [ -n "${GATE_SEEDS:-}" ]; then
+  SEEDS="$GATE_SEEDS"; WHY="explicit GATE_SEEDS"
+elif echo "$SKILL" | grep -qE "$MARGINAL_RE"; then
+  SEEDS=5; WHY="marginal row (measured to flip on simulator noise; 3 seeds resolves only ~+/-13%)"
+else
+  SEEDS=3; WHY="default"
+fi
+echo "--- demonstration: $SEEDS seeds x 5 rounds ($WHY) ---" | tee -a "$OUT"
 TOT=0; PAS=0
 for SD in $(seq 0 $((SEEDS - 1))); do
   R=$(env CUDA_VISIBLE_DEVICES=$GPU WANDB_MODE=offline uv run python logs/skill_demo.py \

@@ -164,12 +164,22 @@ FULL_COLLISION = CollisionCfg(
 #      measured what that costs: same checkpoint, same env, dithered 0.2433/0.2448 m/s ball speed vs
 #      held 0.1215/0.1404 - the held version reproducing the deployment rehearsal (logs/kick_r1_report.md
 #      §34). Walking is quasi-static and was fine either way, which is why nothing caught it.
-# Switches (defaults = the recipe that has been running, so every A/B keeps a baseline):
-#   MICRODUCK_ACTUATOR_LAG="min,max"   control-step lag range; measured truth is "1,2"
-#   MICRODUCK_ACTUATOR_LAG_HOLD=<N>    hold each env's lag for N control steps (0 = mjlab's dither;
-#                                      a whole episode is EPISODE_LENGTH_S * 50, e.g. 250)
+# DEFAULTS CHANGED 2026-09-27 to the two things the measurements had already settled, because both
+# are FIDELITY fixes and the second also removes run-to-run variance:
+#   RANGE      3-6 steps (60-120 ms)  ->  1-2 steps (20-40 ms), the latency measured on the hardware
+#   COHERENCE  per-step dither        ->  held for a whole episode, as the robot's delay is
+# The dither was also measured to be a *source of irreproducibility*: with everything else pinned, the
+# first-step ctrl differs by 5.4e-03 rad under the stock dither and 1.1e-06 with a single fixed lag
+# (logs/turn_tail_findings.md), which is enough to flip a marginal task's episode.
+#
+# Switches (both env-var overridable, read at cfg build):
+#   MICRODUCK_ACTUATOR_LAG="min,max"   control-step lag range; default "1,2" (measured 20-40 ms)
+#   MICRODUCK_ACTUATOR_LAG_HOLD=<N>    hold each env's lag for N control steps. Default 1000 = 20 s =
+#                                      at least one whole episode for every task in the family. Set
+#                                      "3,6" and 0 together to reproduce the pre-2026-09-27 recipe in an
+#                                      A/B against those runs.
 def _actuator_lag() -> tuple[int, int]:
-    raw = os.environ.get("MICRODUCK_ACTUATOR_LAG", "3,6")
+    raw = os.environ.get("MICRODUCK_ACTUATOR_LAG", "1,2")
     lo_s, _, hi_s = raw.partition(",")
     lo, hi = int(lo_s), int(hi_s or lo_s)
     assert 0 <= lo <= hi, f"MICRODUCK_ACTUATOR_LAG must be 'min,max' with 0<=min<=max, got {raw!r}"
@@ -177,7 +187,9 @@ def _actuator_lag() -> tuple[int, int]:
 
 
 ACTUATOR_LAG = _actuator_lag()
-ACTUATOR_LAG_HOLD = int(os.environ.get("MICRODUCK_ACTUATOR_LAG_HOLD", "0"))
+# 1000 steps = 20 s at 50 Hz: the longest episode in the family (velocity/velstand/rollers), so the
+# lag is coherent for at least an episode in every task; the kick task's 250 is its own 5 s episode.
+ACTUATOR_LAG_HOLD = int(os.environ.get("MICRODUCK_ACTUATOR_LAG_HOLD", "1000"))
 
 # -- BAM M6 actuator (full voltage control + load-dependent friction) --
 # Exclude passive_* joints (jaw linkage in the new model has no XML actuator).

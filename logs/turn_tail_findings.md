@@ -83,3 +83,26 @@ MICRODUCK_ACTUATOR_LAG="2,2" uv run python logs/sim_determinism_test.py --steps 
     --play-cfg --pin-spawn
 uv run python logs/dr_tail_probe.py --rounds 6 --pin all --dump-state --ckpts <turn ckpt>
 ```
+
+---
+
+## Validation of the latency fix (2026-09-28)
+
+The dither half of the tail was testable: after changing the default envelope to the measured,
+coherent one (`1,2` steps held 1000 steps — `logs/actuator_latency.md`), the first-step `ctrl`
+difference dropped from **5.4e-03 to 1.5e-06 rad** (only the floating-point floor remains), and:
+
+| measurement | historical default (3-6, dithered) | new default (1-2, held) |
+|---|---|---|
+| turn episodes below 0.15 rad/s, cmd 0.3, seed 0 | 2 of 6 (0.073 / 0.042) | **0 of 12** (all 0.278-0.347, median 0.336) |
+| velocity walk (3 rounds) | 0.252 / 0.254 m/s | 0.267 / 0.261 / 0.265 m/s |
+| velocity turn (3 rounds) | 0.626 / 0.601 | 0.611 / 0.617 / 0.605 |
+| walk+turn (3 rounds) | 0.581 / 0.597 | 0.597 / 0.572 / 0.562 |
+
+So the discrete difference the dither injected was what flipped those episodes, and removing it
+neither regresses nor costs the deployed policies anything (walking is ~5 % faster under the envelope
+the hardware actually has). Honest weight: the episode counts are one seed (0/12 against a historical
+~20 % rate is p ≈ 0.07 on its own), but the *mechanism* is measured directly — the first-step `ctrl`
+difference falls by three orders of magnitude — and the two together are what make this a fix rather
+than a coincidence. The floating-point floor is untouched: no envelope makes the environment
+bit-reproducible, so the "quote episode counts" rule above still stands.

@@ -233,17 +233,25 @@ def test_kick_actuator_lag_is_coherent_not_dithered():
     hold each env's lag for an episode; other tasks stay as they are."""
     cfg = _kick_env()
     act = cfg.scene.entities["robot"].articulation.actuators[0]
-    assert (act.delay_min_lag, act.delay_max_lag) == (3, 6)
+    assert (act.delay_min_lag, act.delay_max_lag) == (1, 2), (
+        "the shared envelope is the measured 1-2 steps since 2026-09-27"
+    )
     assert act.delay_update_period >= 50 * kick_cfg.EPISODE_LENGTH_S, (
         "the actuator lag must be held for at least one episode, otherwise training "
         "dithered its own latency and the deployed (coherent) latency is untrained"
     )
     from mjlab_microduck.robot.microduck_constants import actuators as shared
 
-    assert shared.delay_update_period == 0, (
-        "this fix is for the kick task only — do not silently change every task's "
-        "actuator latency model"
+    # 2026-09-27: this used to assert that ONLY the kick task held its lag, to keep the fix from
+    # leaking into every task silently. The leak was then measured to be the right answer — the
+    # per-step dither is both unfaithful (the robot's latency is coherent) and a source of run-to-run
+    # irreproducibility (first-step ctrl differs by 5.4e-03 rad dithered vs 1.1e-06 fixed,
+    # logs/turn_tail_findings.md) — so the shared envelope is now coherent too, and the assertion
+    # states that instead of forbidding it.
+    assert shared.delay_update_period >= 1000, (
+        "the shared envelope must hold the lag for at least one whole episode (20 s = 1000 steps)"
     )
+    assert act.delay_update_period >= 50 * kick_cfg.EPISODE_LENGTH_S
 
 
 def test_kick_ball_spawn_event_runs_after_the_robot_pose_is_set():
