@@ -42,6 +42,11 @@ logdir/.claude/worktrees/
 # MuJoCo writes this into the CWD whenever the model warns (rehearsals, smoke tests)
 MUJOCO_LOG.TXT
 
+# `uv run publish --dry-run` stages publish-<name>/{policy.onnx,manifest.json,README.md} here; the
+# ONNX is already covered by the global *.onnx rule, but the two text files are not. Rebuild with
+# `uv run python logs/publish_dryrun.py` (evidence: logs/publish_dryrun_e2e.txt).
+publish-*/
+
 # Session checkpoints are committed on purpose (see checkpoints/<date>/README.md for the
 # recipe and measured result behind each file) — the global *.pt / *.onnx ignores above
 # would otherwise drop them silently.
