@@ -4,7 +4,7 @@ Recorded offscreen from the training environments (`logs/skill_demo.py --rounds 
 25 fps (every 2nd control step of the 50 Hz policy), one file per skill with both rounds back to back.
 Each frame carries a burned-in label `<skill> (round N)`.
 
-* **`all_skills_2rounds.mp4`** — all 15 clips concatenated in table order, 7 min 32 s, 14 MB.
+* **`all_skills_2rounds.mp4`** — all 15 clips concatenated in table order, 7 min 36 s, 16 MB.
 * **`round2_montage.png`** — contact sheet, one frame per skill from round 2.
 
 | video | duration | round 1 / round 2 | what to watch |

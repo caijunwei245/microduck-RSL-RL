@@ -106,3 +106,16 @@ the hardware actually has). Honest weight: the episode counts are one seed (0/12
 difference falls by three orders of magnitude — and the two together are what make this a fix rather
 than a coincidence. The floating-point floor is untouched: no envelope makes the environment
 bit-reproducible, so the "quote episode counts" rule above still stands.
+
+### Five-seed gate verdict on the turn row (2026-09-28)
+
+`logs/acceptance_gate.sh "velocity turn" <turn03_woboff@4998>` now selects **5 seeds** for this row
+(marginal list) and prints why; under the new latency default the row scores **21/25 rounds (84 %)
+PASS**, per seed 5/5, 3/5, 4/5, 4/5, 5/5. Two things to read in it:
+
+* the failing rounds now read **0.229-0.468 rad/s (gain 0.46-0.94)** — the policy *turns*, just less
+  than commanded. Under the old dithered envelope the same kinds of round read **0.042-0.073**, i.e.
+  no rotation at all. The "stood still" mode is what the coherent envelope removed; what is left is
+  ordinary tracking spread.
+* the spread across seeds (5/5 to 3/5) is exactly why this row is on the 5-seed list: at 3 seeds the
+  same policy could have been reported anywhere from 12/15 (80 %, PASS) to 15/15.
