@@ -1,16 +1,26 @@
 === ACCEPTANCE GATE: velocity turn ===
 checkpoint: logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt
-date: 2026-09-28T09:03:13+08:00
---- demonstration: 5 seeds x 5 rounds (marginal row (measured to flip on simulator noise; 3 seeds resolves only ~+/-13%)) ---
+date: 2026-09-28T15:32:48+08:00
+--- demonstration: 5 seeds x 5 rounds (explicit GATE_SEEDS) ---
   seed 0: velocity turn 5/5 ALL PASS (turn03_woboff)
     velocity turn turn03_woboff 1:OK |yaw|=0.611 gain=1.22 abs0.3=OK z=115 g=-1.00 | 2:OK |yaw|=0.617 gain=1.23 abs0.3=OK z=116 g=-1.00 | 3:OK |yaw|=0.605 gain=1.21 abs0.3=OK z=118 g=-1.00 | 4:OK |yaw|=0.583 gain=1.17 abs0.3=OK z=116 g=-1.00 | 5:OK |yaw|=0.599 gain=1.20 abs0.3=OK z=116 g=-1.00
   seed 1: velocity turn 3/5 PARTIAL (turn03_woboff)
-    velocity turn turn03_woboff 1:OK |yaw|=0.589 gain=1.18 abs0.3=OK z=115 g=-1.00 | 2:XX |yaw|=0.286 gain=0.57 abs0.3=XX z=113 g=-1.00 | 3:OK |yaw|=0.571 gain=1.14 abs0.3=OK z=115 g=-1.00 | 4:OK |yaw|=0.610 gain=1.22 abs0.3=OK z=112 g=-1.00 | 5:XX |yaw|=0.229 gain=0.46 abs0.3=XX z=115 g=-1.00
+    velocity turn turn03_woboff 1:OK |yaw|=0.591 gain=1.18 abs0.3=OK z=114 g=-1.00 | 2:XX |yaw|=0.285 gain=0.57 abs0.3=XX z=113 g=-1.00 | 3:OK |yaw|=0.571 gain=1.14 abs0.3=OK z=115 g=-1.00 | 4:OK |yaw|=0.610 gain=1.22 abs0.3=OK z=112 g=-1.00 | 5:XX |yaw|=0.229 gain=0.46 abs0.3=XX z=115 g=-1.00
   seed 2: velocity turn 4/5 PARTIAL (turn03_woboff)
-    velocity turn turn03_woboff 1:OK |yaw|=0.543 gain=1.09 abs0.3=OK z=115 g=-1.00 | 2:XX |yaw|=0.468 gain=0.94 abs0.3=OK z=114 g=-1.00 | 3:OK |yaw|=0.528 gain=1.06 abs0.3=OK z=114 g=-1.00 | 4:OK |yaw|=0.508 gain=1.02 abs0.3=OK z=113 g=-1.00 | 5:OK |yaw|=0.520 gain=1.04 abs0.3=OK z=113 g=-1.00
+    velocity turn turn03_woboff 1:OK |yaw|=0.543 gain=1.09 abs0.3=OK z=115 g=-1.00 | 2:XX |yaw|=0.465 gain=0.93 abs0.3=OK z=114 g=-1.00 | 3:OK |yaw|=0.532 gain=1.06 abs0.3=OK z=114 g=-1.00 | 4:OK |yaw|=0.508 gain=1.02 abs0.3=OK z=113 g=-1.00 | 5:OK |yaw|=0.520 gain=1.04 abs0.3=OK z=113 g=-1.00
   seed 3: velocity turn 4/5 PARTIAL (turn03_woboff)
     velocity turn turn03_woboff 1:OK |yaw|=0.578 gain=1.16 abs0.3=OK z=114 g=-1.00 | 2:XX |yaw|=0.311 gain=0.62 abs0.3=OK z=117 g=-1.00 | 3:OK |yaw|=0.542 gain=1.08 abs0.3=OK z=114 g=-1.00 | 4:OK |yaw|=0.547 gain=1.09 abs0.3=OK z=116 g=-1.00 | 5:OK |yaw|=0.560 gain=1.12 abs0.3=OK z=115 g=-1.00
   seed 4: velocity turn 5/5 ALL PASS (turn03_woboff)
     velocity turn turn03_woboff 1:OK |yaw|=0.579 gain=1.16 abs0.3=OK z=115 g=-1.00 | 2:OK |yaw|=0.611 gain=1.22 abs0.3=OK z=116 g=-1.00 | 3:OK |yaw|=0.554 gain=1.11 abs0.3=OK z=116 g=-1.00 | 4:OK |yaw|=0.517 gain=1.03 abs0.3=OK z=115 g=-1.00 | 5:OK |yaw|=0.548 gain=1.10 abs0.3=OK z=115 g=-1.00
   AGGREGATE: 21/25 rounds (84%)
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+  seed 0: median yaw_abs_mean = 0.6048 (n=5)
+  seed 1: median yaw_abs_mean = 0.5713 (n=5)
+  seed 2: median yaw_abs_mean = 0.5196 (n=5)
+  seed 3: median yaw_abs_mean = 0.5466 (n=5)
+  seed 4: median yaw_abs_mean = 0.5541 (n=5)
+  CONTINUOUS: median yaw_abs_mean over 25 rounds = 0.5541 (mean 0.5286 +/-0.04054 95%, SD 0.1034)
 === VERDICT: PASS  21/25 rounds (84%) ===
