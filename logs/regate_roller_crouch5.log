@@ -1,0 +1,16 @@
+=== ACCEPTANCE GATE: roller_crouch ===
+checkpoint: <newest glob match>
+date: 2026-09-28T11:08:23+08:00
+--- demonstration: 5 seeds x 5 rounds (explicit GATE_SEEDS) ---
+  seed 0: roller_crouch 4/5 PARTIAL (crouch_delta2)
+    roller_crouch crouch_delta2 1:OK z 69->111 span=70 g=-1.00 | 2:OK z 69->111 span=71 g=-1.00 | 3:OK z 69->110 span=69 g=-1.00 | 4:XX z 105->105 span=33 g=-0.38 | 5:OK z 69->111 span=69 g=-1.00
+  seed 1: roller_crouch 4/5 PARTIAL (crouch_delta2)
+    roller_crouch crouch_delta2 1:OK z 69->110 span=73 g=-1.00 | 2:OK z 69->110 span=72 g=-1.00 | 3:OK z 69->111 span=68 g=-1.00 | 4:XX z 81->81 span=62 g=-0.41 | 5:OK z 69->110 span=74 g=-1.00
+  seed 2: roller_crouch 4/5 PARTIAL (crouch_delta2)
+    roller_crouch crouch_delta2 1:OK z 69->109 span=72 g=-1.00 | 2:XX z 92->92 span=47 g=-0.36 | 3:OK z 69->110 span=67 g=-1.00 | 4:OK z 69->110 span=68 g=-1.00 | 5:OK z 69->109 span=67 g=-1.00
+  seed 3: roller_crouch 3/5 PARTIAL (crouch_delta2)
+    roller_crouch crouch_delta2 1:OK z 69->110 span=68 g=-1.00 | 2:XX z 36->36 span=101 g=-0.39 | 3:OK z 69->111 span=69 g=-1.00 | 4:OK z 69->110 span=69 g=-1.00 | 5:XX z 77->81 span=61 g=-0.41
+  seed 4: roller_crouch 4/5 PARTIAL (crouch_delta2)
+    roller_crouch crouch_delta2 1:OK z 69->110 span=69 g=-1.00 | 2:OK z 69->110 span=67 g=-1.00 | 3:OK z 69->110 span=71 g=-1.00 | 4:OK z 69->110 span=72 g=-1.00 | 5:XX z 80->80 span=58 g=-0.39
+  AGGREGATE: 19/25 rounds (76%)
+=== VERDICT: PARTIAL  19/25 rounds (76%) ===

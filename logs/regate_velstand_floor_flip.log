@@ -1,0 +1,24 @@
+=== ACCEPTANCE GATE: velstand floor flip ===
+checkpoint: <newest glob match>
+date: 2026-09-28T11:03:36+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: velstand floor flip 5/5 ALL PASS (velstand_fromstandup)
+    velstand floor flip velstand_fromstandup 1:OK hold=972 z=115 g=-1.00 | 2:OK hold=977 z=112 g=-1.00 | 3:OK hold=962 z=116 g=-1.00 | 4:OK hold=972 z=115 g=-1.00 | 5:OK hold=542 z=114 g=-1.00
+  seed 1: velstand floor flip 5/5 ALL PASS (velstand_fromstandup)
+    velstand floor flip velstand_fromstandup 1:OK hold=950 z=115 g=-1.00 | 2:OK hold=967 z=116 g=-1.00 | 3:OK hold=490 z=115 g=-1.00 | 4:OK hold=957 z=114 g=-1.00 | 5:OK hold=220 z=90 g=-0.73
+  seed 2: velstand floor flip 5/5 ALL PASS (velstand_fromstandup)
+    velstand floor flip velstand_fromstandup 1:OK hold=954 z=113 g=-1.00 | 2:OK hold=963 z=114 g=-1.00 | 3:OK hold=944 z=114 g=-1.00 | 4:OK hold=603 z=114 g=-1.00 | 5:OK hold=512 z=114 g=-1.00
+  AGGREGATE: 15/15 rounds (100%)
+--- tilt-keyed family evaluation ---
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File "/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+=== VERDICT: PASS  15/15 rounds (100%) ===

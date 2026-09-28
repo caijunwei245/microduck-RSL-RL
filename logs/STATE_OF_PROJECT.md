@@ -6,24 +6,39 @@ code inventory: `logs/CHANGES.md`; per-step verdicts: `logs/GOAL_SUMMARY.md`; as
 
 ---
 
-## 1. The 13-skill ledger (as measured, not as intended)
+## 1. The skill ledger (refreshed 2026-09-28, gate + 5-round rotation)
 
-| skill | verdict | the number it rests on |
-|---|---|---|
-| velocity walk / turn / head | usable, one caveat | 0.22-0.23 m/s at cmd 0.3 (73 %), in-place turn 0.656 rad/s at cmd 0.5, head yaw/pitch 111 %/99 %, 140 s no falls |
-| **spin** | **solved this session** | 0/5 -> **15/15 (100 %)**, upright at 114 mm / g -1.0, from either a capability-matched target (1.0 rad/s) or a roller-stand warm start |
-| ball_kick (right) | usable but unreliable | 4 rounds send the ball 0.3-1.3 m, 5th misses entirely; **13/25 (52 %)** over 5 seeds |
-| **ball_kick (left)** | **trained this session** | **9/15 (60 %)** - parity with the right foot |
-| sitstand | usable | 17/25 (68 %); failures are a CONSTANT posture flag the robot ignores |
-| ground_pick | solid | 25/25 (100 %) |
-| **rollers** | usable, recipe now a choice | crouched 0.3500 m/s @ 116 mm; tall 0.2099 @ 138.9 mm; **staged 0.1911 @ 138.2 mm with a 15/15 demo** |
-| swizzle | usable | 0.34-0.36 m/s (113-120 % of the commanded push) |
-| roller_slope | solid | 25/25, descends at 137 mm |
-| **roller_standup** | **fixed this session** | 19/25 -> **15/15 (100 %)** with the tilt-clause stall backstop |
-| roller_crouch | solid | **24/25 (96 %)** - the earlier 60 % was 3-seed noise |
-| **standup floor flip** | **solved this session** | 0/184 -> **184/184**; rehearsal 116.0 mm at 0.3 deg of tilt |
-| **velstand floor flip** | **solved - corrected DOWN on 2026-09-25** | **0.812 (52/64, sustained)**, not 127/128: the pin trips `fell_over`, which recycled every episode on step 1, so the older number was measuring the env's own spawn mix (correction at the end of `GOAL_SUMMARY.md`; `skill_demo.py`/`family_eval.py` now drop that term for pinned rows only) |
-| roulade | usable | **25/25**; rolls (progress 3.1-6.7) and ends upright at 115-116 mm |
+Every row below was re-gated on 2026-09-28 under the current recipe (measured latency 1-2 steps held
+coherently; turn rows on the wobble-tax fix) — 5 seeds = 25 rounds for the marginal rows, 3 seeds = 15
+for the rest. Detail: `logs/regate_2026-09-28.md`, `logs/regate_summary.txt`, per row `logs/gate_*.txt`.
+The 5-round rotation that goes with it: `logs/skill_demo.md`.
+
+| skill | gate (2026-09-28) | 5-round rotation | the number it rests on |
+|---|---|---|---|
+| velocity walk | **PASS 22/25 (88 %)** | 5/5 | 0.257-0.267 m/s at cmd 0.3 — the largest move in the set (was 48 % on 2026-09-23) |
+| velocity turn | **PASS 21/25 (84 %)** | 5/5 | 0.584-0.613 rad/s for a commanded 0.5 (gain 1.17-1.23) |
+| walk+turn | PARTIAL 15/25 (60 %) | 5/5 (seed 0) | turning while walking; the five-seed number is the honest one |
+| ball_kick right | PARTIAL 13/25 (52 %) | 4/5 | ball +0.6 to +1.0 m, one clean miss per five; spawn noise ruled out |
+| sitstand | PARTIAL 17/25 (68 %) | 2/5 | 67 mm span when it works; the failures never descend |
+| ground_pick | PASS 14/15 (93 %) | 4/5 | 38-44 mm span (mouth to ground and back) |
+| rollers (fast) | PASS 15/15 (100 %) | 5/5 | 0.517-0.538 m/s on the passive wheels |
+| swizzle | PASS 15/15 (100 %) | 5/5 | 0.484-0.544 m/s |
+| roller_slope | PASS 15/15 (100 %) | 5/5 | descends the ramp upright every round |
+| roller_standup | **PASS 22/25 (88 %)** — 25/25 under the pre-fix envelope | 5/5 | rises onto the wheels; the row is envelopE-dependent, see below |
+| roller_crouch | **PARTIAL 19/25 (76 %)** — 25/25 under the pre-fix envelope | 4/5 | crouch-and-return span; same envelope dependence |
+| standup floor flip | PASS 14/15 | 5/5 | prone pin at 256 envs: **0.953-0.973 sustained**, 116 mm, g -1.0 |
+| velstand floor flip | PASS 15/15 | 5/5 | prone pin at 256 envs: **~0.97 sustained** (the recorded 0.812 is not reproducible today; the envelope is ruled out — see `regate_2026-09-28.md`) |
+| spin | **PASS 15/15 (100 %)** | 5/5 | 1.43-1.47 rad/s, upright every round (the old gate file said FAIL 0/15 — stale) |
+| roulade | PASS 14/15 (93 %) | 5/5 | rolls, ends upright at 115-116 mm |
+
+**The one trade-off found by the refresh**: controlled A/Bs under the pre-fix envelope give walk
+21/25 vs 22/25 (no effect) and recovery 0.95-0.99 either way, so the measured-latency default's ONLY
+pass-rate effect is a cost on the two skating rows (roller_crouch 100 -> 76 %, roller_standup
+100 -> 88 %) when their OLD checkpoints are evaluated under it; its benefits are fidelity and
+reproducibility (first-step `ctrl` spread 5.4e-03 -> 1.5e-06), and the walk row's 48 -> 88 % move
+belongs to the era (the sustained-forward bucket and the turn work), not to the envelope. That is a train/test mismatch until those families are re-trained under the new envelope; quote
+roller rows with their envelope, and use the pre-fix one when the question is "did this policy
+regress?".
 
 Also demonstrated: a **continuous chain** - walk 0.27-0.32 m/s -> fall -> **get up in 0.86-1.02 s** ->
 run 0.29-0.35 m/s, twice in one episode (`logs/demo_videos/chain_walk_fall_up_run.mp4`).

@@ -1,0 +1,16 @@
+=== ACCEPTANCE GATE: roller_standup ===
+checkpoint: <newest glob match>
+date: 2026-09-28T11:11:54+08:00
+--- demonstration: 5 seeds x 5 rounds (explicit GATE_SEEDS) ---
+  seed 0: roller_standup 5/5 ALL PASS (roller_standup_stall)
+    roller_standup roller_standup_stall 1:OK held_high=300 z_max=145 upright=1.00 | 2:OK held_high=300 z_max=140 upright=1.00 | 3:OK held_high=286 z_max=138 upright=0.96 | 4:OK held_high=300 z_max=145 upright=1.00 | 5:OK held_high=287 z_max=138 upright=0.96
+  seed 1: roller_standup 5/5 ALL PASS (roller_standup_stall)
+    roller_standup roller_standup_stall 1:OK held_high=300 z_max=139 upright=1.00 | 2:OK held_high=300 z_max=140 upright=1.00 | 3:OK held_high=288 z_max=140 upright=0.96 | 4:OK held_high=288 z_max=138 upright=0.96 | 5:OK held_high=288 z_max=138 upright=0.96
+  seed 2: roller_standup 5/5 ALL PASS (roller_standup_stall)
+    roller_standup roller_standup_stall 1:OK held_high=300 z_max=140 upright=1.00 | 2:OK held_high=300 z_max=141 upright=1.00 | 3:OK held_high=300 z_max=140 upright=1.00 | 4:OK held_high=300 z_max=143 upright=1.00 | 5:OK held_high=300 z_max=144 upright=1.00
+  seed 3: roller_standup 5/5 ALL PASS (roller_standup_stall)
+    roller_standup roller_standup_stall 1:OK held_high=288 z_max=139 upright=0.96 | 2:OK held_high=288 z_max=139 upright=0.96 | 3:OK held_high=288 z_max=143 upright=0.96 | 4:OK held_high=288 z_max=143 upright=0.96 | 5:OK held_high=288 z_max=142 upright=0.96
+  seed 4: roller_standup 5/5 ALL PASS (roller_standup_stall)
+    roller_standup roller_standup_stall 1:OK held_high=286 z_max=143 upright=0.95 | 2:OK held_high=286 z_max=140 upright=0.96 | 3:OK held_high=199 z_max=142 upright=0.86 | 4:OK held_high=286 z_max=140 upright=0.95 | 5:OK held_high=300 z_max=140 upright=1.00
+  AGGREGATE: 25/25 rounds (100%)
+=== VERDICT: PASS  25/25 rounds (100%) ===

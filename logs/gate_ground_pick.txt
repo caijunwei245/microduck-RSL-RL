@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: ground_pick ===
+checkpoint: <newest glob match>
+date: 2026-09-28T10:54:49+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: ground_pick 4/5 PARTIAL (groundpick)
+    ground_pick groundpick 1:OK z 89->103 span=38 g=-0.98 | 2:OK z 89->117 span=39 g=-1.00 | 3:OK z 85->91 span=39 g=-0.97 | 4:OK z 82->91 span=44 g=-0.95 | 5:XX z 90->108 span=31 g=-1.00
+  seed 1: ground_pick 5/5 ALL PASS (groundpick)
+    ground_pick groundpick 1:OK z 88->95 span=34 g=-0.99 | 2:OK z 88->116 span=33 g=-0.99 | 3:OK z 87->89 span=41 g=-0.97 | 4:OK z 88->116 span=35 g=-1.00 | 5:OK z 88->90 span=38 g=-0.94
+  seed 2: ground_pick 5/5 ALL PASS (groundpick)
+    ground_pick groundpick 1:OK z 88->89 span=38 g=-0.94 | 2:OK z 87->89 span=37 g=-0.94 | 3:OK z 89->89 span=35 g=-0.93 | 4:OK z 87->89 span=35 g=-0.94 | 5:OK z 89->113 span=41 g=-1.00
+  AGGREGATE: 14/15 rounds (93%)
+=== VERDICT: PASS  14/15 rounds (93%) ===

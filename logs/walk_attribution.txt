@@ -1,0 +1,5 @@
+############ walk attribution: velocity walk under the OLD envelope (3-6 dithered), 5 seeds ############
+date: 2026-09-28T11:34:28+08:00
+same checkpoint as the 22/25 (88%) run, same seeds 0-4
+  AGGREGATE: 21/25 rounds (84%)
+=== VERDICT: PASS  21/25 rounds (84%) ===

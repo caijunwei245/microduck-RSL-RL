@@ -361,6 +361,54 @@ class Actor:
         return self.act(obs)
 
 
+def build_agent(task: str, ckpt: str, *, play_cfg: bool = False, video: bool = False,
+                video_scale: int = 1, cam_distance: float = 1.3, pin_floor: bool = False,
+                quiet: bool = False):
+    """Build the env + wrapper + actor exactly the way the rotation does.
+
+    Returns `(env, wrapped, policy, max_steps, mk_env)`, where `mk_env()` builds another identical
+    environment (what `--fresh-env` needs). Shared with `logs/paired_eval.py` on purpose: a second
+    copy of either the construction or the rollout loop has already produced contradictory verdicts
+    in this project - a hand-rolled loop reported the turn tail at 0.232/0.233 rad/s instead of
+    0.073/0.042 (`logs/turn_tail_findings.md`). Same code, or no comparison.
+    """
+    from mjlab.rl import RslRlVecEnvWrapper
+
+    env_cfg = load_env_cfg(task, play=play_cfg)
+    env_cfg.scene.num_envs = 1
+    if video:
+        env_cfg.viewer.width = 640 * video_scale
+        env_cfg.viewer.height = 480 * video_scale
+        # a 25 cm robot at the default 5 m is a speck: frame it for a human viewer
+        env_cfg.viewer.distance = cam_distance
+        env_cfg.viewer.elevation = -20.0
+        env_cfg.viewer.azimuth = 120.0
+    if pin_floor:
+        # Same trap family_eval hit (2026-09-25): the robot IS on the floor, so a fall termination
+        # fires the moment the pin is applied, the env recycles the episode, and the round quietly
+        # measures the env's own spawn mix. StandUp removes this term by design; an evaluation that
+        # pins on purpose must do the same. EVALUATION-ONLY.
+        for _t in ("fell_over",):
+            if _t in env_cfg.terminations:
+                env_cfg.terminations.pop(_t)
+                if not quiet:
+                    print(f"  dropped termination {_t!r} (fires on the pin)")
+
+    def _mk_env():
+        return ManagerBasedRlEnv(
+            cfg=env_cfg, device=DEVICE,
+            render_mode="rgb_array" if video else None,
+        )
+
+    env = _mk_env()
+    max_steps = int(round(env_cfg.episode_length_s
+                          / (env_cfg.sim.mujoco.timestep * env_cfg.decimation)))
+    agent_cfg = load_rl_cfg(task)
+    wrapped = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
+    policy = Actor(ckpt, clip=getattr(agent_cfg, "clip_actions", None))
+    return env, wrapped, policy, max_steps, _mk_env
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--rounds", type=int, default=5)
@@ -420,37 +468,12 @@ def main() -> int:
             summary.append((name, None, 0, args.rounds))
             continue
         torch.manual_seed(args.seed)
-        env_cfg = load_env_cfg(task, play=args.play_cfg)
-        env_cfg.scene.num_envs = 1
-        if args.video:
-            env_cfg.viewer.width = 640 * args.video_scale
-            env_cfg.viewer.height = 480 * args.video_scale
-            # a 25 cm robot at the default 5 m is a speck: frame it for a human viewer
-            env_cfg.viewer.distance = args.cam_distance
-            env_cfg.viewer.elevation = -20.0
-            env_cfg.viewer.azimuth = 120.0
-        if spec[6]:        # a floor pin is requested for this row
-            # Same trap family_eval hit (2026-09-25): the robot IS on the floor, so a fall termination
-            # fires the moment the pin is applied, the env recycles the episode, and the round quietly
-            # measures the env's own spawn mix. StandUp removes this term by design; an evaluation that
-            # pins on purpose must do the same. EVALUATION-ONLY.
-            for _t in ("fell_over",):
-                if _t in env_cfg.terminations:
-                    env_cfg.terminations.pop(_t)
-                    print(f"  {spec[0]}: dropped termination {_t!r} (fires on the pin)")
-        def _mk_env():
-            return ManagerBasedRlEnv(
-                cfg=env_cfg, device=DEVICE,
-                render_mode="rgb_array" if args.video else None,
-            )
-
-        env = _mk_env()
-        max_steps = int(round(env_cfg.episode_length_s / (env_cfg.sim.mujoco.timestep * env_cfg.decimation)))
-        from mjlab.rl import RslRlVecEnvWrapper
-
-        agent_cfg = load_rl_cfg(task)
-        wrapped = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
-        policy = Actor(ckpt, clip=getattr(agent_cfg, "clip_actions", None))
+        if spec[6]:
+            print(f"  {spec[0]}: expecting a floor pin")
+        env, wrapped, policy, max_steps, _mk_env = build_agent(
+            task, ckpt, play_cfg=args.play_cfg, video=args.video,
+            video_scale=args.video_scale, cam_distance=args.cam_distance,
+            pin_floor=bool(spec[6]))
 
         marks, lines = [], []
         frames = [] if args.video else None

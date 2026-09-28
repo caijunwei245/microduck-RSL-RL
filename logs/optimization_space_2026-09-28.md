@@ -10,7 +10,7 @@ one new constraint. Every claim below carries the measurement it rests on; stale
 | was | now | evidence |
 |---|---|---|
 | turn dead zone, "no working fix" | the `angular_wobble` tax; wobble-off + pin takes cmd 0.3 from 0.081 to 0.340 rad/s (gain 1.13), gate 21/25 (84 %) PASS | `turn_deadzone_verdict.md`, `turn_ship_verdict.md`, `gate_velocity_turn.txt` |
-| actuator-latency debt (declared 60-120 ms, dithered) | default is the measured 20-40 ms, held coherently; first-step `ctrl` spread 5.4e-03 -> 1.5e-06 | `actuator_latency.md`, `lag12_validation.out` |
+| actuator-latency debt (declared 60-120 ms, dithered) | default is the measured 20-40 ms, held coherently; first-step `ctrl` spread 5.4e-03 -> 1.5e-06. **Net win, with one measured cost**: walk 48 -> 88 % and turn gain 0.68 -> 1.2 on the gate, floor recovery unchanged (0.95-0.99 either way), but roller_crouch 100 -> 76 % and roller_standup 100 -> 88 % | `actuator_latency.md`, `regate_2026-09-28.md` |
 | floor flips | standup 0.984, velstand **0.812** (the 0.996 was the spawn mix) | `GOAL_SUMMARY.md` correction |
 | spin, roller_standup | 15/15 both | `spin_gate_finish.out`, `gate_roller_standup.txt` |
 | "reward-side can fix the turn" | closed by measurement: 2x/4x extra pay changed nothing | `turn_focus_results.txt` |
@@ -59,7 +59,7 @@ Three consequences that should steer the next work:
 | **Real-robot validation** (walk, floor flip, spin, sitstand) | **every** verdict in this project is simulation-only. The rehearsal, `export`, `publish` and the runtime path all exist; nothing has run on hardware | hours on hardware, no GPU | n/a — it is the only way to falsify the whole ledger |
 | **Publishability decision for phase-driven skills** | 4 skills (ground_pick, spin, roller_crouch, sitstand) are excluded by the schema-2 contract; Route A was *measured* to fail for spin (0/15 internal clock) but is untested on the slow phase tasks | one eval arm per task (no training) for the Route-A question; a bounded cross-repo change for Route B | binary: a task either publishes or does not |
 | **Ship the solved skills** | spin (ratecap/warm-stand 15/15), roller_standup (15/15), the staged roller recipe (138.2 mm @ 0.1911 m/s), the fixed turn policy | export + publish only | none — it is packaging, and it is what makes the work visible |
-| **Evidence hygiene** | `logs/gate_*.txt` mixes eras: `gate_ground_pick.txt` reads "FAIL 15/15 (100 %)" (pre-fix verdict parser) and `gate_spin.txt` reads "FAIL 0/15" from a checkpoint that the ledger calls 15/15. A reader can quote either | re-run or stamp stale | prevents a wrong verdict, which has cost this project weeks |
+| ~~**Evidence hygiene**~~ **DONE 2026-09-28** | `logs/gate_*.txt` mixed eras: `gate_ground_pick.txt` read "FAIL 15/15 (100 %)" (pre-fix verdict parser) and `gate_spin.txt` read "FAIL 0/15" from a checkpoint the ledger calls 15/15 | **every row re-gated under the current recipe** (`logs/regate_summary.txt`, `logs/regate_2026-09-28.md`) | done |
 
 ## 3. Tier 2 — the real skill gaps, ranked by evidence quality
 
@@ -71,6 +71,7 @@ Three consequences that should steer the next work:
 | **ground_pick** | 4/5 in the rotation (one 31 mm span vs a 40 mm criterion); historically 25/25 | most likely the same per-episode noise as everything else | re-gate at 5 seeds before spending anything |
 | **in-place turn below 0.2 rad/s** | 0.008-0.032 rad/s achieved | the tax explains 0.3 but not 0.2; the runtime's held command is 0.5 | low necessity — leave it, or one diagnostic only if the runtime ever needs gentle heading correction |
 | **roller posture/speed** | staged 0.1911 m/s @ 138.2 mm (15/15) vs 0.2099 @ 138.9 plain | it is a deployment choice, not a training gap | ship the staged recipe; stop training this |
+| **re-train the two roller families under the measured envelope** | roller_crouch 100 -> 76 % and roller_standup 100 -> 88 % when the same checkpoints are evaluated under 1-2 held; they were trained under 3-6 dithered | pure train/test mismatch, or a real preference for the smoother (dithered) command stream — the arm tells which | 2 warm-start arms (~1-2 k iters) + 25-round gates |
 
 ## 4. Tier 3 — do not spend GPU hours
 
@@ -90,12 +91,23 @@ Three consequences that should steer the next work:
    easy half of the floor-spawn distribution. The experiment is nearly free: run the floor-spawn
    battery with the **zero-action baseline** as the policy and see what fraction recovers. If that
    fraction is large, the deliverable changes shape.
-2. **A paired evaluation runner.** Same seeds, before/after, per-seed deltas, seed as the unit of
-   analysis. This is the single highest-leverage *tooling* item because it multiplies the resolution of
-   every future A/B (see §1.3).
+2. ~~**A paired evaluation runner.**~~ **BUILT 2026-09-28** — `logs/paired_eval.py`, validated on a
+   known difference (the turn policy at 2k vs 5k iterations, cmd 0.3, 3 seeds x 5 rounds):
+
+   | readout | before 2k | after 5k | verdict |
+   |---|---|---|---|
+   | round pass rate | 0/15 | 0/15 | **sees nothing** (neither arm clears the 0.3 bar) |
+   | paired `yaw_abs_mean` | 0.2205 | 0.2790 | **+0.051 +/- 0.007 (95 %)**, all three seeds same sign |
+
+   Same difference, one readout blind and one resolving it with a ±0.007 interval — which is the
+   practical form of §1: judge changes by the paired continuous delta, not the pass rate. It reuses
+   `skill_demo.build_agent` / `run_round` and imports the row definitions from `skill_demo.SKILLS`, so
+   a comparison cannot judge a different thing than the demos do. Usage:
+   `uv run python logs/paired_eval.py --skill "velocity turn" --a old.pt --b new.pt --seeds 5`.
 3. **Continuous readouts in the gate.** It already prints per-round physical values; report their
    medians with CIs alongside the pass counts, because the physical values are far less noisy than the
-   pass/fail derived from them.
+   pass/fail derived from them. Partly available now via `paired_eval.py`, which always prints the
+   row's primary continuous metric; folding it into `acceptance_gate.sh` itself is still open.
 
 ## 6. Recommended order for the next GPU hours
 

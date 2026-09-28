@@ -1,0 +1,13 @@
+=== ACCEPTANCE GATE: standup floor flip ===
+checkpoint: <newest glob match>
+date: 2026-09-28T11:00:49+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: standup floor flip 4/5 PARTIAL (standup_tiltstall)
+    standup floor flip standup_tiltstall 1:OK hold=286 z=116 g=-1.00 | 2:OK hold=286 z=117 g=-1.00 | 3:XX hold= 0 z=53 g=+0.95 | 4:OK hold=283 z=116 g=-1.00 | 5:OK hold=234 z=116 g=-1.00
+  seed 1: standup floor flip 5/5 ALL PASS (standup_tiltstall)
+    standup floor flip standup_tiltstall 1:OK hold=286 z=116 g=-1.00 | 2:OK hold=155 z=116 g=-1.00 | 3:OK hold=284 z=116 g=-1.00 | 4:OK hold=251 z=116 g=-1.00 | 5:OK hold=284 z=116 g=-1.00
+  seed 2: standup floor flip 5/5 ALL PASS (standup_tiltstall)
+    standup floor flip standup_tiltstall 1:OK hold=281 z=115 g=-1.00 | 2:OK hold=280 z=116 g=-1.00 | 3:OK hold=279 z=116 g=-1.00 | 4:OK hold=280 z=116 g=-1.00 | 5:OK hold=259 z=116 g=-1.00
+  AGGREGATE: 14/15 rounds (93%)
+--- tilt-keyed family evaluation ---
+=== VERDICT: PASS  14/15 rounds (93%) ===

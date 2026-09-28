@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: roller_slope ===
+checkpoint: <newest glob match>
+date: 2026-09-28T10:58:59+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: roller_slope 5/5 ALL PASS (roller_slope)
+    roller_slope roller_slope 1:OK desc=348 mm upright=1.00 | 2:OK desc=354 mm upright=1.00 | 3:OK desc=470 mm upright=0.99 | 4:OK desc=500 mm upright=0.99 | 5:OK desc=471 mm upright=1.00
+  seed 1: roller_slope 5/5 ALL PASS (roller_slope)
+    roller_slope roller_slope 1:OK desc=254 mm upright=1.00 | 2:OK desc=254 mm upright=1.00 | 3:OK desc=246 mm upright=1.00 | 4:OK desc=253 mm upright=1.00 | 5:OK desc=253 mm upright=1.00
+  seed 2: roller_slope 5/5 ALL PASS (roller_slope)
+    roller_slope roller_slope 1:OK desc=205 mm upright=1.00 | 2:OK desc=203 mm upright=1.00 | 3:OK desc=204 mm upright=1.00 | 4:OK desc=204 mm upright=1.00 | 5:OK desc=202 mm upright=1.00
+  AGGREGATE: 15/15 rounds (100%)
+=== VERDICT: PASS  15/15 rounds (100%) ===

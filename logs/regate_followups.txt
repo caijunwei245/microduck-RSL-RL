@@ -1,0 +1,13 @@
+############ follow-ups: floor-flip family evals + 5-seed roller re-gates ############
+date: 2026-09-28T11:08:23+08:00
+standup ckpt : logs/rsl_rl/microduck_stand/2026-09-22_22-06-32_standup_tiltstall/model_54994.pt
+velstand ckpt: logs/rsl_rl/velstand/2026-09-23_00-23-47_velstand_fromstandup/model_5999.pt
+--- standup family eval (tilt-keyed, 256 envs, current latency) ---
+  recovery: {"floor (tilt>=60deg)": {"n": 46, "recovery_rate": 1.0, "recovery_rate_sustained": 1.0}, "upright-low (<25deg)": {"n": 111, "recovery_rate": 1.0, "recovery_rate_sustained": 0.991}}
+  terminal: 115.9 mm  g -1.0  terminations: {'time_out': 254, 'out_of_terrain_bounds': 0, 'recovery_stall': 2, 'nan_state': 0}
+--- velstand family eval (tilt-keyed, 256 envs, current latency) ---
+  recovery: {}
+  terminal: 111.6 mm  g -1.0  terminations: {'time_out': 254, 'fell_over': 1, 'out_of_terrain_bounds': 0, 'nan_state': 0, 'recovery_stall': 2, 'fallen_too_long': 0}
+--- roller rows re-gated at 5 seeds ---
+logs/gate_roller_crouch.txt:=== VERDICT: PARTIAL  19/25 rounds (76%) ===
+logs/gate_roller_standup.txt:=== VERDICT: PASS  22/25 rounds (88%) ===

@@ -1,0 +1,16 @@
+=== ACCEPTANCE GATE: walk+turn ===
+checkpoint: logs/rsl_rl/velocity/2026-09-26_19-46-52_turn03_woboff/model_4998.pt
+date: 2026-09-28T10:48:48+08:00
+--- demonstration: 5 seeds x 5 rounds (marginal row (measured to flip on simulator noise; 3 seeds resolves only ~+/-13%)) ---
+  seed 0: walk+turn 5/5 ALL PASS (turn03_woboff)
+    walk+turn turn03_woboff 1:OK |yaw|=0.597 gain=1.19 abs0.3=OK z=119 g=-0.99 | 2:OK |yaw|=0.572 gain=1.14 abs0.3=OK z=119 g=-0.99 | 3:OK |yaw|=0.562 gain=1.12 abs0.3=OK z=120 g=-1.00 | 4:OK |yaw|=0.606 gain=1.21 abs0.3=OK z=119 g=-1.00 | 5:OK |yaw|=0.577 gain=1.15 abs0.3=OK z=120 g=-1.00
+  seed 1: walk+turn 3/5 PARTIAL (turn03_woboff)
+    walk+turn turn03_woboff 1:OK |yaw|=0.552 gain=1.10 abs0.3=OK z=119 g=-0.99 | 2:XX |yaw|=0.290 gain=0.58 abs0.3=XX z=114 g=-1.00 | 3:OK |yaw|=0.580 gain=1.16 abs0.3=OK z=115 g=-1.00 | 4:OK |yaw|=0.605 gain=1.21 abs0.3=OK z=116 g=-1.00 | 5:XX |yaw|=0.292 gain=0.58 abs0.3=XX z=116 g=-1.00
+  seed 2: walk+turn 0/5 FAIL (turn03_woboff)
+    walk+turn turn03_woboff 1:XX |yaw|=0.463 gain=0.93 abs0.3=OK z=118 g=-1.00 | 2:XX |yaw|=0.438 gain=0.88 abs0.3=OK z=116 g=-1.00 | 3:XX |yaw|=0.454 gain=0.91 abs0.3=OK z=119 g=-1.00 | 4:XX |yaw|=0.434 gain=0.87 abs0.3=OK z=116 g=-1.00 | 5:XX |yaw|=0.442 gain=0.88 abs0.3=OK z=118 g=-0.99
+  seed 3: walk+turn 4/5 PARTIAL (turn03_woboff)
+    walk+turn turn03_woboff 1:OK |yaw|=0.566 gain=1.13 abs0.3=OK z=118 g=-1.00 | 2:XX |yaw|=0.344 gain=0.69 abs0.3=OK z=117 g=-1.00 | 3:OK |yaw|=0.564 gain=1.13 abs0.3=OK z=119 g=-1.00 | 4:OK |yaw|=0.524 gain=1.05 abs0.3=OK z=117 g=-0.99 | 5:OK |yaw|=0.569 gain=1.14 abs0.3=OK z=117 g=-1.00
+  seed 4: walk+turn 3/5 PARTIAL (turn03_woboff)
+    walk+turn turn03_woboff 1:OK |yaw|=0.532 gain=1.06 abs0.3=OK z=119 g=-0.99 | 2:OK |yaw|=0.542 gain=1.08 abs0.3=OK z=119 g=-1.00 | 3:OK |yaw|=0.547 gain=1.09 abs0.3=OK z=118 g=-1.00 | 4:XX |yaw|=0.453 gain=0.91 abs0.3=OK z=116 g=-1.00 | 5:XX |yaw|=0.485 gain=0.97 abs0.3=OK z=117 g=-1.00
+  AGGREGATE: 15/25 rounds (60%)
+=== VERDICT: PARTIAL  15/25 rounds (60%) ===

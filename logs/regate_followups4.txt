@@ -1,0 +1,8 @@
+############ pin-flavour check: event-replayed floor pin (prone_event), 256 envs, current latency ############
+date: 2026-09-28T11:22:17+08:00
+--- standup prone_event pin
+  recovery: {"floor (tilt>=60deg)": {"n": 256, "recovery_rate": 0.957, "recovery_rate_sustained": 0.957}}
+  terminal: 116.0 mm  g -1.0
+--- velstand prone_event pin
+  recovery: {"floor (tilt>=60deg)": {"n": 256, "recovery_rate": 0.984, "recovery_rate_sustained": 0.961}}
+  terminal: 112.2 mm  g -1.0

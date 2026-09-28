@@ -1,0 +1,14 @@
+=== ACCEPTANCE GATE: spin ===
+checkpoint: logs/rsl_rl/spin/2026-09-23_14-43-24_spin_feetflat/model_4998.pt
+date: 2026-09-23T16:16:14+08:00
+--- demonstration: 2 seeds x 5 rounds ---
+  seed 0: spin 0/5 FAIL (spin_feetflat)
+    spin spin_feetflat 1:XX |yaw|=1.09 rad/s g=-0.34 | 2:XX |yaw|=1.05 rad/s g=-0.35 | 3:XX |yaw|=1.07 rad/s g=-0.35 | 4:XX |yaw|=1.08 rad/s g=-0.34 | 5:XX |yaw|=1.09 rad/s g=-0.36
+  seed 1: spin 0/5 FAIL (spin_feetflat)
+    spin spin_feetflat 1:XX |yaw|=1.17 rad/s g=-0.35 | 2:XX |yaw|=1.12 rad/s g=-0.34 | 3:XX |yaw|=1.11 rad/s g=-0.36 | 4:XX |yaw|=1.08 rad/s g=-0.35 | 5:XX |yaw|=1.08 rad/s g=-0.35
+  AGGREGATE: 0/10 rounds (0%)
+--- tilt-keyed family evaluation ---
+  recovery(tilt-keyed): {}
+  terminal pose: 44.8 mm  g -0.351
+  terminations: {'time_out': 0, 'fell_over': 1018, 'out_of_terrain_bounds': 0, 'nan_state': 0}
+=== VERDICT: FAIL  0/10 rounds (0%) ===

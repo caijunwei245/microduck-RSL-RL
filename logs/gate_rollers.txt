@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: rollers ===
+checkpoint: logs/rsl_rl/velocity_rollers/2026-09-23_17-45-27_rollers_tall2000/model_2999.pt
+date: 2026-09-23T18:49:34+08:00
+--- demonstration: 3 seeds x 5 rounds ---
+  seed 0: rollers (fast) 5/5 ALL PASS (rollers_tall2000)
+    rollers (fast) rollers_tall2000 1:OK v=+0.240 m/s z=138 g=-1.00 | 2:OK v=+0.234 m/s z=140 g=-0.99 | 3:OK v=+0.236 m/s z=138 g=-0.99 | 4:OK v=+0.211 m/s z=138 g=-1.00 | 5:OK v=+0.238 m/s z=140 g=-0.99
+  seed 1: rollers (fast) 5/5 ALL PASS (rollers_tall2000)
+    rollers (fast) rollers_tall2000 1:OK v=+0.218 m/s z=139 g=-1.00 | 2:OK v=+0.221 m/s z=137 g=-0.99 | 3:OK v=+0.200 m/s z=137 g=-1.00 | 4:OK v=+0.229 m/s z=137 g=-0.99 | 5:OK v=+0.220 m/s z=142 g=-1.00
+  seed 2: rollers (fast) 5/5 ALL PASS (rollers_tall2000)
+    rollers (fast) rollers_tall2000 1:OK v=+0.201 m/s z=141 g=-1.00 | 2:OK v=+0.192 m/s z=140 g=-0.99 | 3:OK v=+0.217 m/s z=140 g=-0.98 | 4:OK v=+0.205 m/s z=138 g=-0.98 | 5:OK v=+0.210 m/s z=138 g=-0.99
+  AGGREGATE: 15/15 rounds (100%)
+=== VERDICT: PASS  15/15 rounds (100%) ===

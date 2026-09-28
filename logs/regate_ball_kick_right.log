@@ -1,0 +1,16 @@
+=== ACCEPTANCE GATE: ball_kick right ===
+checkpoint: <newest glob match>
+date: 2026-09-28T10:53:26+08:00
+--- demonstration: 5 seeds x 5 rounds (marginal row (measured to flip on simulator noise; 3 seeds resolves only ~+/-13%)) ---
+  seed 0: ball_kick right 4/5 PARTIAL (kick_r4)
+    ball_kick right kick_r4 1:OK ball+0.608 m | 2:OK ball+1.000 m | 3:OK ball+1.029 m | 4:OK ball+0.869 m | 5:XX ball+0.000 m
+  seed 1: ball_kick right 2/5 PARTIAL (kick_r4)
+    ball_kick right kick_r4 1:XX ball+0.007 m | 2:XX ball+0.000 m | 3:OK ball+0.437 m | 4:XX ball+0.000 m | 5:OK ball+0.146 m
+  seed 2: ball_kick right 3/5 PARTIAL (kick_r4)
+    ball_kick right kick_r4 1:OK ball+0.104 m | 2:XX ball+0.000 m | 3:XX ball+0.000 m | 4:OK ball+0.644 m | 5:OK ball+1.209 m
+  seed 3: ball_kick right 3/5 PARTIAL (kick_r4)
+    ball_kick right kick_r4 1:OK ball+0.097 m | 2:OK ball+1.096 m | 3:XX ball+0.000 m | 4:OK ball+0.052 m | 5:XX ball+0.000 m
+  seed 4: ball_kick right 1/5 PARTIAL (kick_r4)
+    ball_kick right kick_r4 1:XX ball+0.001 m | 2:XX ball+0.000 m | 3:OK ball+1.430 m | 4:XX ball+0.000 m | 5:XX ball+0.000 m
+  AGGREGATE: 13/25 rounds (52%)
+=== VERDICT: PARTIAL  13/25 rounds (52%) ===

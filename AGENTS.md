@@ -306,10 +306,17 @@ ball); roller tasks leave head/body command slots zero-padded.
   the episode, and the metric quietly measures the env's own spawn mix instead
   of the pin. Measured 2026-09-25: a VelStand prone pin reported `fell_over`
   64/64 with the trunk frozen at 75.0 mm, and the "0.996 floor-flip rate" it
-  produced was really the spawn mix; with the term dropped the honest number is
+  produced was really the spawn mix; with the term dropped the honest number was
   **0.812** (52/64, sustained). StandUp needs no such fix because its cfg
-  removes `fell_over` by design — and it re-verifies at **0.984** (126/128) from
-  a genuine pin, so quote those two numbers with their difference in mind.
+  removes `fell_over` by design, and it re-verifies at **0.984** (126/128) from a
+  genuine pin. **Update 2026-09-28: re-measured at 256 envs the VelStand floor
+  flip reads 0.965-0.984 sustained, and 0.953-0.973 for StandUp, under BOTH pin
+  flavours (`SPAWN_FLOOR=prone`, `prone_event`) and BOTH latency envelopes — the
+  0.812 does not reproduce (same checkpoint, same protocol; a 52/64 outcome at
+  p~0.97 is a ~1e-4 event, so that run's code or its 64-env sample was
+  pathological). Quote ~0.97 sustained at n=256 as the current number and treat
+  0.812 as unexplained history rather than as the honest one; the direction of
+  the 2026-09-25 correction still stands (0.996 was the spawn mix).**
 - **The simulator is chaotic and NOT bit-reproducible across resets, so a marginal task is a
   coin flip per episode.** Measured 2026-09-27 (`logs/turn_tail_findings.md`): with the play cfg
   (no DR) and the spawn pinned to the same pose, four trials of *the same 200 actions* from
@@ -328,7 +335,13 @@ ball); roller tasks leave head/body command slots zero-padded.
   whole episode** (`delay_update_period=1000`) rather than the declared `3,6` re-drawn every step: the
   same trace reads 1.5e-06 with the new default, i.e. the discrete part is gone and only the
   floating-point floor remains. `MICRODUCK_ACTUATOR_LAG="3,6"` + `..._HOLD=0` reproduces the
-  pre-2026-09-27 recipe for A/B work. No envelope makes the environment bit-reproducible.
+  pre-2026-09-27 recipe for A/B work. **What the change is and is not worth, measured 2026-09-28**
+  (`logs/regate_2026-09-28.md`): walk 22/25 under the new envelope vs 21/25 under the old (no
+  effect — the walk row's move from 48 % belongs to the sustained-forward bucket and the turn work,
+  not to this), recovery 0.95-0.99 either way, and a REAL cost on the two skating rows
+  (roller_crouch 100 -> 76 %, roller_standup 100 -> 88 %) when their pre-change checkpoints are
+  evaluated under it. So the default buys fidelity and reproducibility, not pass rates, and a roller
+  comparison must name its envelope. No envelope makes the environment bit-reproducible.
   What is NOT the cause, each with a control that could have failed: the policy (three arms paying
   2x/4x for the turn left it identical), the reward, the spawn pose, any per-episode DR draw, the
   firmware gains (`ENABLE_KP/KD_RANDOMIZATION = False`), and the delay buffer contents. This also explains the older "walk 0/5 to 3/5 across seeds" / "spawn

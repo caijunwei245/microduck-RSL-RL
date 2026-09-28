@@ -1,0 +1,10 @@
+############ latency trade-off check + documented floor-flip protocol ############
+date: 2026-09-28T11:11:54+08:00
+/tmp/rc_old.log:  AGGREGATE: 25/25 rounds (100%)
+/tmp/rs_old.log:  AGGREGATE: 25/25 rounds (100%)
+--- standup prone pin (256 envs, current latency)
+  recovery: {"floor (tilt>=60deg)": {"n": 256, "recovery_rate": 0.953, "recovery_rate_sustained": 0.953}}
+  terminal: 116.0 mm  g -1.0
+--- velstand prone pin (256 envs, current latency)
+  recovery: {"floor (tilt>=60deg)": {"n": 256, "recovery_rate": 0.984, "recovery_rate_sustained": 0.965}}
+  terminal: 112.4 mm  g -1.0

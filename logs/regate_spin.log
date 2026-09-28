@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: spin ===
+checkpoint: <newest glob match>
+date: 2026-09-28T11:01:55+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: spin 5/5 ALL PASS (spin_warmstand)
+    spin spin_warmstand 1:OK |yaw|=1.47 rad/s g=-1.00 | 2:OK |yaw|=1.43 rad/s g=-1.00 | 3:OK |yaw|=1.47 rad/s g=-1.00 | 4:OK |yaw|=1.43 rad/s g=-1.00 | 5:OK |yaw|=1.48 rad/s g=-1.00
+  seed 1: spin 5/5 ALL PASS (spin_warmstand)
+    spin spin_warmstand 1:OK |yaw|=1.45 rad/s g=-1.00 | 2:OK |yaw|=1.45 rad/s g=-1.00 | 3:OK |yaw|=1.44 rad/s g=-1.00 | 4:OK |yaw|=1.44 rad/s g=-1.00 | 5:OK |yaw|=1.45 rad/s g=-1.00
+  seed 2: spin 5/5 ALL PASS (spin_warmstand)
+    spin spin_warmstand 1:OK |yaw|=1.39 rad/s g=-1.00 | 2:OK |yaw|=1.42 rad/s g=-1.00 | 3:OK |yaw|=1.37 rad/s g=-1.00 | 4:OK |yaw|=1.37 rad/s g=-1.00 | 5:OK |yaw|=1.38 rad/s g=-1.00
+  AGGREGATE: 15/15 rounds (100%)
+=== VERDICT: PASS  15/15 rounds (100%) ===

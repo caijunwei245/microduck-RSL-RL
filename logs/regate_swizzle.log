@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: swizzle ===
+checkpoint: <newest glob match>
+date: 2026-09-28T10:57:25+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: swizzle 5/5 ALL PASS (swizzle_rolling18)
+    swizzle swizzle_rolling18 1:OK v=+0.505 m/s z=121 g=-0.98 | 2:OK v=+0.492 m/s z=121 g=-0.97 | 3:OK v=+0.487 m/s z=120 g=-0.98 | 4:OK v=+0.526 m/s z=123 g=-0.97 | 5:OK v=+0.509 m/s z=119 g=-0.98
+  seed 1: swizzle 5/5 ALL PASS (swizzle_rolling18)
+    swizzle swizzle_rolling18 1:OK v=+0.480 m/s z=121 g=-0.98 | 2:OK v=+0.492 m/s z=116 g=-0.99 | 3:OK v=+0.467 m/s z=121 g=-0.98 | 4:OK v=+0.480 m/s z=121 g=-0.98 | 5:OK v=+0.434 m/s z=115 g=-0.99
+  seed 2: swizzle 5/5 ALL PASS (swizzle_rolling18)
+    swizzle swizzle_rolling18 1:OK v=+0.380 m/s z=116 g=-1.00 | 2:OK v=+0.364 m/s z=114 g=-1.00 | 3:OK v=+0.410 m/s z=118 g=-0.99 | 4:OK v=+0.419 m/s z=117 g=-0.99 | 5:OK v=+0.413 m/s z=120 g=-0.98
+  AGGREGATE: 15/15 rounds (100%)
+=== VERDICT: PASS  15/15 rounds (100%) ===

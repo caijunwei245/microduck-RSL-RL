@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: rollers (fast) ===
+checkpoint: <newest glob match>
+date: 2026-09-28T10:56:15+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: rollers (fast) 5/5 ALL PASS (rollers_noskate)
+    rollers (fast) rollers_noskate 1:OK v=+0.532 m/s z=118 g=-0.97 | 2:OK v=+0.515 m/s z=117 g=-0.98 | 3:OK v=+0.534 m/s z=112 g=-0.96 | 4:OK v=+0.535 m/s z=114 g=-0.97 | 5:OK v=+0.533 m/s z=116 g=-0.97
+  seed 1: rollers (fast) 5/5 ALL PASS (rollers_noskate)
+    rollers (fast) rollers_noskate 1:OK v=+0.505 m/s z=115 g=-0.97 | 2:OK v=+0.491 m/s z=117 g=-0.98 | 3:OK v=+0.483 m/s z=117 g=-0.98 | 4:OK v=+0.507 m/s z=119 g=-0.98 | 5:OK v=+0.508 m/s z=117 g=-0.98
+  seed 2: rollers (fast) 5/5 ALL PASS (rollers_noskate)
+    rollers (fast) rollers_noskate 1:OK v=+0.425 m/s z=117 g=-0.97 | 2:OK v=+0.424 m/s z=114 g=-0.96 | 3:OK v=+0.419 m/s z=116 g=-0.97 | 4:OK v=+0.402 m/s z=113 g=-0.97 | 5:OK v=+0.396 m/s z=118 g=-0.97
+  AGGREGATE: 15/15 rounds (100%)
+=== VERDICT: PASS  15/15 rounds (100%) ===

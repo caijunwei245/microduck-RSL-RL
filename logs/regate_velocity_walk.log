@@ -1,0 +1,16 @@
+=== ACCEPTANCE GATE: velocity walk ===
+checkpoint: <newest glob match>
+date: 2026-09-28T10:48:48+08:00
+--- demonstration: 5 seeds x 5 rounds (marginal row (measured to flip on simulator noise; 3 seeds resolves only ~+/-13%)) ---
+  seed 0: velocity walk 5/5 ALL PASS (dc_long_0919_0125)
+    velocity walk dc_long_0919_0125 1:OK v=+0.267 m/s z=116 g=-1.00 | 2:OK v=+0.261 m/s z=115 g=-1.00 | 3:OK v=+0.265 m/s z=119 g=-1.00 | 4:OK v=+0.257 m/s z=114 g=-1.00 | 5:OK v=+0.262 m/s z=118 g=-1.00
+  seed 1: velocity walk 3/5 PARTIAL (dc_long_0919_0125)
+    velocity walk dc_long_0919_0125 1:OK v=+0.274 m/s z=117 g=-1.00 | 2:XX v=+0.136 m/s z=114 g=-1.00 | 3:OK v=+0.269 m/s z=115 g=-1.00 | 4:OK v=+0.264 m/s z=118 g=-1.00 | 5:XX v=+0.114 m/s z=119 g=-0.99
+  seed 2: velocity walk 5/5 ALL PASS (dc_long_0919_0125)
+    velocity walk dc_long_0919_0125 1:OK v=+0.242 m/s z=117 g=-1.00 | 2:OK v=+0.232 m/s z=115 g=-1.00 | 3:OK v=+0.236 m/s z=118 g=-1.00 | 4:OK v=+0.218 m/s z=116 g=-0.99 | 5:OK v=+0.252 m/s z=116 g=-1.00
+  seed 3: velocity walk 4/5 PARTIAL (dc_long_0919_0125)
+    velocity walk dc_long_0919_0125 1:OK v=+0.235 m/s z=116 g=-1.00 | 2:XX v=+0.125 m/s z=115 g=-1.00 | 3:OK v=+0.233 m/s z=116 g=-1.00 | 4:OK v=+0.226 m/s z=120 g=-1.00 | 5:OK v=+0.238 m/s z=118 g=-1.00
+  seed 4: velocity walk 5/5 ALL PASS (dc_long_0919_0125)
+    velocity walk dc_long_0919_0125 1:OK v=+0.250 m/s z=118 g=-1.00 | 2:OK v=+0.259 m/s z=116 g=-1.00 | 3:OK v=+0.265 m/s z=116 g=-1.00 | 4:OK v=+0.224 m/s z=115 g=-1.00 | 5:OK v=+0.247 m/s z=115 g=-1.00
+  AGGREGATE: 22/25 rounds (88%)
+=== VERDICT: PASS  22/25 rounds (88%) ===

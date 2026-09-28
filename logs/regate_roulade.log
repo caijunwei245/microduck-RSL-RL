@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: roulade ===
+checkpoint: <newest glob match>
+date: 2026-09-28T11:07:06+08:00
+--- demonstration: 3 seeds x 5 rounds (default) ---
+  seed 0: roulade 4/5 PARTIAL (roulade_finish)
+    roulade roulade_finish 1:OK z 44->115 g=-1.00 roll=6.86 | 2:XX z 46->55 g=+0.40 roll=7.01 | 3:OK z 46->115 g=-1.00 roll=3.39 | 4:OK z 45->115 g=-1.00 roll=4.89 | 5:OK z 46->115 g=-1.00 roll=1.66
+  seed 1: roulade 5/5 ALL PASS (roulade_finish)
+    roulade roulade_finish 1:OK z 45->115 g=-1.00 roll=4.43 | 2:OK z 45->115 g=-1.00 roll=1.33 | 3:OK z 47->115 g=-1.00 roll=1.75 | 4:OK z 45->115 g=-1.00 roll=5.59 | 5:OK z 44->115 g=-1.00 roll=6.31
+  seed 2: roulade 5/5 ALL PASS (roulade_finish)
+    roulade roulade_finish 1:OK z 47->115 g=-1.00 roll=2.23 | 2:OK z 43->115 g=-1.00 roll=6.86 | 3:OK z 43->115 g=-1.00 roll=6.82 | 4:OK z 43->115 g=-1.00 roll=6.66 | 5:OK z 42->115 g=-1.00 roll=5.24
+  AGGREGATE: 14/15 rounds (93%)
+=== VERDICT: PASS  14/15 rounds (93%) ===

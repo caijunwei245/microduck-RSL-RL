@@ -1,0 +1,19 @@
+############ acceptance gate, refreshed 2026-09-28T11:07:56+08:00 ############
+(current recipe: measured latency 1-2 steps held; turn rows on the wobble-tax fix)
+
+velocity walk          PASS  22/25 rounds (88%)
+walk+turn              PARTIAL  15/25 rounds (60%)
+ball_kick right        PARTIAL  13/25 rounds (52%)
+sitstand               PARTIAL  17/25 rounds (68%)
+ground_pick            PASS  14/15 rounds (93%)
+rollers (fast)         PASS  15/15 rounds (100%)
+swizzle                PASS  15/15 rounds (100%)
+roller_slope           PASS  15/15 rounds (100%)
+roller_standup         PASS  12/15 rounds (80%)
+roller_crouch          PARTIAL  11/15 rounds (73%)
+standup floor flip     PASS  14/15 rounds (93%)
+velstand floor flip    PASS  15/15 rounds (100%)
+spin                   PASS  15/15 rounds (100%)
+roulade                PASS  14/15 rounds (93%)
+
+velocity turn          PASS  21/25 rounds (84%)   (gated 2026-09-28 09:03)

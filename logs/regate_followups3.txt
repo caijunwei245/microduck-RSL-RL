@@ -1,0 +1,9 @@
+############ attribution: floor recovery under the OLD envelope (3-6 dithered) ############
+date: 2026-09-28T11:16:43+08:00
+same checkpoints, same SPAWN_FLOOR=prone protocol, 256 envs
+--- standup prone pin, OLD envelope
+  recovery: {"floor (tilt>=60deg)": {"n": 256, "recovery_rate": 0.973, "recovery_rate_sustained": 0.973}}
+  terminal: 116.1 mm  g -1.0
+--- velstand prone pin, OLD envelope
+  recovery: {"floor (tilt>=60deg)": {"n": 256, "recovery_rate": 0.992, "recovery_rate_sustained": 0.984}}
+  terminal: 111.9 mm  g -1.0

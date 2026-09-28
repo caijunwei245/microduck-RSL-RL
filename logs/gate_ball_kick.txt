@@ -1,0 +1,12 @@
+=== ACCEPTANCE GATE: ball_kick ===
+checkpoint: logs/rsl_rl/ball_kick_left/2026-09-23_16-47-24_ball_kick_left/model_1499.pt
+date: 2026-09-23T17:52:18+08:00
+--- demonstration: 3 seeds x 5 rounds ---
+  seed 0: ball_kick right 4/5 PARTIAL (ball_kick_left)
+    ball_kick right ball_kick_left 1:OK ball+1.444 m | 2:OK ball+0.187 m | 3:OK ball+1.454 m | 4:OK ball+1.400 m | 5:XX ball+0.000 m
+  seed 1: ball_kick right 1/5 PARTIAL (ball_kick_left)
+    ball_kick right ball_kick_left 1:XX ball+0.000 m | 2:XX ball+0.000 m | 3:OK ball+0.143 m | 4:XX ball+0.000 m | 5:XX ball+0.001 m
+  seed 2: ball_kick right 4/5 PARTIAL (ball_kick_left)
+    ball_kick right ball_kick_left 1:OK ball+1.045 m | 2:XX ball+0.000 m | 3:OK ball+0.307 m | 4:OK ball+0.766 m | 5:OK ball+1.273 m
+  AGGREGATE: 9/15 rounds (60%)
+=== VERDICT: PARTIAL  9/15 rounds (60%) ===
