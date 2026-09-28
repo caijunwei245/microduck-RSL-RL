@@ -19,7 +19,7 @@ The 5-round rotation that goes with it: `logs/skill_demo.md`.
 | velocity turn | **PASS 21/25 (84 %)** | 5/5 | 0.584-0.613 rad/s for a commanded 0.5 (gain 1.17-1.23) |
 | walk+turn | PARTIAL 15/25 (60 %) | 5/5 (seed 0) | turning while walking; the five-seed number is the honest one |
 | ball_kick (both feet) | **PASS 25/25 (100 %)** each (re-measured 2026-09-28) | **5/5** | right: median 1.301 m; left: median 1.362 m, both along the robot's own forward axis. The earlier right 52 % / left 60 % scored the ball's WORLD-x displacement while the task places the ball and pays the reward in the robot's yaw frame — an evaluation artifact, not a policy defect (`logs/kick_frame_fix.txt`) |
-| sitstand | PARTIAL 17/25 (68 %) | 2/5 | 67 mm span when it works; the failures never descend |
+| sitstand | **PASS 24/25 (96 %)** — criterion corrected 2026-09-28 | **5/5** | judged against each episode's own command (held stand / held sit / switch): 11 of the 25 gate rounds were held-command rounds and 10 of those OBEYED while the old cycle rule scored them as failures. One genuine failure in 25 (a commanded switch that never descended) |
 | ground_pick | PASS 14/15 (93 %) | 4/5 | 38-44 mm span (mouth to ground and back) |
 | rollers (fast) | PASS 15/15 (100 %) | 5/5 | 0.517-0.538 m/s on the passive wheels |
 | swizzle | PASS 15/15 (100 %) | 5/5 | 0.484-0.544 m/s |

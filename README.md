@@ -126,9 +126,11 @@ Measured readouts of the five rounds, with the failures left in (`r1 / r2 / r3 /
 | spin | 1.46 / 1.43 / 1.47 / 1.44 / 1.46 rad/s, upright — **5/5** |
 | roulade | roll magnitude spreads 1.66–7.04 rad but every round ends upright at 115–116 mm — **5/5** |
 
-**71 of 75 rounds passed (95 %)** after the ball_kick criterion fix and the two roller arms retrained
-under the measured latency envelope: thirteen skills 5/5, `ground_pick` at 4/5, and `sitstand` at 2/5 —
-the row with the lowest per-episode rate in the set. The two turn clips run on a different checkpoint from the rest:
+**74 of 75 rounds passed (99 %)** after three measurement fixes and one retrain: fourteen skills 5/5,
+`ground_pick` at 4/5. The three fixes were the ball_kick scoring frame (world x instead of the robot's
+own axis), the sitstand criterion (it demanded a sit-and-return cycle while the task commands a held
+binary posture) and the two roller arms, which needed training under the measured latency envelope
+they are evaluated with. The two turn clips run on a different checkpoint from the rest:
 the policy from the turn dead-zone experiment (`turn03_woboff@4998` — the deployed walking candidate,
 warm-started with the `angular_wobble` tax removed and a 0.3 rad/s in-place command pinned into 30 % of
 the envs), which tracks a commanded 0.5 rad/s at gain ~1.2 where the deployed candidate managed 0.68.

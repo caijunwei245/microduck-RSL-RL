@@ -1,0 +1,20 @@
+=== ACCEPTANCE GATE: sitstand ===
+checkpoint: <newest glob match>
+date: 2026-09-28T15:40:54+08:00
+--- demonstration: 5 seeds x 5 rounds (explicit GATE_SEEDS) ---
+  seed 0: sitstand 5/5 ALL PASS (sitstand_hold2)
+    sitstand sitstand_hold2 1:OK z 53->53 span=67 cmd[+0,+1] switch | 2:OK z 113->117 span=4 cmd[+0,+0] held stand | 3:OK z 53->53 span=18 cmd[+1,+1] held sit | 4:OK z 53->53 span=63 cmd[+1,+1] held sit | 5:OK z 53->53 span=15 cmd[+1,+1] held sit
+  seed 1: sitstand 5/5 ALL PASS (sitstand_hold2)
+    sitstand sitstand_hold2 1:OK z 116->116 span=1 cmd[+0,+0] held stand | 2:OK z 53->117 span=64 cmd[+0,+1] switch | 3:OK z 53->116 span=66 cmd[+0,+1] switch | 4:OK z 53->53 span=63 cmd[+1,+1] held sit | 5:OK z 53->116 span=64 cmd[+0,+1] switch
+  seed 2: sitstand 5/5 ALL PASS (sitstand_hold2)
+    sitstand sitstand_hold2 1:OK z 53->53 span=63 cmd[+0,+1] switch | 2:OK z 53->116 span=67 cmd[+0,+1] switch | 3:OK z 53->53 span=65 cmd[+0,+1] switch | 4:OK z 62->116 span=54 cmd[+0,+0] held stand | 5:OK z 116->116 span=3 cmd[+0,+0] held stand
+  seed 3: sitstand 4/5 PARTIAL (sitstand_hold2)
+    sitstand sitstand_hold2 1:OK z 53->54 span=64 cmd[+0,+1] switch | 2:OK z 53->117 span=64 cmd[+0,+1] switch | 3:XX z 111->117 span=6 cmd[+0,+1] switch | 4:OK z 53->117 span=64 cmd[+0,+1] switch | 5:OK z 53->53 span=64 cmd[+0,+1] switch
+  seed 4: sitstand 5/5 ALL PASS (sitstand_hold2)
+    sitstand sitstand_hold2 1:OK z 112->116 span=4 cmd[+0,+0] held stand | 2:OK z 53->53 span=64 cmd[+0,+1] switch | 3:OK z 53->53 span=64 cmd[+0,+1] switch | 4:OK z 53->111 span=64 cmd[+0,+1] switch | 5:OK z 113->116 span=4 cmd[+0,+0] held stand
+  AGGREGATE: 24/25 rounds (96%)
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+=== VERDICT: PASS  24/25 rounds (96%) ===

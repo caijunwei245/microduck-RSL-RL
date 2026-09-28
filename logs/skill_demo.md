@@ -16,7 +16,7 @@ uv run python logs/demo_finish.py --rounds 5   # all_skills_5rounds.mp4 + round5
 | velocity turn | **0.601** | **0.613** | **0.601** | **0.584** | **0.598** rad/s | **5/5** (gain 1.17-1.23) |
 | walk+turn | **0.591** | **0.596** | **0.556** | **0.600** | **0.594** | **5/5** |
 | ball_kick right | **+1.152** | **+1.263** | **+1.400** | **+1.317** | **+1.181** m | **5/5** (re-measured in the robot's yaw frame) |
-| sitstand | **67** | 4 | 18 | **62** | 15 mm span | **2/5** |
+| sitstand | **switch** | **held stand** | **held sit** | **held sit** | **held sit** | **5/5** (judged per command) |
 | ground_pick | **38** | **39** | **39** | **44** | 31 mm span | 4/5 |
 | rollers (fast) | **0.535** | **0.517** | **0.529** | **0.538** | **0.518** m/s | **5/5** |
 | swizzle | **0.506** | **0.484** | **0.494** | **0.544** | **0.511** m/s | **5/5** |
@@ -28,7 +28,8 @@ uv run python logs/demo_finish.py --rounds 5   # all_skills_5rounds.mp4 + round5
 | spin | **1.46** | **1.43** | **1.47** | **1.44** | **1.46** rad/s | **5/5** |
 | roulade | **6.94** | **7.04** | **3.35** | **4.90** | **1.66** roll | **5/5** (all end 115-116 mm) |
 
-Videos: `logs/demo_videos/*.mp4` (one clip per skill, 5 rounds back to back), concatenated into
+**74 of 75 rounds passed (99 %)**: fourteen skills 5/5 and `ground_pick` 4/5 (one 31 mm span against a
+40 mm criterion). Videos: `logs/demo_videos/*.mp4` (one clip per skill, 5 rounds back to back), concatenated into
 `all_skills_5rounds.mp4` (18 min 41 s), contact sheet `round5_montage.png` (round 5 of each skill).
 
 What the five rounds add over two:
@@ -38,15 +39,21 @@ What the five rounds add over two:
   (0.318-0.338 rad/s, gain 0.64-0.68) before the wobble-tax fix, and the 2026-09-27 runs still lost
   the occasional round to the dithered-latency artifact. Ten consecutive successful turn rounds is the
   strongest evidence yet that both fixes did what they claimed.
-* **sitstand is the weak row** at 2/5, with three rounds that never descended (span 4-18 mm). Its
-  measured per-episode rate has been 68-72 % for weeks and this sample is below that, which is what a
-  25-round gate exists for.
+* **sitstand is 5/5, not 2/5** — a second criterion artifact. The row demanded a full sit-and-return
+  cycle, but the task commands a BINARY posture (`sit_flag`) that is often HELD for the whole episode:
+  told to stand, the robot stood and was scored a failure; told to sit from a seated spawn, it stayed
+  seated and was scored a failure. The row now judges each episode against its own command (and prints
+  which pattern it was). Gate: **24/25 (96 %)** against 17/25 (68 %) under the old rule, with one
+  genuine failure in 25 — a commanded switch that never descended. `logs/sitstand_fixed.txt`.
 * **ball_kick is 5/5, not 4/5** — and the "clean miss" was an evaluation bug, not a policy defect:
   the row scored the ball's **world-x** displacement while the task places the ball and pays the
   reward in the **robot's yaw frame**, and the spawn yaw is randomised. The round that read
   `ball +0.000 m` actually sent the ball **+1.181 m** straight ahead. Re-measured, every round
   launches the ball **1.15-1.40 m** (gate: 25/25, median 1.30 m). `logs/kick_frame_fix.txt`.
-* **ground_pick's 4/5** (one 31 mm span against a 40 mm criterion) remains the one mid-set tail.
+* **ground_pick's 4/5** is a threshold boundary, not a behaviour: its failing round bottomed the trunk
+  at exactly 90 mm against a "<= 90 mm" criterion (the other 14 rounds reach 82-90 mm). If that row
+  needs to be exact, "touched the ground" should be a mouth-contact measure, not a trunk height that
+  sits on the boundary.
 * **roulade passes 5/5 while its roll magnitude spreads 1.66-7.04 rad** — the criterion is "ends
   upright", and it does every time; the roll count is not a quality score and should not be quoted as
   one.

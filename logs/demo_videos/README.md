@@ -8,9 +8,9 @@ back. Each frame carries a burned-in label `<skill> (round N)`.
 * **`round5_montage.png`** — contact sheet, one frame per skill from round 5.
 * `all_skills_2rounds.mp4` / `round2_montage.png` were the earlier 2-round set; superseded and removed
   from the repository (the per-skill clips below are the 5-round ones).
-* **71 of 75 rounds passed (95 %)**: 13 skills 5/5, `ground_pick` at 4/5 and `sitstand` at 2/5 —
-  after the ball_kick scoring fix (its "miss" was a world-frame bug) and the two roller arms retrained
-  under the measured latency envelope. Per-round numbers and the honest reading of each:
+* **74 of 75 rounds passed (99 %)**: fourteen skills 5/5 and `ground_pick` at 4/5 — after the
+  ball_kick scoring fix (a world-frame bug), the sitstand criterion fix (it demanded a cycle the
+  command never asked for) and the two roller arms retrained under the measured latency envelope. Per-round numbers and the honest reading of each:
   `logs/skill_demo.md`.
 
 | video | duration | round 1 / round 2 | what to watch |
@@ -19,7 +19,7 @@ back. Each frame carries a burned-in label `<skill> (round N)`.
 | `velocity_turn.mp4` | 1:40 | **5/5** | **0.584-0.613 rad/s for a commanded 0.5 (gain 1.17-1.23, every round)** — the fixed turn policy: wobble tax removed, low command pinned, measured latency |
 | `walk_turn.mp4` | 1:40 | **5/5** | 0.556-0.600 rad/s (gain 1.11-1.20) while walking |
 | `ball_kick_right.mp4` | 0:25 | **5/5** | ball +1.15 / +1.26 / +1.40 / +1.32 / +1.18 m along the robot's own forward axis — the actor never sees the ball (the old "clean miss" was a world-frame scoring bug) |
-| `sitstand.mp4` | 1:00 | **2/5** | 67 / 62 mm spans; three rounds never descended (span 4-18 mm) — the weak row, 68-72 % per episode |
+| `sitstand.mp4` | 1:00 | **5/5** | commanded postures: switch, held stand, then held sit x3 — each round judged against its own command (gate 24/25) |
 | `ground_pick.mp4` | 1:40 | **4/5** | 38 / 39 / 39 / 44 mm spans, then one 31 mm span against a 40 mm criterion |
 | `rollers_(fast).mp4` | 1:40 | **5/5** | 0.517-0.538 m/s on the passive wheels |
 | `swizzle.mp4` | 1:40 | **5/5** | 0.484-0.544 m/s |

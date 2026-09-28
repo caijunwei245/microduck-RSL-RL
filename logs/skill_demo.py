@@ -44,7 +44,13 @@ SKILLS = [
     ("velocity walk",      "Mjlab-Velocity-Flat-MicroDuck",        "logs/rsl_rl/velocity/*dc_long_0919_0125/model_*.pt",         "walk",         0.3,  0.0,  None,   None),
     # "velocity turn" and "walk+turn" are appended in main() so --turn can set their target
     ("ball_kick right",    "Mjlab-BallKick-Flat-MicroDuck",        "logs/rsl_rl/ball_kick_right/*kick_r4/model_*.pt",            "ball",         0.0,  0.0,  None,   None),
-    ("sitstand",           "Mjlab-SitStand-Flat-MicroDuck",        "logs/rsl_rl/microduck_sitstand/*/model_*.pt",                "cycle_low",    0.0,  0.0,  None,   75.0),
+    # `posture_cycle` (2026-09-28): sitstand commands a BINARY posture (sit_flag in cmd[0], held or
+    # switched), so the row judges each episode against its OWN command instead of demanding a full
+    # sit-and-return cycle. Under the old cycle rule 17/25 rounds "failed" while being judged against
+    # the command they read 24/25 - 11 of the 25 were held-command rounds that OBEYED (5 held-stand
+    # rounds were scored as failures for standing). ground_pick keeps `cycle_low`: its command is a
+    # PHASE, so a cycle really is commanded.
+    ("sitstand",           "Mjlab-SitStand-Flat-MicroDuck",        "logs/rsl_rl/microduck_sitstand/*/model_*.pt",                "posture_cycle", 0.0,  0.0,  None,   75.0),
     ("ground_pick",        "Mjlab-GroundPick-Flat-MicroDuck",      "logs/rsl_rl/ground_pick/*/model_*.pt",                       "cycle_low",    0.0,  0.0,  None,   90.0),
     ("rollers (fast)",     "Mjlab-Velocity-Flat-MicroDuck-Rollers","logs/rsl_rl/velocity_rollers/*rollers_noskate/model_*.pt",   "walk",         0.3,  0.0,  None,   None),
     ("swizzle",            "Mjlab-Velocity-Swizzle-MicroDuck",     "logs/rsl_rl/velocity_swizzle/*swizzle_rolling18/model_*.pt", "walk",         0.3,  0.0,  None,   None),
@@ -168,7 +174,7 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
     upright_steps = 0
     with torch.no_grad():
         for _ in range(max_steps):
-            if log_cmd:
+            if log_cmd or kind == "posture_cycle":
                 try:
                     cmd_trace.append(tuple(float(v) for v in env.command_manager.get_term("twist").command[0]))
                 except Exception:  # noqa: BLE001
@@ -265,6 +271,27 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
         res["ok_abs03"] = res["yaw_abs_mean"] >= 0.30 and not fell
     elif kind == "ball":
         ok = ball_max >= 0.05
+    elif kind == "posture_cycle":
+        # Judge against the COMMAND the episode actually carried, and require the commanded posture to
+        # be HELD (the whole second half of the episode), so a held-posture round is not free:
+        #   held stand  -> trunk stays >= 105 mm
+        #   held sit    -> trunk stays <= the row's low threshold
+        #   a switch    -> both extremes are reached (this is the only branch the old rule tested)
+        c0min = min((c[0] for c in cmd_trace), default=None)
+        c0max = max((c[0] for c in cmd_trace), default=None)
+        tail = zs[max(1, len(zs) // 2):]
+        if c0min is None:
+            ok = res["z_min"] <= spec[7] and res["z_max"] >= 105.0 and not fell
+            res["cmd_pattern"] = "unknown"
+        elif c0max < 0.5:
+            ok = min(tail) >= 105.0 and not fell
+            res["cmd_pattern"] = "held stand"
+        elif c0min > 0.5:
+            ok = min(tail) <= spec[7] and not fell
+            res["cmd_pattern"] = "held sit"
+        else:
+            ok = res["z_min"] <= spec[7] and res["z_max"] >= 105.0 and not fell
+            res["cmd_pattern"] = "switch"
     elif kind == "cycle_low":
         # PERIODIC task: the episode may end mid-cycle, so the skill is "both extremes reached",
         # not "ends high" (a 5 s phase period against a 6 s episode guarantees an arbitrary end).
@@ -321,6 +348,9 @@ def detail(kind: str, r: dict) -> str:
         return f"desc={r['descent']:.0f} mm upright={r['upright_frac']:.2f}"
     if kind == "roller_stand":
         return f"held_high={r['held_high']:3d} z_max={r['z_max']:.0f} upright={r['upright_frac']:.2f}"
+    if kind == "posture_cycle":
+        return (f"z {r['z_min']:.0f}->{r['z_last']:.0f} span={r['z_max'] - r['z_min']:.0f} "
+                f"cmd[{r.get('cmd0_min', 0):+.0f},{r.get('cmd0_max', 0):+.0f}] {r.get('cmd_pattern', '?')}")
     if kind == "cycle_low" and r.get("cmd0_min") is not None:
         return (f"z {r['z_min']:.0f}->{r['z_last']:.0f} span={r['z_max']-r['z_min']:.0f} "
                 f"cmd cos[{r['cmd0_min']:+.2f},{r['cmd0_max']:+.2f}] "

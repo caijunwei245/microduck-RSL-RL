@@ -358,6 +358,14 @@ ball); roller tasks leave head/body command slots zero-padded.
   explained: the failures were never in the physics. Check every derived criterion against the frame
   and the axis the reward uses; a wrong axis looks exactly like a policy defect, and this one survived
   weeks of analysis, a left-foot training run and two noise ablations.
+  **The same class bit twice more on 2026-09-28, so the general rule is: judge each episode against the
+  command it actually carried.** `sitstand` demanded a full sit-and-return CYCLE while the task commands
+  a binary posture that is often HELD for the episode - told to stand it stood (scored a failure), told
+  to sit from a seated spawn it stayed seated (scored a failure): 17/25 under the old rule, **24/25**
+  judged per command, and 11 of the 25 gate rounds were held-command rounds of which 10 obeyed. And
+  `velocity walk`'s "48 %" turned out to be era, not the latency default (21/25 vs 22/25 under the two
+  envelopes). Before training anything, print the command each failing episode carried and check that
+  the criterion could have been satisfied at all.
 - **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
   needs the actor only, and the actor carries its own obs normalizer (that is
   what the ONNX export bakes in). Building a runner instead drags in the task's

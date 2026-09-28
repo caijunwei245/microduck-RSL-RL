@@ -63,9 +63,16 @@ Three consequences that should steer the next work:
 
 ## 3. Tier 2 — the real skill gaps, ranked by evidence quality
 
+**As of 2026-09-28 this list is EMPTY.** Both entries that survived the first pass were criterion
+artifacts: `ball_kick` scored the ball in the world frame instead of the robot's (52 % -> 100 %), and
+`sitstand` demanded a cycle the command never asked for (68 % -> 96 %). What remains is one genuine
+failure in 25 sitstand rounds (a commanded switch that never descended) and the rows already at
+93-100 %. The next unit of work is therefore measurement policy and the non-GPU items below, not
+another training arm.
+
 | gap | the number | what is known | the cheapest decisive step |
 |---|---|---|---|
-| **sitstand** | 2/5 in the 5-round rotation; 18/25 (72 %) on its gate | failures are "never descended" (span 4-18 mm); it is a commanded two-state with a phase the policy must discover; the hold bucket bought +4 points | 25-round gate first (the 2/5 sample is below its own 72 %), then one arm that lengthens the *hold* on the descent side |
+| ~~**sitstand**~~ **ARTIFACT, 2026-09-28** | 2/5 in the rotation and 17/25 (68 %) on its gate — but the row demanded a full sit-and-return CYCLE while the task commands a BINARY posture (sit_flag, often held). Judged against each episode's own command it is **24/25 (96 %)**; 11 of the 25 rounds were held-command rounds and 10 of those obeyed | the policy was never the problem; one genuine failure in 25 | no arm needed — `logs/sitstand_criterion_fix.txt`, `logs/sitstand_fixed.txt` |
 | ~~**ball_kick**~~ **ARTIFACT, 2026-09-28** | it was 13/25 (52 %) because the row scored the ball's **world-x** displacement while the task places the ball and pays the reward in the **robot's yaw frame**; corrected it is **25/25 (100 %)**, 1.15-1.40 m per round | the "spawn noise makes no difference" ablation (52/48/48 %) was a symptom of the same bug, not a finding | no arm needed — `logs/kick_frame_fix.txt`, `logs/kick_contact_probe.py` |
 | **walk start transient** | 56 % of rounds start walking | failures are upright at 0.05-0.12 m/s; the sustained-forward bucket bought +8 points, so the rest is the stand-to-walk transition | one arm that spawns *partway into* the first step (reverse curriculum), which is the pattern that fixed the floor flips |
 | **ground_pick** | 4/5 in the rotation (one 31 mm span vs a 40 mm criterion); historically 25/25 | most likely the same per-episode noise as everything else | re-gate at 5 seeds before spending anything |
@@ -117,7 +124,7 @@ Three consequences that should steer the next work:
 | 2 | ~~Ball-kick contact gate (1 arm)~~ **dropped** | the "gap" was a measurement frame bug — there is nothing to fix | 0 | — |
 | 3 | Walk stand-to-walk reverse curriculum (1 arm) | 44 % of the walk failures live here and the pattern is proven elsewhere | 1 arm | 25-round gate + physical speed readout |
 | 4 | Route-A test on sitstand and roller_crouch (no training) | decides whether 2 of the 4 unpublished skills can ship as-is | eval only | binary |
-| 5 | Sitstand descent-hold arm | weakest measured row | 1 arm + 25 seeds | marginal — needs the paired runner from #1 |
+| 5 | ~~Sitstand descent-hold arm~~ **dropped** | its "gap" was a second criterion artifact (68 % -> 96 % once the row is judged against the command each episode carried) | 0 | — |
 
 Not on the list, deliberately: any further reward-side tuning, any from-scratch turn run, and any
 retraining of the families the latency change already improved (walk, rollers, swizzle, spin all moved

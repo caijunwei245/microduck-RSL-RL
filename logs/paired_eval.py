@@ -48,6 +48,9 @@ PRIMARY = {
     "roller_stand": "z_max",
     "roulade": "z_last",
     "cycle_low": "z_max",
+    # sitstand: the terminal trunk height, which per command pattern is ~53 mm (held sit) or ~116 mm
+    # (held stand / after a rise) - the row's per-round detail line carries the pattern.
+    "posture_cycle": "z_last",
     "crouch_cycle": "z_max",
 }
 

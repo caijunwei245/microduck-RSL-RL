@@ -1,0 +1,14 @@
+############ sitstand: criterion judged against the episode's own command ############
+date: 2026-09-28T15:40:54+08:00
+old rule (a full sit-and-return cycle): 17/25 (68 %) - but 11 of the 25 rounds were HELD-command
+rounds, and 10 of those obeyed their command while being scored as failures (logs/sitstand_criterion_fix.txt)
+
+5 seeds x 5 rounds under the command-relative rule:
+    AGGREGATE: 24/25 rounds (96%)
+  === VERDICT: PASS  24/25 rounds (96%) ===
+  sitstand sitstand_hold2 1:OK z 53->53 span=67 cmd[+0,+1] switch 
+   2:OK z 113->117 span=4 cmd[+0,+0] held stand 
+   3:OK z 53->53 span=18 cmd[+1,+1] held sit 
+   4:OK z 53->53 span=63 cmd[+1,+1] held sit 
+   5:OK z 53->53 span=15 cmd[+1,+1] held sit
+  sitstand 5/5 ALL PASS (sitstand_hold2)

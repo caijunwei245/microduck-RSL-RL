@@ -1,0 +1,35 @@
+rounds analysed: 25
+demo criterion (a full cycle: z_min<=75 and z_max>=105): 17/25 = 68 %
+judged against the ACTUAL command (held stand -> ends >=105; held sit -> ends <=75; transition -> both): 24/25 = 96 %
+
+command pattern   rounds  obeyed  demo criterion
+held_stand             6       6
+held_sit               4       4
+transition            15      14
+
+per-round detail (seed, round, cmd range, z_min/z_max/z_last, demo_ok, obeyed):
+  s0 r1: cmd[0,1] z 53/120/53 demo_ok=True  obeyed=True
+  s0 r2: cmd[0,0] z 113/117/117 demo_ok=False obeyed=True
+  s0 r3: cmd[1,1] z 53/71/53 demo_ok=False obeyed=True
+  s0 r4: cmd[1,1] z 53/116/53 demo_ok=True  obeyed=True
+  s0 r5: cmd[1,1] z 53/68/53 demo_ok=False obeyed=True
+  s1 r1: cmd[0,0] z 116/117/116 demo_ok=False obeyed=True
+  s1 r2: cmd[0,1] z 53/118/117 demo_ok=True  obeyed=True
+  s1 r3: cmd[0,1] z 53/119/116 demo_ok=True  obeyed=True
+  s1 r4: cmd[1,1] z 53/116/53 demo_ok=True  obeyed=True
+  s1 r5: cmd[0,1] z 53/117/117 demo_ok=True  obeyed=True
+  s2 r1: cmd[0,1] z 53/116/53 demo_ok=True  obeyed=True
+  s2 r2: cmd[0,1] z 53/120/116 demo_ok=True  obeyed=True
+  s2 r3: cmd[0,1] z 53/117/53 demo_ok=True  obeyed=True
+  s2 r4: cmd[0,0] z 62/116/116 demo_ok=True  obeyed=True
+  s2 r5: cmd[0,0] z 116/119/116 demo_ok=False obeyed=True
+  s3 r1: cmd[0,1] z 53/117/54 demo_ok=True  obeyed=True
+  s3 r2: cmd[0,1] z 53/117/117 demo_ok=True  obeyed=True
+  s3 r3: cmd[0,1] z 111/117/117 demo_ok=False obeyed=False
+  s3 r4: cmd[0,1] z 53/117/117 demo_ok=True  obeyed=True
+  s3 r5: cmd[0,1] z 53/117/53 demo_ok=True  obeyed=True
+  s4 r1: cmd[0,0] z 112/116/116 demo_ok=False obeyed=True
+  s4 r2: cmd[0,1] z 53/117/53 demo_ok=True  obeyed=True
+  s4 r3: cmd[0,1] z 53/117/53 demo_ok=True  obeyed=True
+  s4 r4: cmd[0,1] z 53/117/111 demo_ok=True  obeyed=True
+  s4 r5: cmd[0,0] z 113/117/116 demo_ok=False obeyed=True
