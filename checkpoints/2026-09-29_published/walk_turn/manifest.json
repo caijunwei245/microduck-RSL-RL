@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "obs_len": 61,
+  "action_len": 14,
+  "robot": {
+    "model": "microduck",
+    "hw_rev": 1,
+    "servos": "xl330",
+    "control_hz": 50
+  },
+  "name": "walk_turn",
+  "kind": "perpetual",
+  "entry_pose": "standing",
+  "description": "Walk, and turn in place at the commanded rate (wobble tax off: 0.5 rad/s at gain 1.17-1.23). Loads into the walk slot; the factory walk policy is a different repo.",
+  "command": {
+    "encoding": "constant",
+    "idle": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "twist": "[vx, vy, wz] = the daemon's velocity command. This build is the turn-fixed one: it tracks |wz| = 0.5 rad/s at gain 1.17-1.23 and matches the current walk policy on the walk row.",
+    "head": "unused (zeros)",
+    "body": "unused (zeros)"
+  },
+  "duration_s": null,
+  "slot": "walk",
+  "training": {
+    "repo": "pollen-robotics/microduck_rl",
+    "commit": "c10f9a0ce",
+    "branch": "develop",
+    "dirty": true,
+    "task_id": "Mjlab-Velocity-Flat-MicroDuck",
+    "checkpoint": 4998
+  }
+}

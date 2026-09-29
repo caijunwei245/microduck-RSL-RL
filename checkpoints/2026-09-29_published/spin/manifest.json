@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "obs_len": 61,
+  "action_len": 14,
+  "robot": {
+    "model": "microduck",
+    "hw_rev": 1,
+    "servos": "xl330",
+    "control_hz": 50
+  },
+  "name": "spin",
+  "kind": "episodic",
+  "entry_pose": "standing on the rollers (passive wheels)",
+  "description": "Spin in place on the rollers: one full turn, ending at the commanded zero rate.",
+  "command": {
+    "encoding": "phase",
+    "period_s": 4.0,
+    "end_phase": 0.65,
+    "idle": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "twist": "[cos(2*pi*phi), sin(2*pi*phi), 0]",
+    "head": "unused (zeros)",
+    "body": "unused (zeros)"
+  },
+  "duration_s": 2.6,
+  "chain": false,
+  "training": {
+    "repo": "pollen-robotics/microduck_rl",
+    "commit": "c10f9a0ce",
+    "branch": "develop",
+    "dirty": true,
+    "task_id": "Mjlab-Spin-Flat-MicroDuck",
+    "checkpoint": 3999
+  }
+}

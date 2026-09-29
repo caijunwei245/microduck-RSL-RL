@@ -279,6 +279,9 @@ What `--kind` means, and what each needs:
     drives the idle twist (`--idle`, zeros by default) before handing back to
     the gait, so the robot is not let go of on one foot. The owner runs it as a
     one-shot with `policy add ... --hold <seconds>`.
+- **scripted** — the daemon drives the command rather than the owner
+  (`--command-encoding posture_flag` for the sit↔stand: it holds the commanded
+  posture and slews between them over `--ramp-s`).
 
 Before anything is uploaded, `publish` checks the graph is `[1,61] -> [1,14]`
 (a 51-D legacy policy is refused with a message), runs it on plausible inputs
@@ -287,9 +290,25 @@ wandb (task, commit, branch, dirty flag, run, checkpoint), and refuses to
 overwrite an existing `.onnx` in the repo without `--force`. Repos are created
 private; `--no-private` for public, `--tag v1` to tag the revision.
 
-Only constant-command policies are publishable this way. Phase-driven moves
-(the ground pick) and the posture-flag sit↔stand are driven by the daemon
-itself and live in the official set, `pollen-robotics/microduck-policies`.
+**Three command encodings are publishable, and the official set uses all three.** A
+time-varying command needs neither a retrain nor an internal clock in the policy:
+
+- `--command-encoding constant` (default) — a fixed twist; every one-shot here.
+- `--command-encoding phase` with `--period-s`/`--end-phase` — the daemon writes
+  `[cos(2*pi*phi), sin(2*pi*phi), 0]` and sweeps `phi` (the ground pick, the roller
+  crouch, spin). This is the encoding the phase-driven tasks already train with.
+- `--command-encoding posture_flag` with `--ramp-s`/`--sit`/`--stand` — a binary flag
+  in the twist slot that the owner toggles (the sit↔stand).
+
+Whether the daemon accepts those last two from a **community** repository, rather than
+reserving them for the official uploads, is a decision in the `microduck` repo — the
+format validates here and each generated README names the driver the policy expects, so
+the first hardware run is the confirmation.
+
+Five solved skills are exported and staged this way — spin (phase), roller_standup,
+ball_kick right and left, and the turn-fixed gait — with their measured timings and the
+source checkpoints under [`checkpoints/2026-09-29_published/`](checkpoints/2026-09-29_published/);
+rebuild them with `bash logs/publish_solved.sh` (`--upload` to push them to the Hub).
 
 ## Tests
 
