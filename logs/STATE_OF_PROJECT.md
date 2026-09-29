@@ -188,3 +188,14 @@ which rows pass) - `turn_deadzone_plan.md` (the pre-registered turn experiment) 
 `a3_results.txt`, `a4_diagnostics.txt`, `crouch_delta_results.txt`, `sitstand_hold_results.txt`,
 `sitstand_cmd_audit.txt`, `seed_sweep_results.txt`, `seed_sweep2_results.txt`, `gate_*.txt`,
 `family_*.md`, `task_verification.md`.
+
+**Publishing (2026-09-28)** - `publishability.md` (schema 2 already drives `phase`/`posture_flag`;
+Route-A screening) - `publish_dryrun.md` + `publish_dryrun/` (the four contract skills, manifest level) -
+`publish_stage.sh` + `publish_stage.txt` (the same four through the real export path) -
+**`publish_solved_skills.md` + `publish_solved.sh` + `publish_solved.txt`** (the five solved skills:
+spin, roller_standup, ball_kick L/R, walk_turn; includes the per-skill timing evidence) -
+`publish_duration_sweep.py` + `publish_duration_{sweep,spin15,spin_brake,roller_standup,ball_kick,
+ball_kick_left}.txt` (how long one deployable window is) - `roller_standup_rise.py` +
+`roller_standup_rise.txt` (the rise, per spawn bucket) - `paired_walk_vs_turn.txt` (does the turn fix
+cost the walk row) - `paired_eval.py` (the paired tool itself). Upload is blocked on an HF token and
+nothing else: `HF_USER=<name> bash logs/publish_solved.sh --upload`.

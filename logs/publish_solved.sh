@@ -55,9 +55,13 @@ stage() {  # name task glob envvars... -- publish flags...
   [ -n "$envs" ] && echo "env:        $envs"
   local mode="--dry-run"
   [ "$UPLOAD" = "1" ] && mode=""
+  # A repo carries exactly one .onnx (`publish` refuses a second), so re-publishing a skill after a fix
+  # needs FORCE=1 explicitly - it is the only flag that can overwrite a policy already on the Hub.
+  local force=""
+  [ "${FORCE:-0}" = "1" ] && force="--force"
   # shellcheck disable=SC2086
   env $envs WANDB_MODE=offline uv run publish --task "$task" --checkpoint-file "$ck" \
-      --repo "$HF_USER/microduck-$name" --name "$name" "$@" $mode \
+      --repo "$HF_USER/microduck-$name" --name "$name" "$@" $force $mode \
     || { echo "!! $name: publish failed"; FAILED=1; }
 }
 

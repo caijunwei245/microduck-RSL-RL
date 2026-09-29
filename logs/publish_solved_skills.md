@@ -124,3 +124,12 @@ Two open items remain after that, both outside this repo: whether the daemon acc
 **community-published** policy declaring `phase` (`command.encoding`, as `alpha_ground_pick` does) —
 the format validates here and the official set uses it — and real-robot validation, which is still
 **zero** for every policy above.
+
+One step between the upload and the robot that is *not* done here: the CPU MuJoCo deployment rehearsal
+(`uv run scripts/infer_policy.py`), which runs the ONNX through the BAM actuator stack rather than
+through mjlab. It opens a `mujoco.viewer` window (there is no display in this environment), and it
+already knows these skills: `--walking publish-walk_turn/policy.onnx --ang-vel-z 0.5 --new-cmd-obs` for
+the turn, `--kick-right publish-ball_kick_right/policy.onnx --new-cmd-obs --kick-duration 1.5` (the
+duration here matches the manifest), `--roller --start-pose prone` for the roller get-up, and the
+crouch-style phase driver for spin. Everything before that step — export, the daemon's own shape gate,
+the smoke run, the manifest contract — is done and staged.
