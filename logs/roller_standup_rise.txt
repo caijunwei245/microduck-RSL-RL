@@ -1,0 +1,294 @@
+/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/.venv/lib/python3.12/site-packages/mjlab/entity/entity.py:149: UserWarning: Actuator config matched 14 joint(s) but the same expressions also match 7 site(s): imu, left_foot, head_camera, tof, head_imu, mouth_tip, right_foot. Add a separate config with transmission_type=TransmissionType.SITE if those should be actuated too.
+  self._add_actuators()
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+row: roller_standup  task: Mjlab-RollerStandUp-Flat-MicroDuck
+checkpoint: logs/rsl_rl/roller_standup/2026-09-28_14-42-12_rollerstandup_lag12/model_1999.pt
+window: 3.0 s (150 steps), 15 rounds per bucket (belly = the rise case, back = the hardest direction, standing = the HOLD case)
+
+Warp 1.12.0 initialized:
+   CUDA Toolkit 12.9, Driver 13.0
+   Devices:
+     "cpu"      : "CPU"
+     "cuda:0"   : "NVIDIA GeForce RTX 4090" (22 GiB, sm_89, mempool enabled)
+   Kernel cache:
+     /home/iisr/.cache/warp/1.12.0
+Warp DeprecationWarning: The symbol `warp.context.runtime` will soon be removed from the public API. It can still be accessed from `warp._src.context.runtime` but might be changed or removed without notice.
+Module mujoco_warp._src.smooth 95a0b8b load on device 'cuda:0' took 2.40 ms  (cached)
+Module mujoco_warp._src.collision_driver 88f7770 load on device 'cuda:0' took 0.30 ms  (cached)
+Module _nxn_broadphase__locals__kernel_e73b1315 e73b131 load on device 'cuda:0' took 0.26 ms  (cached)
+Module ccd_kernel_builder__locals__ccd_kernel_079dfa94 079dfa9 load on device 'cuda:0' took 1.44 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_b282a07a b282a07 load on device 'cuda:0' took 0.79 ms  (cached)
+Module mujoco_warp._src.constraint 27c5750 load on device 'cuda:0' took 1.62 ms  (cached)
+Module _efc_contact_init__locals__kernel_fda71e14 fda71e1 load on device 'cuda:0' took 0.42 ms  (cached)
+Module _efc_contact_jac_dense__locals__kernel_7974b597 cc0fc30 load on device 'cuda:0' took 0.47 ms  (cached)
+Module _efc_contact_update__locals__kernel_90315d53 90315d5 load on device 'cuda:0' took 0.29 ms  (cached)
+Module mujoco_warp._src.sensor 7fc0378 load on device 'cuda:0' took 1.96 ms  (cached)
+Module mujoco_warp._src.forward f60f76d load on device 'cuda:0' took 0.96 ms  (cached)
+Module mujoco_warp._src.passive 1a5e55c load on device 'cuda:0' took 1.06 ms  (cached)
+Module mujoco_warp._src.forward 8ebfcb1 load on device 'cuda:0' took 1.16 ms  (cached)
+Module mujoco_warp._src.support dd3f924 load on device 'cuda:0' took 0.27 ms  (cached)
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_da8974fa 0272f2d load on device 'cuda:0' took 22.12 ms  (cached)
+Module mujoco_warp._src.solver b116efb load on device 'cuda:0' took 1.12 ms  (cached)
+Module solve_init_jaref__locals__kernel_cf8d890e cf8d890 load on device 'cuda:0' took 1.00 ms  (cached)
+Module mul_m_dense__locals___mul_m_dense_63eb81d7 63eb81d load on device 'cuda:0' took 0.75 ms  (cached)
+Module update_constraint_efc__locals__kernel_32935e9d 32935e9 load on device 'cuda:0' took 0.28 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_e88c7347 e88c734 load on device 'cuda:0' took 0.39 ms  (cached)
+Module update_gradient_JTDAJ_dense_tiled__locals__kernel_9981265a 0667084 load on device 'cuda:0' took 1.33 ms  (cached)
+Module update_gradient_cholesky__locals__kernel_11b66683 2637917 load on device 'cuda:0' took 22.15 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_c90cc86b c90cc86 load on device 'cuda:0' took 0.47 ms  (cached)
+Module linesearch_prepare_gauss__locals__kernel_cc28fc48 cc28fc4 load on device 'cuda:0' took 0.40 ms  (cached)
+Module update_constraint_efc__locals__kernel_3c1a9816 3c1a981 load on device 'cuda:0' took 0.31 ms  (cached)
+Module _contact_sort__locals__contact_sort_304c86df 6c97b35 load on device 'cuda:0' took 0.26 ms  (cached)
+Module mujoco_warp._src.derivative d0e2fd7 load on device 'cuda:0' took 0.63 ms  (cached)
+Module reset_data__locals__reset_xfrc_applied_e7898c5c e7898c5 load on device 'cuda:0' took 0.45 ms  (cached)
+Module reset_data__locals__reset_qM_10d3c793 10d3c79 load on device 'cuda:0' took 0.22 ms  (cached)
+Module reset_data__locals__reset_mocap_ff71f630 ff71f63 load on device 'cuda:0' took 0.27 ms  (cached)
+Module reset_data__locals__reset_contact_df686d47 df686d4 load on device 'cuda:0' took 0.26 ms  (cached)
+Module reset_data__locals__reset_nworld_6e0d904e 6e0d904 load on device 'cuda:0' took 0.29 ms  (cached)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | randomize_wheel_friction    |
+|   4   | randomize_com               |
+|   5   | randomize_head_com          |
+|   6   | randomize_joint_friction    |
+|   7   | randomize_armature          |
+|   8   | set_ground_state            |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | encoder_bias                  |
+|   1   | base_com                      |
+|   2   | expand_bam_friction_fields    |
+|   3   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | body_ipos           |
+|   1   | body_subtreemass    |
+|   2   | dof_invweight0      |
+|   3   | body_invweight0     |
+|   4   | tendon_length0      |
+|   5   | tendon_invweight0   |
+|   6   | dof_frictionloss    |
+|   7   | dof_damping         |
+|   8   | body_mass           |
+|   9   | body_inertia        |
+|   10  | body_iquat          |
+|   11  | dof_armature        |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++--------------------------------------------+
+|            Active Command Terms            |
++-------+-------+----------------------------+
+| Index | Name  |            Type            |
++-------+-------+----------------------------+
+|   0   | twist | VelocityCommandCommandOnly |
++-------+-------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (78,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | wheel_vel                          |    (4,)    |
+|    11    | head_command                       |    (4,)    |
+|    12    | body_command                       |    (6,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | out_of_terrain_bounds |   True   |
+|   2   | nan_state             |  False   |
+|   3   | recovery_stall        |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 19 active terms.
++---------------------------------------+
+|          Active Reward Terms          |
++-------+----------------------+--------+
+| Index | Name                 | Weight |
++-------+----------------------+--------+
+|   0   | body_ang_vel         |  -0.05 |
+|   1   | angular_momentum     |  -0.02 |
+|   2   | action_rate_l2       |   -0.6 |
+|   3   | self_collisions      |   -1.0 |
+|   4   | neck_action_rate_l2  |   -0.5 |
+|   5   | neck_joint_pos_l2    |   -0.5 |
+|   6   | joint_torques_l2     | -0.001 |
+|   7   | action_over_limit    |   -0.5 |
+|   8   | pose_stand_legs      |    8.0 |
+|   9   | pose_stand_l1        |    5.0 |
+|   10  | height_stand         |    4.0 |
+|   11  | height_stand_sharp   |    4.0 |
+|   12  | height_stand_l1      |   30.0 |
+|   13  | com_upward_velocity  |    3.0 |
+|   14  | gentle_rise          |   0.02 |
+|   15  | upright_linear       |    6.0 |
+|   16  | upright_sharp        |    6.0 |
+|   17  | standing_composite   |   15.0 |
+|   18  | joint_torque_rate_l2 |   -0.2 |
++-------+----------------------+--------+
+
+[INFO] <CurriculumManager> contains 6 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | wheel_friction     |
+|   2   | com_range          |
+|   3   | head_com_range     |
+|   4   | ground_state_mix   |
+|   5   | push_magnitude     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+Module mujoco_warp._src.io 4b387a0 load on device 'cuda:0' took 1.38 ms  (cached)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_c69276de a2c0277 load on device 'cuda:0' took 15.94 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_c0aa4f5e 2eeec5b load on device 'cuda:0' took 15.49 ms  (cached)
+--- spawn pinned to belly: {'face_down_prob': 1.0, 'face_up_prob': 0.0, 'sitting_prob': 0.0, 'standing_prob': 0.0} ---
+  round  1: z0=84 mm rise=0.20 s z_last=139 mm max=144 held_high=140 upright=0.93 fell=True
+  round  2: z0=89 mm rise=0.20 s z_last=139 mm max=143 held_high=140 upright=0.93 fell=True
+  round  3: z0=83 mm rise=0.20 s z_last=139 mm max=143 held_high=140 upright=0.93 fell=True
+  round  4: z0=84 mm rise=0.20 s z_last=139 mm max=144 held_high=140 upright=0.93 fell=True
+  round  5: z0=89 mm rise=0.20 s z_last=139 mm max=140 held_high=140 upright=0.94 fell=True
+  round  6: z0=90 mm rise=0.20 s z_last=139 mm max=143 held_high=140 upright=0.93 fell=True
+  round  7: z0=85 mm rise=0.20 s z_last=139 mm max=142 held_high=140 upright=0.94 fell=True
+  round  8: z0=86 mm rise=0.18 s z_last=139 mm max=144 held_high=141 upright=0.93 fell=True
+  round  9: z0=84 mm rise=0.20 s z_last=139 mm max=144 held_high=140 upright=0.93 fell=True
+  round 10: z0=87 mm rise=0.18 s z_last=139 mm max=143 held_high=141 upright=0.94 fell=True
+  round 11: z0=83 mm rise=0.20 s z_last=139 mm max=144 held_high=140 upright=0.93 fell=True
+  round 12: z0=78 mm rise=0.20 s z_last=139 mm max=144 held_high=140 upright=0.93 fell=True
+  round 13: z0=77 mm rise=0.20 s z_last=139 mm max=145 held_high=140 upright=0.93 fell=True
+  round 14: z0=76 mm rise=0.18 s z_last=139 mm max=145 held_high=141 upright=0.93 fell=True
+  round 15: z0=89 mm rise=0.18 s z_last=139 mm max=144 held_high=141 upright=0.93 fell=True
+  belly: reached 130 mm in 15/15 rounds; rise median 0.20 s (range 0.18-0.20)
+  z_last median 139 mm, held_high median 140 steps, upright median 0.93, fell 15/15
+
+--- spawn pinned to back: {'face_down_prob': 0.0, 'face_up_prob': 1.0, 'sitting_prob': 0.0, 'standing_prob': 0.0} ---
+  round  1: z0=80 mm rise=0.30 s z_last=139 mm max=141 held_high=135 upright=0.91 fell=True
+  round  2: z0=78 mm rise=0.32 s z_last=139 mm max=142 held_high=134 upright=0.91 fell=True
+  round  3: z0=79 mm rise=0.32 s z_last=139 mm max=139 held_high=134 upright=0.91 fell=True
+  round  4: z0=83 mm rise=0.30 s z_last=139 mm max=140 held_high=135 upright=0.91 fell=True
+  round  5: z0=90 mm rise=0.32 s z_last=139 mm max=140 held_high=134 upright=0.91 fell=True
+  round  6: z0=85 mm rise=0.32 s z_last=139 mm max=140 held_high=134 upright=0.91 fell=True
+  round  7: z0=79 mm rise=0.32 s z_last=139 mm max=141 held_high=134 upright=0.91 fell=True
+  round  8: z0=82 mm rise=0.30 s z_last=139 mm max=141 held_high=135 upright=0.90 fell=True
+  round  9: z0=87 mm rise=0.30 s z_last=139 mm max=141 held_high=135 upright=0.91 fell=True
+  round 10: z0=81 mm rise=0.30 s z_last=139 mm max=142 held_high=135 upright=0.91 fell=True
+  round 11: z0=87 mm rise=0.32 s z_last=139 mm max=140 held_high=134 upright=0.91 fell=True
+  round 12: z0=89 mm rise=0.32 s z_last=139 mm max=140 held_high=134 upright=0.90 fell=True
+  round 13: z0=78 mm rise=0.32 s z_last=139 mm max=141 held_high=134 upright=0.91 fell=True
+  round 14: z0=79 mm rise=0.32 s z_last=139 mm max=140 held_high=134 upright=0.90 fell=True
+  round 15: z0=88 mm rise=0.32 s z_last=139 mm max=139 held_high=134 upright=0.90 fell=True
+  back: reached 130 mm in 15/15 rounds; rise median 0.32 s (range 0.30-0.32)
+  z_last median 139 mm, held_high median 134 steps, upright median 0.91, fell 15/15
+
+--- spawn pinned to standing: {'face_down_prob': 0.0, 'face_up_prob': 0.0, 'sitting_prob': 0.0, 'standing_prob': 1.0} ---
+  round  1: z0=141 mm rise=0.00 s z_last=139 mm max=141 held_high=150 upright=1.00 fell=False
+  round  2: z0=141 mm rise=0.00 s z_last=139 mm max=143 held_high=150 upright=1.00 fell=False
+  round  3: z0=143 mm rise=0.00 s z_last=139 mm max=144 held_high=150 upright=1.00 fell=False
+  round  4: z0=138 mm rise=0.00 s z_last=139 mm max=142 held_high=150 upright=1.00 fell=False
+  round  5: z0=134 mm rise=0.00 s z_last=139 mm max=140 held_high=150 upright=1.00 fell=False
+  round  6: z0=141 mm rise=0.00 s z_last=139 mm max=141 held_high=150 upright=1.00 fell=False
+  round  7: z0=143 mm rise=0.00 s z_last=139 mm max=143 held_high=150 upright=1.00 fell=False
+  round  8: z0=139 mm rise=0.00 s z_last=139 mm max=142 held_high=150 upright=1.00 fell=False
+  round  9: z0=141 mm rise=0.00 s z_last=139 mm max=142 held_high=150 upright=1.00 fell=False
+  round 10: z0=143 mm rise=0.00 s z_last=139 mm max=143 held_high=150 upright=1.00 fell=False
+  round 11: z0=143 mm rise=0.00 s z_last=139 mm max=143 held_high=150 upright=1.00 fell=False
+  round 12: z0=140 mm rise=0.00 s z_last=139 mm max=143 held_high=150 upright=1.00 fell=False
+  round 13: z0=140 mm rise=0.00 s z_last=139 mm max=141 held_high=150 upright=1.00 fell=False
+  round 14: z0=136 mm rise=0.00 s z_last=139 mm max=140 held_high=150 upright=1.00 fell=False
+  round 15: z0=135 mm rise=0.00 s z_last=139 mm max=141 held_high=150 upright=1.00 fell=False
+  standing: reached 130 mm in 15/15 rounds; rise median 0.00 s (range 0.00-0.00)
+  z_last median 139 mm, held_high median 150 steps, upright median 1.00, fell 0/15
+
+duration_s for the manifest = the belly rise median plus a hold margin; the standing bucket
+must survive the same window (it is the bucket that tests holding, not rising).

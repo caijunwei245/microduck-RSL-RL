@@ -66,6 +66,16 @@ def main() -> int:
             # The button question, not the demo question: how much rotation does this window deliver?
             run_metric += (f"turned={statistics.median(r['yaw_abs_rad'] for r in res):.1f} rad "
                            f"(net {statistics.median(r['yaw_net_rad'] for r in res):+.1f}) ")
+        if spec[3] == "ball":
+            # A kick's own number: how far the ball went. It keeps rolling after the robot stops, so the
+            # published `duration_s` has to cover the TRAVEL, not just the strike (contact is at step
+            # 5-8, see logs/kick_frame_fix.txt) - the sweep shows where the distance plateaus.
+            run_metric += (f"ball={statistics.median(r['ball'] for r in res):.2f} m "
+                           f"(min {min(r['ball'] for r in res):.2f}) ")
+        if spec[3] == "roller_stand":
+            run_metric += (f"z_max={statistics.median(r['z_max'] for r in res):.0f} mm "
+                           f"held_high={int(statistics.median(r['held_high'] for r in res))} steps "
+                           f"upright={statistics.median(r['upright_frac'] for r in res):.2f} ")
         print(f"{dur:>10.1f} {steps:>6d} {ok:>3d}/{len(res):<3d}   {run_metric}"
               f"span median {statistics.median(spans):.0f} mm, z_last median {statistics.median(zlast):.0f} mm")
         if args.detail:

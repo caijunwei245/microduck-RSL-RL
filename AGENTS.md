@@ -382,6 +382,16 @@ ball); roller tasks leave head/body command slots zero-padded.
   readout is a rate, ask **which segment of the commanded profile the measurement window covers**; for
   a published button (`duration_s`) the useful number is the rotation the window delivers, not the rate
   at the instant it is cut (2.6 s = the brake end ships one full turn and hands back slack).
+  **A fourth instance, on a SPAWN mix rather than a command** (`logs/roller_standup_rise.txt`): the
+  duration sweep for RollerStandUp reads "0.6 s passes 15/15, trunk ends at 139 mm" - impossible as a
+  rise time, and not one, because the task spawns 50 % belly / 50 % ALREADY STANDING (the standing
+  bucket is deliberate: it teaches HOLDING). Half the rounds pass a short window for free, so the pass
+  rate cannot see the rise. Pinning one bucket at a time gives the real numbers (belly 0.20 s, back
+  0.32 s, standing 0) and the published window is 1.0 s. Whenever a task's spawn is a MIX, pin the
+  bucket before quoting a duration, a hold rate or a success rate - and pin it through the curriculum,
+  not the event: `ground_state_mix` is an `event_param_curriculum` that rewrites the event's
+  probabilities on every reset, so writing them into `event_manager.get_term_cfg(...).params` is a
+  silent no-op (measured: the mix stayed 50/50).
 - **Evaluate with a hand-loaded actor, not an rsl_rl runner.** An evaluation
   needs the actor only, and the actor carries its own obs normalizer (that is
   what the ONNX export bakes in). Building a runner instead drags in the task's

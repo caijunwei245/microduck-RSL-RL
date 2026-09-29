@@ -257,10 +257,16 @@ def run_round(env, wrapped, policy, spec, max_steps: int, frames=None,
     _dt = float(getattr(env, "step_dt", 0.02))
     yaw_net = sum(ys) * _dt
     yaw_abs = sum(abs(y) for y in ys) * _dt
+    # First step at/above the standing height, and the height it started from. A rise task's window has
+    # to cover the WORST spawn, and RollerStandUp spawns 50 % belly / 50 % already standing (the mix is
+    # deliberate: the standing bucket teaches it to HOLD) - so a pass rate over the mixed spawn says
+    # nothing about the rise, and z0 is what separates the buckets (measured 2026-09-28).
+    z130 = next((i for i, z in enumerate(zs) if z >= 130.0), None)
     res = dict(z0=zs[0], z_min=min(zs), z_max=max(zs), z_last=zs[-1], g_last=gs[-1],
                v_mean=v_ss, yaw_abs_mean=yaw_ss, upright_frac=upright_steps / max(1, len(zs)),
                yaw_net_rad=yaw_net, yaw_abs_rad=yaw_abs,
                yaw_peak=max((abs(y) for y in ys), default=0.0),
+               z130_step=z130, z130_s=(None if z130 is None else z130 * _dt),
                descent=zs[0] - min(zs), held_high=longest_run([z >= 130.0 for z in zs]),
                hold=hold, steps=steps, fell=fell, ball=ball_max, ball_worldx=ball_worldx,
                sums=sums, probe=res_probe)
@@ -358,7 +364,10 @@ def detail(kind: str, r: dict) -> str:
     if kind == "slope_descent":
         return f"desc={r['descent']:.0f} mm upright={r['upright_frac']:.2f}"
     if kind == "roller_stand":
-        return f"held_high={r['held_high']:3d} z_max={r['z_max']:.0f} upright={r['upright_frac']:.2f}"
+        rise = r.get("z130_s")
+        return (f"held_high={r['held_high']:3d} z {r.get('z0', 0):.0f}->{r['z_last']:.0f} mm "
+                f"(max {r['z_max']:.0f}) rise={'%.2f s' % rise if rise is not None else '  -  '} "
+                f"upright={r['upright_frac']:.2f}")
     if kind == "posture_cycle":
         return (f"z {r['z_min']:.0f}->{r['z_last']:.0f} span={r['z_max'] - r['z_min']:.0f} "
                 f"cmd[{r.get('cmd0_min', 0):+.0f},{r.get('cmd0_max', 0):+.0f}] {r.get('cmd_pattern', '?')}")

@@ -1,0 +1,317 @@
+/home/iisr/.unsloth/studio/sandbox/__LOCALID_W8vum7H/microduck_rl/.venv/lib/python3.12/site-packages/mjlab/entity/entity.py:149: UserWarning: Actuator config matched 14 joint(s) but the same expressions also match 7 site(s): imu, left_foot, head_camera, tof, head_imu, mouth_tip, right_foot. Add a separate config with transmission_type=TransmissionType.SITE if those should be actuated too.
+  self._add_actuators()
+[mdp] Patches 1-2 active: NaN-safe reward/advantage
+[mdp] Patch 4 active: ONNX export filters passive_* joints
+[mdp] Patch 5 active: adaptive LR bounded to [1.0e-05, 3.84e-04]
+[mdp] Patch 6 active: MICRODUCK_WARM_START=1 restarts curricula after checkpoint load
+row: ball_kick right  task: Mjlab-BallKick-Flat-MicroDuck  kind: ball
+checkpoint: logs/rsl_rl/ball_kick_right/2026-09-20_14-14-35_kick_r4/model_999.pt
+
+Warp 1.12.0 initialized:
+   CUDA Toolkit 12.9, Driver 13.0
+   Devices:
+     "cpu"      : "CPU"
+     "cuda:0"   : "NVIDIA GeForce RTX 4090" (24 GiB, sm_89, mempool enabled)
+   Kernel cache:
+     /home/iisr/.cache/warp/1.12.0
+Warp DeprecationWarning: The symbol `warp.context.runtime` will soon be removed from the public API. It can still be accessed from `warp._src.context.runtime` but might be changed or removed without notice.
+Module mujoco_warp._src.smooth 95a0b8b load on device 'cuda:0' took 1.92 ms  (cached)
+Module mujoco_warp._src.collision_driver 88f7770 load on device 'cuda:0' took 0.25 ms  (cached)
+Module _nxn_broadphase__locals__kernel_e73b1315 e73b131 load on device 'cuda:0' took 0.44 ms  (cached)
+Module ccd_kernel_builder__locals__ccd_kernel_c1d0c893 c1d0c89 load on device 'cuda:0' took 1.24 ms  (cached)
+Module ccd_kernel_builder__locals__ccd_kernel_079dfa94 079dfa9 load on device 'cuda:0' took 1.60 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_02484c54 02484c5 load on device 'cuda:0' took 2.86 ms  (cached)
+Module mujoco_warp._src.constraint 27c5750 load on device 'cuda:0' took 1.74 ms  (cached)
+Module _efc_contact_init__locals__kernel_fda71e14 fda71e1 load on device 'cuda:0' took 0.52 ms  (cached)
+Module _efc_contact_jac_dense__locals__kernel_7974b597 cc0fc30 load on device 'cuda:0' took 0.53 ms  (cached)
+Module _efc_contact_update__locals__kernel_90315d53 90315d5 load on device 'cuda:0' took 0.33 ms  (cached)
+Module mujoco_warp._src.sensor 7fc0378 load on device 'cuda:0' took 1.92 ms  (cached)
+Module mujoco_warp._src.forward f60f76d load on device 'cuda:0' took 1.05 ms  (cached)
+Module mujoco_warp._src.passive 1a5e55c load on device 'cuda:0' took 0.78 ms  (cached)
+Module mujoco_warp._src.forward 8ebfcb1 load on device 'cuda:0' took 1.68 ms  (cached)
+Module mujoco_warp._src.support dd3f924 load on device 'cuda:0' took 0.31 ms  (cached)
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_37ca3f47 b319ac8 load on device 'cuda:0' took 24.98 ms  (cached)
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_b16bf393 b7e5d5f load on device 'cuda:0' took 24.34 ms  (cached)
+Module mujoco_warp._src.solver b116efb load on device 'cuda:0' took 1.19 ms  (cached)
+Module solve_init_jaref__locals__kernel_af106063 af10606 load on device 'cuda:0' took 0.46 ms  (cached)
+Module mul_m_dense__locals___mul_m_dense_19197cab 19197ca load on device 'cuda:0' took 0.28 ms  (cached)
+Module update_constraint_efc__locals__kernel_32935e9d 32935e9 load on device 'cuda:0' took 0.38 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_f02e74ab f02e74a load on device 'cuda:0' took 0.30 ms  (cached)
+Module update_gradient_JTDAJ_dense_tiled__locals__kernel_73f22f8d 0469885 load on device 'cuda:0' took 1.02 ms  (cached)
+Module update_gradient_cholesky__locals__kernel_a458a9b8 e47f115 load on device 'cuda:0' took 26.38 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_d54ab32b d54ab32 load on device 'cuda:0' took 0.57 ms  (cached)
+Module linesearch_prepare_gauss__locals__kernel_32809bfd 32809bf load on device 'cuda:0' took 0.29 ms  (cached)
+Module update_constraint_efc__locals__kernel_3c1a9816 3c1a981 load on device 'cuda:0' took 0.31 ms  (cached)
+Module _contact_sort__locals__contact_sort_304c86df 6c97b35 load on device 'cuda:0' took 0.44 ms  (cached)
+Module mujoco_warp._src.derivative d0e2fd7 load on device 'cuda:0' took 0.85 ms  (cached)
+Module reset_data__locals__reset_xfrc_applied_e7898c5c e7898c5 load on device 'cuda:0' took 0.30 ms  (cached)
+Module reset_data__locals__reset_qM_10d3c793 10d3c79 load on device 'cuda:0' took 0.20 ms  (cached)
+Module reset_data__locals__reset_mocap_ff71f630 ff71f63 load on device 'cuda:0' took 0.20 ms  (cached)
+Module reset_data__locals__reset_contact_df686d47 df686d4 load on device 'cuda:0' took 0.21 ms  (cached)
+Module reset_data__locals__reset_nworld_6e0d904e 6e0d904 load on device 'cuda:0' took 0.24 ms  (cached)
+[BamActuator] model='m6' joints=14 kt=0.3660 R=2.8114 vin=range=(6.5, 8.2) drop_gain_range=(0.0, 0.2) force_limit=±1.07Nm friction_base=0.0048 friction_viscous=0.0054 envs=1 device=cuda:0
+
++---------------------------------+
+|         Base Environment        |
++------------------------+--------+
+| Property               | Value  |
++------------------------+--------+
+| Number of environments | 1      |
+| Environment device     | cuda:0 |
+| Environment seed       | None   |
+| Physics step-size      | 0.005  |
+| Environment step-size  | 0.02   |
++------------------------+--------+
+
+[INFO] <EventManager> contains 3 active terms.
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-------+-----------------------------+
+| Index | Name                        |
++-------+-----------------------------+
+|   0   | reset_base                  |
+|   1   | reset_robot_joints          |
+|   2   | reset_action_history        |
+|   3   | set_ground_state            |
+|   4   | settled_stand               |
+|   5   | reset_ball                  |
+|   6   | randomize_com               |
+|   7   | randomize_head_com          |
+|   8   | randomize_armature          |
+|   9   | randomize_joint_friction    |
++-------+-----------------------------+
++----------------------------------------------+
+|    Active Event Terms in Mode: 'interval'    |
++-------+------------+-------------------------+
+| Index | Name       | Interval time range (s) |
++-------+------------+-------------------------+
+|   0   | push_robot |        (3.0, 6.0)       |
++-------+------------+-------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++-------+-------------------------------+
+| Index | Name                          |
++-------+-------------------------------+
+|   0   | foot_friction                 |
+|   1   | encoder_bias                  |
+|   2   | base_com                      |
+|   3   | expand_bam_friction_fields    |
+|   4   | randomize_mass_inertia        |
++-------+-------------------------------+
++-----------------------------+
+| Domain Randomization Fields |
++-------+---------------------+
+| Index | Field Name          |
++-------+---------------------+
+|   0   | geom_friction       |
+|   1   | body_ipos           |
+|   2   | body_subtreemass    |
+|   3   | dof_invweight0      |
+|   4   | body_invweight0     |
+|   5   | tendon_length0      |
+|   6   | tendon_invweight0   |
+|   7   | dof_frictionloss    |
+|   8   | dof_damping         |
+|   9   | dof_armature        |
+|   10  | body_mass           |
+|   11  | body_inertia        |
+|   12  | body_iquat          |
++-------+---------------------+
+
+[INFO] <CommandManager> contains 1 active terms.
++--------------------------------------------+
+|            Active Command Terms            |
++-------+-------+----------------------------+
+| Index | Name  |            Type            |
++-------+-------+----------------------------+
+|   0   | twist | VelocityCommandCommandOnly |
++-------+-------+----------------------------+
+
+[INFO] <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 14) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          14 |
++-------+-----------+-------------+
+
+[INFO] <ObservationManager> contains 2 groups.
++-----------------------------------------------------------+
+| Active Observation Terms in Group: 'actor' (shape: (61,)) |
++-----------+----------------------------------+------------+
+|   Index   | Name                             |   Shape    |
++-----------+----------------------------------+------------+
+|     0     | base_ang_vel                     |    (3,)    |
+|     1     | projected_gravity                |    (3,)    |
+|     2     | joint_pos                        |   (14,)    |
+|     3     | joint_vel                        |   (14,)    |
+|     4     | actions                          |   (14,)    |
+|     5     | command                          |    (3,)    |
+|     6     | head_command                     |    (4,)    |
+|     7     | body_command                     |    (6,)    |
++-----------+----------------------------------+------------+
++------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (80,)) |
++----------+------------------------------------+------------+
+|  Index   | Name                               |   Shape    |
++----------+------------------------------------+------------+
+|    0     | base_lin_vel                       |    (3,)    |
+|    1     | base_ang_vel                       |    (3,)    |
+|    2     | projected_gravity                  |    (3,)    |
+|    3     | joint_pos                          |   (14,)    |
+|    4     | joint_vel                          |   (14,)    |
+|    5     | actions                            |   (14,)    |
+|    6     | command                            |    (3,)    |
+|    7     | foot_air_time                      |    (2,)    |
+|    8     | foot_contact                       |    (2,)    |
+|    9     | foot_contact_forces                |    (6,)    |
+|    10    | head_command                       |    (4,)    |
+|    11    | body_command                       |    (6,)    |
+|    12    | ball_position                      |    (3,)    |
+|    13    | ball_velocity                      |    (3,)    |
++----------+------------------------------------+------------+
+
+[INFO] <TerminationManager> contains 4 active terms.
++------------------------------------------+
+|         Active Termination Terms         |
++-------+-----------------------+----------+
+| Index | Name                  | Time Out |
++-------+-----------------------+----------+
+|   0   | time_out              |   True   |
+|   1   | fell_over             |  False   |
+|   2   | out_of_terrain_bounds |   True   |
+|   3   | nan_state             |  False   |
++-------+-----------------------+----------+
+
+[INFO] <RewardManager> contains 12 active terms.
++----------------------------------------+
+|          Active Reward Terms           |
++-------+-----------------------+--------+
+| Index | Name                  | Weight |
++-------+-----------------------+--------+
+|   0   | upright               |    2.0 |
+|   1   | body_ang_vel          |  -0.05 |
+|   2   | angular_momentum      |  -0.02 |
+|   3   | dof_pos_limits        |   -1.0 |
+|   4   | action_rate_l2        |   -0.1 |
+|   5   | ball_forward_velocity |   12.0 |
+|   6   | ball_speed_overshoot  |   -4.0 |
+|   7   | support_foot_grounded |    2.0 |
+|   8   | pose_stand_legs       |    2.0 |
+|   9   | pose_stand_neck       |    1.0 |
+|   10  | height_stand          |    1.0 |
+|   11  | self_collisions       |   -1.0 |
++-------+-----------------------+--------+
+
+[INFO] <CurriculumManager> contains 4 active terms.
++----------------------------+
+|  Active Curriculum Terms   |
++-------+--------------------+
+| Index | Name               |
++-------+--------------------+
+|   0   | action_rate_weight |
+|   1   | com_range          |
+|   2   | head_com_range     |
+|   3   | push_magnitude     |
++-------+--------------------+
+
+[INFO] <MetricsManager> contains 1 active terms.
++-------------------------+
+|   Active Metrics Terms  |
++-------+-----------------+
+| Index | Name            |
++-------+-----------------+
+|   0   | mean_action_acc |
++-------+-----------------+
+
+[INFO] <NullRecorderManager> (inactive)
+Module mujoco_warp._src.io 4b387a0 load on device 'cuda:0' took 1.41 ms  (cached)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_68698e2e e5a5250 load on device 'cuda:0' took 18.40 ms  (cached)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_a02b7349 3d3b894 load on device 'cuda:0' took 18.08 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_8f106300 2c9154f load on device 'cuda:0' took 18.16 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_8c82e9f1 95f6085 load on device 'cuda:0' took 18.85 ms  (cached)
+duration_s  steps  passed   readouts
+       0.5     25  15/15    ball=0.10 m (min 0.08) span median 6 mm, z_last median 115 mm
+           round 1: ok=True  ball+0.101 m
+           round 2: ok=True  ball+0.085 m
+           round 3: ok=True  ball+0.084 m
+           round 4: ok=True  ball+0.110 m
+           round 5: ok=True  ball+0.121 m
+           round 6: ok=True  ball+0.109 m
+           round 7: ok=True  ball+0.102 m
+           round 8: ok=True  ball+0.108 m
+           round 9: ok=True  ball+0.117 m
+           round 10: ok=True  ball+0.077 m
+           round 11: ok=True  ball+0.100 m
+           round 12: ok=True  ball+0.101 m
+           round 13: ok=True  ball+0.113 m
+           round 14: ok=True  ball+0.121 m
+           round 15: ok=True  ball+0.097 m
+       1.0     50  15/15    ball=0.23 m (min 0.20) span median 6 mm, z_last median 115 mm
+           round 1: ok=True  ball+0.199 m
+           round 2: ok=True  ball+0.224 m
+           round 3: ok=True  ball+0.197 m
+           round 4: ok=True  ball+0.211 m
+           round 5: ok=True  ball+0.250 m
+           round 6: ok=True  ball+0.239 m
+           round 7: ok=True  ball+0.225 m
+           round 8: ok=True  ball+0.242 m
+           round 9: ok=True  ball+0.252 m
+           round 10: ok=True  ball+0.232 m
+           round 11: ok=True  ball+0.232 m
+           round 12: ok=True  ball+0.249 m
+           round 13: ok=True  ball+0.227 m
+           round 14: ok=True  ball+0.241 m
+           round 15: ok=True  ball+0.263 m
+       1.5     75  15/15    ball=0.36 m (min 0.30) span median 5 mm, z_last median 115 mm
+           round 1: ok=True  ball+0.344 m
+           round 2: ok=True  ball+0.352 m
+           round 3: ok=True  ball+0.427 m
+           round 4: ok=True  ball+0.323 m
+           round 5: ok=True  ball+0.440 m
+           round 6: ok=True  ball+0.333 m
+           round 7: ok=True  ball+0.301 m
+           round 8: ok=True  ball+0.357 m
+           round 9: ok=True  ball+0.402 m
+           round 10: ok=True  ball+0.312 m
+           round 11: ok=True  ball+0.371 m
+           round 12: ok=True  ball+0.372 m
+           round 13: ok=True  ball+0.321 m
+           round 14: ok=True  ball+0.365 m
+           round 15: ok=True  ball+0.360 m
+       2.0    100  15/15    ball=0.49 m (min 0.38) span median 6 mm, z_last median 116 mm
+           round 1: ok=True  ball+0.544 m
+           round 2: ok=True  ball+0.382 m
+           round 3: ok=True  ball+0.493 m
+           round 4: ok=True  ball+0.461 m
+           round 5: ok=True  ball+0.572 m
+           round 6: ok=True  ball+0.533 m
+           round 7: ok=True  ball+0.505 m
+           round 8: ok=True  ball+0.482 m
+           round 9: ok=True  ball+0.432 m
+           round 10: ok=True  ball+0.486 m
+           round 11: ok=True  ball+0.461 m
+           round 12: ok=True  ball+0.394 m
+           round 13: ok=True  ball+0.512 m
+           round 14: ok=True  ball+0.500 m
+           round 15: ok=True  ball+0.471 m
+       3.0    150  15/15    ball=0.76 m (min 0.70) span median 6 mm, z_last median 116 mm
+           round 1: ok=True  ball+0.781 m
+           round 2: ok=True  ball+0.830 m
+           round 3: ok=True  ball+0.735 m
+           round 4: ok=True  ball+0.740 m
+           round 5: ok=True  ball+0.832 m
+           round 6: ok=True  ball+0.887 m
+           round 7: ok=True  ball+0.697 m
+           round 8: ok=True  ball+0.763 m
+           round 9: ok=True  ball+0.794 m
+           round 10: ok=True  ball+0.745 m
+           round 11: ok=True  ball+0.756 m
+           round 12: ok=True  ball+0.729 m
+           round 13: ok=True  ball+0.720 m
+           round 14: ok=True  ball+0.780 m
+           round 15: ok=True  ball+0.779 m
+
+The shortest duration that still passes is the one to put in the manifest; `end_phase` is
+that duration divided by the task's own phase period (4.0 s ground_pick, 5.0 s crouch).
